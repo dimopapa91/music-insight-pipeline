@@ -10,3 +10,34 @@
 2026-06-14 20:57:09,515 [INFO] Claude analysis completed for Radiohead
 2026-06-14 20:57:09,525 [INFO] Saved Radiohead to database
 2026-06-14 20:57:09,525 [INFO] Pipeline completed successfully for: Radiohead
+2026-06-14 21:07:42,853 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2026-06-14 21:07:42,854 [INFO] [33mPress CTRL+C to quit[0m
+2026-06-14 21:07:42,854 [INFO]  * Restarting with stat
+2026-06-14 21:07:43,195 [WARNING]  * Debugger is active!
+2026-06-14 21:07:43,199 [INFO]  * Debugger PIN: 681-251-546
+2026-06-14 21:07:54,074 [INFO] 127.0.0.1 - - [14/Jun/2026 21:07:54] "GET / HTTP/1.1" 200 -
+2026-06-14 21:08:03,673 [INFO] Pipeline started for: BlakeNor
+2026-06-14 21:08:03,817 [INFO] Fetched 3 tracks for BlakeNor
+2026-06-14 21:08:08,266 [INFO] HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-06-14 21:08:08,293 [INFO] Claude analysis completed for BlakeNor
+2026-06-14 21:08:08,302 [INFO] Saved BlakeNor to database
+2026-06-14 21:08:08,302 [INFO] Pipeline completed successfully for: BlakeNor
+2026-06-14 21:08:08,302 [INFO] 127.0.0.1 - - [14/Jun/2026 21:08:08] "[32mPOST /search HTTP/1.1[0m" 302 -
+2026-06-14 21:08:08,316 [INFO] 127.0.0.1 - - [14/Jun/2026 21:08:08] "GET /?message=✅+BlakeNor+analysed+and+saved+successfully! HTTP/1.1" 200 -
+2026-06-14 21:08:18,902 [INFO] Pipeline started for: J dilla
+2026-06-14 21:08:19,061 [INFO] Fetched 5 tracks for J dilla
+2026-06-14 21:08:22,983 [INFO] HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-06-14 21:08:22,985 [INFO] Claude analysis completed for J dilla
+2026-06-14 21:08:22,994 [INFO] Saved J dilla to database
+2026-06-14 21:08:22,994 [INFO] Pipeline completed successfully for: J dilla
+2026-06-14 21:08:22,996 [INFO] 127.0.0.1 - - [14/Jun/2026 21:08:22] "[32mPOST /search HTTP/1.1[0m" 302 -
+2026-06-14 21:08:23,011 [INFO] 127.0.0.1 - - [14/Jun/2026 21:08:23] "GET /?message=✅+J+dilla+analysed+and+saved+successfully! HTTP/1.1" 200 -
+2026-06-14 21:08:27,931 [INFO] Pipeline started for: J dilla
+2026-06-14 21:08:28,073 [INFO] Fetched 5 tracks for J dilla
+2026-06-14 21:08:31,885 [INFO] HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-06-14 21:08:31,889 [INFO] Claude analysis completed for J dilla
+2026-06-14 21:08:31,897 [INFO] Saved J dilla to database
+2026-06-14 21:08:31,897 [INFO] Pipeline completed successfully for: J dilla
+2026-06-14 21:08:31,899 [INFO] 127.0.0.1 - - [14/Jun/2026 21:08:31] "[32mPOST /search HTTP/1.1[0m" 302 -
+2026-06-14 21:08:31,917 [INFO] 127.0.0.1 - - [14/Jun/2026 21:08:31] "GET /?message=✅+J+dilla+analysed+and+saved+successfully! HTTP/1.1" 200 -
