@@ -94,6 +94,11 @@ python3 scheduler.py
 python3 transform.py
 ```
 
+**Compare two artists head to head:**
+```bash
+python3 compare.py
+```
+
 ## 📊 Example Output
 
 
@@ -112,7 +117,7 @@ python3 transform.py
 
 - [ ] Web dashboard to visualise trends
 - [ ] Multi-source pipeline (Spotify + Last.fm)
-- [ ] Artist comparison mode
+- [x] Artist comparison mode
 - [ ] Genre trend analysis
 
 ---
