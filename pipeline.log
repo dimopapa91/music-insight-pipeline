@@ -4,3 +4,9 @@
 2026-06-14 20:46:19,791 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
 2026-06-14 20:46:19,793 [INFO] Added job "scheduled_job" to job store "default"
 2026-06-14 20:46:19,793 [INFO] Scheduler started
+2026-06-14 20:57:04,686 [INFO] Pipeline started for: Radiohead
+2026-06-14 20:57:04,845 [INFO] Fetched 5 tracks for Radiohead
+2026-06-14 20:57:09,487 [INFO] HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-06-14 20:57:09,515 [INFO] Claude analysis completed for Radiohead
+2026-06-14 20:57:09,525 [INFO] Saved Radiohead to database
+2026-06-14 20:57:09,525 [INFO] Pipeline completed successfully for: Radiohead
