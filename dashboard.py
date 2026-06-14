@@ -17,86 +17,484 @@ HTML_TEMPLATE = """
 <html>
 <head>
     <title>Music Insight Pipeline</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #0f0f0f; color: #fff; padding: 30px; }
-        h1 { color: #1db954; margin-bottom: 5px; font-size: 2em; }
-        .subtitle { color: #888; margin-bottom: 30px; }
-        .search-box { display: flex; gap: 10px; margin-bottom: 30px; }
-        .search-box input { flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #fff; font-size: 1em; }
-        .search-box input:focus { outline: none; border-color: #1db954; }
-        .search-box button { padding: 12px 24px; background: #1db954; color: #000; border: none; border-radius: 8px; font-size: 1em; font-weight: bold; cursor: pointer; }
-        .search-box button:hover { background: #1ed760; }
-        .alert { background: #1a1a1a; border-left: 3px solid #1db954; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; color: #1db954; }
-        .error { border-left-color: #e74c3c; color: #e74c3c; }
-        .stats { display: flex; gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: #1a1a1a; border-radius: 10px; padding: 20px; flex: 1; text-align: center; border: 1px solid #333; }
-        .stat-card h2 { font-size: 2.5em; color: #1db954; }
-        .stat-card p { color: #888; margin-top: 5px; }
-        .section { background: #1a1a1a; border-radius: 10px; padding: 20px; margin-bottom: 20px; border: 1px solid #333; }
-        .section h3 { color: #1db954; margin-bottom: 15px; font-size: 1.2em; }
-        .insight-card { background: #111; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 3px solid #1db954; }
-        .insight-card h4 { color: #1db954; margin-bottom: 8px; }
-        .insight-card p { color: #ccc; font-size: 0.9em; line-height: 1.6; }
-        .timestamp { color: #555; font-size: 0.8em; margin-top: 8px; }
-        .bar-container { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
-        .bar { height: 20px; background: #1db954; border-radius: 4px; min-width: 4px; }
-        .bar-label { color: #888; font-size: 0.85em; width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .bar-value { color: #fff; font-size: 0.85em; }
-        .loading { color: #888; font-style: italic; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f5f3;
+            color: #111;
+            min-height: 100vh;
+        }
+
+        /* ── TICKER ── */
+        .ticker {
+            background: #1da0c3;
+            color: #fff;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 6px 0;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .ticker-inner {
+            display: inline-block;
+            animation: ticker 28s linear infinite;
+        }
+        .ticker-inner span { margin-right: 60px; }
+        @keyframes ticker {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* ── NTS-STYLE TOPBAR ── */
+        .topbar {
+            background: #000;
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 48px;
+        }
+        .topbar-brand {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.85em;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #fff;
+        }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .topbar-link {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.62em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #888;
+        }
+        .live-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 3px;
+            padding: 4px 10px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #fff;
+        }
+        .dot {
+            width: 6px; height: 6px;
+            background: #1da0c3;
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.2; }
+        }
+
+        /* ── HERO / HEADER ── */
+        .hero {
+            background: #fff;
+            border-bottom: 2px solid #111;
+            padding: 48px 30px 36px;
+            text-align: center;
+        }
+        .hero-eyebrow {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65em;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #1da0c3;
+            margin-bottom: 14px;
+        }
+        .hero h1 {
+            font-family: 'Space Mono', monospace;
+            font-size: 3em;
+            font-weight: 700;
+            letter-spacing: -2px;
+            line-height: 1;
+            text-transform: uppercase;
+            color: #111;
+        }
+        .hero-sub {
+            font-size: 0.78em;
+            color: #999;
+            margin-top: 14px;
+            letter-spacing: 1px;
+        }
+
+        /* ── SEARCH ── */
+        .search-wrap {
+            background: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 22px 30px;
+            display: flex;
+            justify-content: center;
+        }
+        .search-form {
+            display: flex;
+            width: 100%;
+            max-width: 440px;
+        }
+        .search-form input {
+            flex: 1;
+            padding: 11px 20px;
+            background: #f5f5f3;
+            border: 1px solid #ddd;
+            border-right: none;
+            border-radius: 3px 0 0 3px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.78em;
+            color: #111;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .search-form input::placeholder { color: #bbb; }
+        .search-form input:focus { border-color: #1da0c3; }
+        .search-form button {
+            padding: 11px 22px;
+            background: #111;
+            color: #fff;
+            border: none;
+            border-radius: 0 3px 3px 0;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.72em;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .search-form button:hover { background: #1da0c3; }
+
+        .alert {
+            padding: 11px 30px;
+            background: #fffbf0;
+            border-bottom: 1px solid #f0e68c;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.72em;
+            color: #7a6000;
+        }
+        .alert.error { background: #fff5f5; border-bottom-color: #fcc; color: #c0392b; }
+
+        /* ── STATS ── */
+        .stats-strip {
+            display: flex;
+            background: #111;
+            border-bottom: 2px solid #1da0c3;
+        }
+        .stat {
+            flex: 1;
+            padding: 20px 30px;
+            border-right: 1px solid #222;
+        }
+        .stat:last-child { border-right: none; }
+        .stat-number {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.9em;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1;
+        }
+        .stat-label {
+            font-size: 0.72em;
+            color: #1da0c3;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 6px;
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* ── TWO-COLUMN GRID ── */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        /* ── PANELS ── */
+        .panel {
+            padding: 30px;
+            background: #fff;
+            border-right: 1px solid #e8e8e8;
+        }
+        .panel:last-child { border-right: none; }
+        .panel-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.62em;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #111;
+            margin-bottom: 22px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #111;
+        }
+
+        /* ── BARS ── */
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .bar-name {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.72em;
+            color: #444;
+            width: 140px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .bar-track {
+            flex: 1;
+            height: 3px;
+            background: #eee;
+        }
+        .bar-fill {
+            height: 100%;
+            background: #1da0c3;
+        }
+        .bar-val {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.66em;
+            color: #bbb;
+            width: 100px;
+            text-align: right;
+        }
+
+        /* ── INSIGHT CARDS ── */
+        .insight-card {
+            padding: 18px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .insight-card:last-child { border-bottom: none; }
+        .insight-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .insight-artist {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.82em;
+            font-weight: 700;
+            color: #111;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .insight-time {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6em;
+            color: #bbb;
+            letter-spacing: 1px;
+        }
+        .track-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .track-tag {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6em;
+            color: #555;
+            background: #f0f0f0;
+            border: 1px solid #e0e0e0;
+            border-radius: 2px;
+            padding: 2px 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 160px;
+        }
+        .insight-body {
+            font-size: 0.8em;
+            color: #555;
+            line-height: 1.75;
+        }
+        .insight-preview { display: block; }
+        .insight-full    { display: none; }
+        .insight-toggle {
+            margin-top: 8px;
+            display: inline-block;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65em;
+            letter-spacing: 1px;
+            color: #1da0c3;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+        .insight-toggle:hover { color: #111; }
+
+        /* ── FOOTER ── */
+        .footer {
+            background: #000;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .footer-brand {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7em;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #fff;
+        }
+        .footer-sub {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #444;
+        }
     </style>
 </head>
 <body>
-    <h1>🎵 Music Insight Pipeline</h1>
-    <p class="subtitle">Real-time dashboard — powered by Last.fm + Claude AI + PostgreSQL</p>
 
-    <div class="search-box">
-        <form method="POST" action="/search" style="display:flex; gap:10px; flex:1;">
-            <input type="text" name="artist" placeholder="Search any artist e.g. Frank Ocean..." required />
-            <button type="submit">Analyse 🔍</button>
-        </form>
+    <!-- TICKER -->
+    <div class="ticker">
+        <div class="ticker-inner">
+            <span>Music Insight Pipeline — Live</span>
+            <span>Last.fm · Claude AI · PostgreSQL</span>
+            <span>Manchester, UK — 2026</span>
+            <span>Automated Music Intelligence</span>
+            <span>Music Insight Pipeline — Live</span>
+            <span>Last.fm · Claude AI · PostgreSQL</span>
+            <span>Manchester, UK — 2026</span>
+            <span>Automated Music Intelligence</span>
+        </div>
     </div>
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <span class="topbar-brand">MIP</span>
+        <div class="topbar-right">
+            <span class="topbar-link">Last.fm + Claude AI + PostgreSQL</span>
+            <span class="live-pill"><span class="dot"></span>Live</span>
+        </div>
+    </div>
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-eyebrow">Music Intelligence · Manchester</div>
+        <h1>Music Insight Pipeline</h1>
+        <p class="hero-sub">Search any artist — Claude analyses their top tracks in seconds</p>
+    </div>
+
+    <!-- SEARCH -->
+    <form method="POST" action="/search">
+        <div class="search-wrap">
+            <div class="search-form">
+                <input type="text" name="artist" placeholder="Search an artist..." required />
+                <button type="submit">Analyse</button>
+            </div>
+        </div>
+    </form>
 
     {% if message %}
     <div class="alert {{ 'error' if error else '' }}">{{ message }}</div>
     {% endif %}
 
-    <div class="stats">
-        <div class="stat-card">
-            <h2>{{ total_searches }}</h2>
-            <p>Total Searches</p>
+    <!-- STATS -->
+    <div class="stats-strip">
+        <div class="stat">
+            <div class="stat-number">{{ total_searches }}</div>
+            <div class="stat-label">Total Searches</div>
         </div>
-        <div class="stat-card">
-            <h2>{{ unique_artists }}</h2>
-            <p>Unique Artists</p>
+        <div class="stat">
+            <div class="stat-number">{{ unique_artists }}</div>
+            <div class="stat-label">Unique Artists</div>
         </div>
-        <div class="stat-card">
-            <h2>{{ searches_today }}</h2>
-            <p>Searches Today</p>
+        <div class="stat">
+            <div class="stat-number">{{ searches_today }}</div>
+            <div class="stat-label">Today</div>
         </div>
     </div>
 
-    <div class="section">
-        <h3>📊 Average Plays by Artist</h3>
-        {% for artist, avg, max_avg in artist_plays %}
-        <div class="bar-container">
-            <span class="bar-label">{{ artist }}</span>
-            <div class="bar" style="width: {{ [((avg / max_avg) * 300)|int, 4]|max }}px"></div>
-            <span class="bar-value">{{ "{:,}".format(avg) }} avg plays</span>
+    <!-- MAIN GRID -->
+    <div class="main-grid">
+
+        <!-- LEFT: PLAYS CHART -->
+        <div class="panel">
+            <div class="panel-title">Average Plays by Artist</div>
+            {% for artist, avg, max_avg in artist_plays %}
+            <div class="bar-row">
+                <span class="bar-name">{{ artist }}</span>
+                <div class="bar-track">
+                    <div class="bar-fill" style="width: {{ [((avg / max_avg) * 100)|int, 1]|max }}%"></div>
+                </div>
+                <span class="bar-val">{{ "{:,}".format(avg) }}</span>
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
+
+        <!-- RIGHT: INSIGHTS -->
+        <div class="panel">
+            <div class="panel-title">Latest Claude Insights</div>
+            {% for row in latest_insights %}
+            {% set clean = row.insight | replace('##', '') | replace('**', '') | replace('# ', '') %}
+            <div class="insight-card">
+                <div class="insight-meta">
+                    <span class="insight-artist">{{ row.artist }}</span>
+                    <span class="insight-time">{{ row.searched_at.strftime('%d %b %Y  %H:%M') }}</span>
+                </div>
+                <div class="track-tags">
+                    {% for t in row.top_tracks %}
+                    <span class="track-tag">{{ t }}</span>
+                    {% endfor %}
+                </div>
+                <div class="insight-body" id="body-{{ loop.index }}">
+                    <span class="insight-preview">{{ clean[:200] }}...</span>
+                    <span class="insight-full">{{ clean }}</span>
+                </div>
+                <button class="insight-toggle" onclick="toggleInsight({{ loop.index }}, this)">Read more</button>
+            </div>
+            {% endfor %}
+        </div>
+
     </div>
 
-    <div class="section">
-        <h3>🤖 Latest Claude Insights</h3>
-        {% for row in latest_insights %}
-        <div class="insight-card">
-            <h4>{{ row.artist }}</h4>
-            <p>{{ row.insight[:400] }}...</p>
-            <p class="timestamp">{{ row.searched_at.strftime('%d %b %Y %H:%M') }}</p>
-        </div>
-        {% endfor %}
+    <!-- FOOTER -->
+    <div class="footer">
+        <span class="footer-brand">Music Insight Pipeline</span>
+        <span class="footer-sub">Built by Dimos Dimitrios Papageorgiou · Manchester · 2026</span>
     </div>
+
+    <script>
+    function toggleInsight(i, btn) {
+        var body = document.getElementById('body-' + i);
+        var preview = body.querySelector('.insight-preview');
+        var full    = body.querySelector('.insight-full');
+        if (full.style.display !== 'block') {
+            preview.style.display = 'none';
+            full.style.display    = 'block';
+            btn.textContent = 'Show less';
+        } else {
+            preview.style.display = 'block';
+            full.style.display    = 'none';
+            btn.textContent = 'Read more';
+        }
+    }
+    </script>
+
 </body>
 </html>
 """
@@ -130,8 +528,12 @@ def get_dashboard_data():
     artist_plays = [(a, avg, max_avg) for a, avg in sorted_avgs]
 
     cur.execute("""
-        SELECT artist_name, claude_insight, searched_at
-        FROM searches ORDER BY searched_at DESC LIMIT 5
+        SELECT * FROM (
+            SELECT DISTINCT ON (artist_name) artist_name, claude_insight, searched_at, top_tracks
+            FROM searches
+            ORDER BY artist_name, searched_at DESC
+        ) sub
+        ORDER BY searched_at DESC LIMIT 5
     """)
 
     class Row:
@@ -139,6 +541,8 @@ def get_dashboard_data():
             self.artist = r[0]
             self.insight = r[1]
             self.searched_at = r[2]
+            tracks_raw = r[3] if isinstance(r[3], list) else json.loads(r[3])
+            self.top_tracks = [t["name"] for t in tracks_raw[:4]]
 
     latest_insights = [Row(r) for r in cur.fetchall()]
     cur.close()

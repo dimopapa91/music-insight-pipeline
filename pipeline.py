@@ -76,7 +76,8 @@ Please give me:
 1. A brief analysis of what these tracks reveal about {artist_name}'s appeal
 2. What production or songwriting patterns might explain their popularity
 3. One recommendation for a similar artist someone might enjoy
-Keep it concise and insightful."""
+
+Write in plain prose only. No markdown, no headers, no bullet points, no bold or italic formatting. Just clean paragraphs."""
 
         message = client.messages.create(
             model="claude-haiku-4-5-20251001",
