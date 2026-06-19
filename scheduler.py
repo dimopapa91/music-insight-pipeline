@@ -1,6 +1,7 @@
 import logging
 from apscheduler.schedulers.blocking import BlockingScheduler
 from pipeline import run_pipeline
+from email_digest import send_digest
 import random
 
 # Set up logging so we can see what's happening
@@ -36,6 +37,9 @@ scheduler = BlockingScheduler()
 # Run once immediately, then every day at 9am
 scheduled_job()  # run right now so you can see it working
 scheduler.add_job(scheduled_job, 'cron', hour=9, minute=0)
+
+# Weekly email digest — every Monday at 8am
+scheduler.add_job(send_digest, 'cron', day_of_week='mon', hour=8, minute=0)
 
 print("\n⏰ Scheduler running — pipeline will execute daily at 9am")
 print("Press Ctrl+C to stop\n")
