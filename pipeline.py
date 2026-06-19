@@ -23,7 +23,11 @@ logging.basicConfig(
 
 def get_db_connection():
     try:
-        conn = psycopg2.connect(dbname="music_insights", user=os.getenv("USER"))
+        database_url = os.getenv("DATABASE_URL")
+        if database_url:
+            conn = psycopg2.connect(database_url)
+        else:
+            conn = psycopg2.connect(dbname="music_insights", user=os.getenv("USER"))
         return conn
     except psycopg2.OperationalError as e:
         logging.error(f"Database connection failed: {e}")

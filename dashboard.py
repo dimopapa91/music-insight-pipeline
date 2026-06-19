@@ -114,6 +114,11 @@ def get_discovery_artists(searched_artists):
     return discovery
 
 def get_db_connection():
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        # Railway provides DATABASE_URL — use it directly
+        return psycopg2.connect(database_url)
+    # Local development fallback
     return psycopg2.connect(dbname="music_insights", user=os.getenv("USER"))
 
 HTML_TEMPLATE = """
@@ -2118,4 +2123,6 @@ def news_refresh():
     return redirect("/news")
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    port = int(os.getenv("PORT", 5000))
+    debug = os.getenv("RAILWAY_ENVIRONMENT") is None  # debug off on Railway
+    app.run(host="0.0.0.0", port=port, debug=debug)

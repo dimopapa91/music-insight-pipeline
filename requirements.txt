@@ -1,0 +1,6 @@
+flask
+requests
+psycopg2-binary
+anthropic
+python-dotenv
+apscheduler
