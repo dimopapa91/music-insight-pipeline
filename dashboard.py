@@ -171,6 +171,8 @@ HTML_TEMPLATE = """
             background-size: 120% auto;
             color: #111;
             min-height: 100vh;
+            font-size: 17px;
+            line-height: 1.5;
             transition: background 0.2s, color 0.2s;
         }
 
@@ -179,7 +181,7 @@ HTML_TEMPLATE = """
         body.dark { background-color: #0d0d0d; color: #e0e0e0; }
         body.dark .hero { background: #111; border-color: #222; }
         body.dark .hero h1 { color: #fff; }
-        body.dark .hero-sub { color: #555; }
+        body.dark .hero-sub { color: #999; }
         body.dark .search-wrap { background: #111; border-color: #222; }
         body.dark .search-form input { background: #1a1a1a; border-color: #333; color: #e0e0e0; }
         body.dark .search-form input::placeholder { color: #444; }
@@ -189,17 +191,23 @@ HTML_TEMPLATE = """
         body.dark .alert { background: #1a1600; border-color: #333; }
         body.dark .panel { background: #111; border-color: #222; }
         body.dark .panel-title { color: #e0e0e0; border-color: #333; }
-        body.dark .bar-name { color: #888; }
-        body.dark .bar-track { background: #222; }
-        body.dark .insight-card { border-color: #1e1e1e; }
+        body.dark .bar-name { color: #aaa; }
+        body.dark .bar-track { background: #262626; }
+        body.dark .bar-val { color: #aaa; }
+        body.dark .insight-card { background: #161616; border-color: #262626; }
+        body.dark .insight-card:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.45); border-color: #1da0c3; }
         body.dark .insight-artist { color: #e0e0e0; }
-        body.dark .insight-time { color: #444; }
-        body.dark .insight-body { color: #777; }
+        body.dark .insight-time { color: #888; }
+        body.dark .insight-body { color: #999; }
+        body.dark .similar-label { color: #888; }
         body.dark .track-tag { background: #1a1a1a; border-color: #2a2a2a; color: #888; }
         body.dark .similar-chip { background: #1a1a1a; border-color: #2a2a2a; color: #e0e0e0; }
         body.dark .discovery-section { background: #111; border-color: #222; }
         body.dark .discovery-header { color: #e0e0e0; border-color: #444; }
+        body.dark .discovery-card { background: #161616; border-color: #262626; }
+        body.dark .discovery-card:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.45); border-color: #1da0c3; }
         body.dark .discovery-name { color: #e0e0e0; }
+        body.dark .discovery-fans { color: #999; }
         body.dark .discovery-img { border-color: #222; background: #1a1a1a; }
         body.dark .footer { background: #000; }
 
@@ -283,7 +291,7 @@ HTML_TEMPLATE = """
         .hero {
             background: #fff;
             border-bottom: 2px solid #111;
-            padding: 48px 30px 36px;
+            padding: 56px 30px 44px;
             text-align: center;
         }
         .hero-eyebrow {
@@ -305,8 +313,8 @@ HTML_TEMPLATE = """
         }
         .hero-sub {
             font-size: 0.78em;
-            color: #999;
-            margin-top: 14px;
+            color: #6b6b6b;
+            margin-top: 16px;
             letter-spacing: 1px;
         }
 
@@ -314,7 +322,7 @@ HTML_TEMPLATE = """
         .search-wrap {
             background: #fff;
             border-bottom: 1px solid #ddd;
-            padding: 22px 30px;
+            padding: 28px 30px;
             display: flex;
             justify-content: center;
             position: relative;
@@ -367,20 +375,20 @@ HTML_TEMPLATE = """
         .search-form input::placeholder { color: #bbb; }
         .search-form input:focus { border-color: #1da0c3; }
         .search-form button {
-            padding: 11px 22px;
+            padding: 12px 26px;
             background: #111;
             color: #fff;
             border: none;
             border-radius: 0 3px 3px 0;
             font-family: 'Space Mono', monospace;
-            font-size: 0.72em;
+            font-size: 0.78em;
             font-weight: 700;
             letter-spacing: 2px;
             text-transform: uppercase;
             cursor: pointer;
-            transition: background 0.15s;
+            transition: background 0.15s, transform 0.15s;
         }
-        .search-form button:hover { background: #1da0c3; }
+        .search-form button:hover { background: #1da0c3; transform: translateY(-1px); }
 
         .alert {
             padding: 11px 30px;
@@ -400,14 +408,15 @@ HTML_TEMPLATE = """
         }
         .stat {
             flex: 1;
-            padding: 20px 30px;
+            padding: 26px 30px;
             border-right: 1px solid #222;
         }
         .stat:last-child { border-right: none; }
         .stat-number {
             font-family: 'Space Mono', monospace;
-            font-size: 1.9em;
+            font-size: 2.5em;
             font-weight: 700;
+            letter-spacing: -1px;
             color: #fff;
             line-height: 1;
         }
@@ -416,7 +425,7 @@ HTML_TEMPLATE = """
             color: #1da0c3;
             letter-spacing: 3px;
             text-transform: uppercase;
-            margin-top: 6px;
+            margin-top: 8px;
             font-family: 'Space Mono', monospace;
         }
 
@@ -434,7 +443,7 @@ HTML_TEMPLATE = """
 
         /* ── PANELS ── */
         .panel {
-            padding: 30px;
+            padding: 36px;
             background: #fff;
             border-right: 1px solid #e8e8e8;
         }
@@ -445,7 +454,7 @@ HTML_TEMPLATE = """
             letter-spacing: 4px;
             text-transform: uppercase;
             color: #111;
-            margin-bottom: 22px;
+            margin-bottom: 24px;
             padding-bottom: 10px;
             border-bottom: 2px solid #111;
         }
@@ -455,12 +464,12 @@ HTML_TEMPLATE = """
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 14px;
+            margin-bottom: 18px;
         }
         .bar-name {
             font-family: 'Space Mono', monospace;
-            font-size: 0.72em;
-            color: #444;
+            font-size: 0.74em;
+            color: #2a2a2a;
             width: 140px;
             white-space: nowrap;
             overflow: hidden;
@@ -468,36 +477,50 @@ HTML_TEMPLATE = """
         }
         .bar-track {
             flex: 1;
-            height: 3px;
-            background: #eee;
+            height: 8px;
+            background: #e6e6e6;
+            border-radius: 4px;
+            overflow: hidden;
         }
         .bar-fill {
             height: 100%;
             background: #1da0c3;
+            border-radius: 4px;
         }
         .bar-val {
             font-family: 'Space Mono', monospace;
-            font-size: 0.66em;
-            color: #bbb;
+            font-size: 0.72em;
+            font-weight: 700;
+            color: #444;
             width: 100px;
             text-align: right;
         }
 
         /* ── INSIGHT CARDS ── */
         .insight-card {
-            padding: 18px 0;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 20px 22px;
+            margin-bottom: 14px;
+            background: #fff;
+            border: 1px solid #ececec;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
         }
-        .insight-card:last-child { border-bottom: none; }
+        .insight-card:last-child { margin-bottom: 0; }
+        .insight-card:hover {
+            box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+            transform: translateY(-2px);
+            border-color: #1da0c3;
+        }
         .insight-meta {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
         .insight-artist {
             font-family: 'Space Mono', monospace;
-            font-size: 0.82em;
+            font-size: 0.84em;
             font-weight: 700;
             color: #111;
             text-transform: uppercase;
@@ -505,8 +528,8 @@ HTML_TEMPLATE = """
         }
         .insight-time {
             font-family: 'Space Mono', monospace;
-            font-size: 0.6em;
-            color: #bbb;
+            font-size: 0.62em;
+            color: #888;
             letter-spacing: 1px;
         }
         .track-tags {
@@ -577,17 +600,18 @@ HTML_TEMPLATE = """
             font-size: 0.6em;
             letter-spacing: 2px;
             text-transform: uppercase;
-            color: #bbb;
+            color: #888;
             margin-right: 4px;
         }
         .similar-chip {
             font-family: 'Space Mono', monospace;
-            font-size: 0.62em;
+            font-size: 0.64em;
+            font-weight: 700;
             color: #111;
             background: #f0f0f0;
             border: 1px solid #ddd;
             border-radius: 2px;
-            padding: 3px 10px;
+            padding: 4px 12px;
             cursor: pointer;
             transition: background 0.15s, border-color 0.15s;
         }
@@ -601,7 +625,7 @@ HTML_TEMPLATE = """
         .discovery-section {
             background: #fff;
             border-top: 1px solid #e8e8e8;
-            padding: 30px;
+            padding: 36px;
         }
         .discovery-header {
             font-family: 'Space Mono', monospace;
@@ -609,7 +633,7 @@ HTML_TEMPLATE = """
             letter-spacing: 4px;
             text-transform: uppercase;
             color: #111;
-            margin-bottom: 22px;
+            margin-bottom: 24px;
             padding-bottom: 10px;
             border-bottom: 2px solid #111;
         }
@@ -622,6 +646,17 @@ HTML_TEMPLATE = """
             display: flex;
             flex-direction: column;
             gap: 8px;
+            padding: 12px;
+            background: #fff;
+            border: 1px solid #ececec;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+        }
+        .discovery-card:hover {
+            box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+            transform: translateY(-3px);
+            border-color: #1da0c3;
         }
         .discovery-img {
             width: 100%;
@@ -639,25 +674,26 @@ HTML_TEMPLATE = """
         }
         .discovery-fans {
             font-family: 'Space Mono', monospace;
-            font-size: 0.58em;
-            color: #bbb;
+            font-size: 0.6em;
+            color: #777;
         }
         .discovery-btn {
-            margin-top: 2px;
-            padding: 5px 0;
+            margin-top: 4px;
+            padding: 8px 0;
             background: #111;
             color: #fff;
             border: none;
-            border-radius: 2px;
+            border-radius: 3px;
             font-family: 'Space Mono', monospace;
-            font-size: 0.6em;
+            font-size: 0.68em;
+            font-weight: 700;
             letter-spacing: 1px;
             text-transform: uppercase;
             cursor: pointer;
-            transition: background 0.15s;
+            transition: background 0.15s, transform 0.15s;
             width: 100%;
         }
-        .discovery-btn:hover { background: #1da0c3; }
+        .discovery-btn:hover { background: #1da0c3; transform: translateY(-1px); }
 
         /* ── MINI PLAYER ── */
         .mini-player {
@@ -692,7 +728,7 @@ HTML_TEMPLATE = """
         .player-note {
             font-family: 'Space Mono', monospace;
             font-size: 0.55em;
-            color: #555;
+            color: #999;
             margin-top: 2px;
         }
         #audio-player {
@@ -731,15 +767,16 @@ HTML_TEMPLATE = """
             font-size: 0.6em;
             letter-spacing: 2px;
             text-transform: uppercase;
-            color: #444;
+            color: #888;
         }
 
         /* ── MOBILE ── */
         @media (max-width: 700px) {
-            .topbar { padding: 0 14px; }
-            .topbar-brand { font-size: 0.85em; letter-spacing: 1px; }
-            .topbar-right { gap: 10px; }
-            .topbar-link { font-size: 0.55em; letter-spacing: 1px; }
+            .topbar { padding: 0 10px; }
+            .topbar-brand { font-size: 0.8em; letter-spacing: 1px; flex-shrink: 0; }
+            .topbar-right { gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-shrink: 1; min-width: 0; }
+            .topbar-right::-webkit-scrollbar { display: none; }
+            .topbar-link { font-size: 0.55em; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; }
             .live-pill { display: none; }
             .ticker { display: none; }
             .hero { padding: 24px 16px 20px; }
@@ -810,7 +847,7 @@ HTML_TEMPLATE = """
         <div class="search-wrap">
             <div class="search-form-wrapper">
                 <div class="search-form">
-                    <input type="text" name="artist" id="artist-input" placeholder="Search an artist… (press / to focus)" required />
+                    <input type="text" name="artist" id="artist-input" placeholder="Search an artist…" required />
                     <button type="submit">Analyse</button>
                 </div>
                 <div id="suggestions" class="suggestions"></div>
@@ -1178,7 +1215,7 @@ ARTIST_PROFILE_TEMPLATE = """
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Space Mono', monospace; background: #e2e2df; color: #111; }
+        body { font-family: 'Space Mono', monospace; background: #e2e2df; color: #111; font-size: 17px; line-height: 1.5; }
         /* topbar */
         .topbar { background: #111; color: #fff; padding: 0 24px; height: 44px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
         .topbar-brand { font-weight: 700; font-size: 0.95em; letter-spacing: 2px; color: #1da0c3; }
@@ -1186,7 +1223,7 @@ ARTIST_PROFILE_TEMPLATE = """
         .topbar-link { color: #1da0c3; font-size: 0.78em; text-decoration: none; }
         .topbar-link:hover { color: #fff; }
         /* hero */
-        .profile-hero { display: flex; align-items: center; gap: 28px; padding: 36px 36px 24px; background: #fff; border-bottom: 1px solid #e8e8e8; }
+        .profile-hero { display: flex; align-items: center; gap: 28px; padding: 44px 36px 32px; background: #fff; border-bottom: 1px solid #e8e8e8; }
         .profile-img { width: 120px; height: 120px; object-fit: cover; border-radius: 4px; background: #eee; }
         .profile-img-placeholder { width: 120px; height: 120px; background: #1da0c3; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 2.5em; color: #fff; font-weight: 700; }
         .profile-meta { flex: 1; }
@@ -1200,12 +1237,24 @@ ARTIST_PROFILE_TEMPLATE = """
         .genre-tag { font-size: 0.68em; padding: 3px 10px; border: 1px solid #1db954; color: #1db954; border-radius: 2px; }
         .spotify-link { display: inline-block; margin-top: 12px; font-size: 0.72em; color: #1db954; text-decoration: none; border: 1px solid #1db954; padding: 4px 12px; border-radius: 2px; }
         .spotify-link:hover { background: #1db954; color: #fff; }
-        .profile-searches { font-size: 0.75em; color: #aaa; margin-top: 8px; }
+        .profile-searches { font-size: 0.75em; color: #888; margin-top: 8px; }
         .back-link { font-size: 0.78em; color: #1da0c3; text-decoration: none; border: 1px solid #1da0c3; padding: 5px 12px; border-radius: 2px; }
         .back-link:hover { background: #1da0c3; color: #fff; }
         /* layout */
-        .profile-body { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 28px 36px; max-width: 1100px; margin: 0 auto; }
-        .card { background: #fff; border: 1px solid #e8e8e8; padding: 22px 24px; }
+        .profile-body { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; padding: 32px 36px; max-width: 1100px; margin: 0 auto; }
+        .card {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            padding: 26px 28px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+        }
+        .card:hover {
+            box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+            transform: translateY(-2px);
+            border-color: #1da0c3;
+        }
         .card-title { font-size: 0.72em; color: #1da0c3; letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 16px; }
         .insight-text { font-size: 0.8em; line-height: 1.85; color: #333; }
         .insight-text p { margin-bottom: 12px; }
@@ -1218,7 +1267,7 @@ ARTIST_PROFILE_TEMPLATE = """
         .track-row:last-child { border-bottom: none; }
         .track-name { font-size: 0.8em; color: #222; cursor: pointer; }
         .track-name:hover { color: #1da0c3; }
-        .track-plays { font-size: 0.72em; color: #aaa; }
+        .track-plays { font-size: 0.72em; color: #888; }
         .play-btn { font-size: 0.75em; color: #1da0c3; cursor: pointer; border: 1px solid #1da0c3; padding: 2px 8px; border-radius: 2px; background: none; }
         .play-btn:hover { background: #1da0c3; color: #fff; }
         /* similar chips */
@@ -1226,10 +1275,10 @@ ARTIST_PROFILE_TEMPLATE = """
         .chip { font-size: 0.75em; padding: 5px 12px; border: 1px solid #ddd; color: #444; cursor: pointer; border-radius: 2px; text-decoration: none; }
         .chip:hover { border-color: #1da0c3; color: #1da0c3; }
         /* stats row */
-        .stat-row { display: flex; justify-content: space-around; padding: 20px 36px; background: #111; }
+        .stat-row { display: flex; justify-content: space-around; padding: 26px 36px; background: #111; }
         .stat-item { text-align: center; }
         .stat-label { font-size: 0.65em; color: #1da0c3; letter-spacing: 1px; text-transform: uppercase; }
-        .stat-val { font-size: 1.6em; font-weight: 700; color: #fff; }
+        .stat-val { font-size: 2.1em; font-weight: 700; letter-spacing: -0.5px; color: #fff; margin-top: 6px; }
         /* mini player */
         #mini-player { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #111; padding: 10px 20px; flex-direction: row; align-items: center; gap: 16px; z-index: 999; border-top: 2px solid #1da0c3; }
         #player-title { font-size: 0.8em; color: #fff; font-weight: 700; }
@@ -1239,17 +1288,23 @@ ARTIST_PROFILE_TEMPLATE = """
         .close-player:hover { color: #fff; }
         /* dark mode */
         body.dark { background: #0d0d0d; color: #e0e0e0; }
-        body.dark .profile-hero, body.dark .card { background: #111; border-color: #222; }
+        body.dark .profile-hero { background: #111; border-color: #222; }
+        body.dark .card { background: #161616; border-color: #262626; }
+        body.dark .card:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.45); border-color: #1da0c3; }
         body.dark .profile-name { color: #fff; }
+        body.dark .profile-searches { color: #999; }
         body.dark .insight-text { color: #ccc; }
         body.dark .track-row { border-color: #1a1a1a; }
         body.dark .track-name { color: #ddd; }
+        body.dark .track-plays { color: #999; }
         body.dark .chip { border-color: #333; color: #999; }
         body.dark .card-title { border-color: #222; }
         @media (max-width: 700px) {
-            .topbar { padding: 0 14px; }
-            .topbar-right { gap: 8px; }
-            .topbar-link { font-size: 0.62em; }
+            .topbar { padding: 0 10px; }
+            .topbar-brand { flex-shrink: 0; }
+            .topbar-right { gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-shrink: 1; min-width: 0; }
+            .topbar-right::-webkit-scrollbar { display: none; }
+            .topbar-link { font-size: 0.55em; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; }
             .profile-hero { flex-direction: column; padding: 20px 16px; gap: 16px; }
             .profile-img, .profile-img-placeholder { width: 90px; height: 90px; }
             .profile-name { font-size: 1.5em; }
@@ -1426,12 +1481,12 @@ def artist_profile(artist_name):
                 return render_template_string("""
 <!DOCTYPE html><html><head><meta charset="UTF-8">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<style>body{font-family:'Space Mono',monospace;background:#f5f5f3;padding:60px 36px;}
+<style>body{font-family:'Space Mono',monospace;background:#f5f5f3;padding:60px 36px;font-size:17px;}
 .topbar{background:#111;color:#fff;padding:0 24px;height:44px;display:flex;align-items:center;position:fixed;top:0;left:0;right:0;}
 .topbar-brand{font-weight:700;font-size:0.95em;letter-spacing:2px;color:#1da0c3;}
-.box{background:#fff;border:1px solid #e8e8e8;padding:28px 32px;max-width:500px;margin:60px auto;}
-h2{font-size:1em;color:#111;margin-bottom:12px;}
-p{font-size:0.8em;color:#666;line-height:1.7;}
+.box{background:#fff;border:1px solid #e8e8e8;border-radius:6px;padding:32px 36px;max-width:500px;margin:60px auto;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+h2{font-size:1.05em;color:#111;margin-bottom:12px;line-height:1.2;}
+p{font-size:0.8em;color:#555;line-height:1.7;}
 a{color:#1da0c3;font-size:0.8em;}
 </style></head><body>
 <div class="topbar"><span class="topbar-brand">WAVELINE</span></div>
@@ -1506,7 +1561,34 @@ a{color:#1da0c3;font-size:0.8em;}
             urlencode=quote
         )
     except Exception as e:
-        return f"<h2>Error: {e}</h2><a href='/'>Back</a>", 500
+        return render_template_string("""<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Error — Waveline</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;}body{font-family:'Space Mono',monospace;background:#f5f5f3;margin:0;padding-top:60px;}
+.topbar{background:#000;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:fixed;top:0;left:0;right:0;z-index:100;}
+.topbar-brand{font-weight:700;font-size:0.85em;letter-spacing:2px;color:#fff;text-decoration:none;}
+.topbar-right{display:flex;gap:20px;align-items:center;}
+.topbar-link{font-size:0.62em;letter-spacing:2px;text-transform:uppercase;color:#1da0c3;text-decoration:none;}
+.box{background:#fff;border:1px solid #e8e8e8;padding:32px;max-width:520px;margin:60px auto;}
+h2{font-size:1em;color:#111;margin:0 0 12px;}
+p{font-size:0.8em;color:#666;line-height:1.7;}
+a.back{color:#1da0c3;font-size:0.8em;text-decoration:none;}
+</style></head><body>
+<div class="topbar">
+  <a href="/" class="topbar-brand">WAVELINE</a>
+  <div class="topbar-right">
+    <a href="/news" class="topbar-link">News</a>
+    <a href="/compare" class="topbar-link">Compare</a>
+    <a href="/profile" class="topbar-link">Taste Profile</a>
+  </div>
+</div>
+<div class="box">
+<h2>Something went wrong</h2>
+<p>Could not load the artist profile. This might be a temporary database issue.</p>
+<a href="/" class="back">← Back to dashboard</a>
+</div></body></html>
+"""), 500
 
 # ──────────────────────────────────────────────
 #  TASTE PROFILE  /profile
@@ -1524,17 +1606,30 @@ TASTE_TEMPLATE = """
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Space Mono', monospace; background: #e2e2df; color: #111; }
+        body { font-family: 'Space Mono', monospace; background: #e2e2df; color: #111; font-size: 17px; line-height: 1.5; }
         .topbar { background: #111; color: #fff; padding: 0 24px; height: 44px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
         .topbar-brand { font-weight: 700; font-size: 0.95em; letter-spacing: 2px; color: #1da0c3; }
         .topbar-right { display: flex; align-items: center; gap: 16px; }
         .topbar-link { color: #1da0c3; font-size: 0.78em; text-decoration: none; }
         .topbar-link:hover { color: #fff; }
-        .hero { background: #fff; border-bottom: 1px solid #e8e8e8; padding: 32px 36px; }
-        .hero h1 { font-size: 1.4em; font-weight: 700; color: #111; }
-        .hero p { font-size: 0.8em; color: #888; margin-top: 6px; }
-        .body { max-width: 860px; margin: 0 auto; padding: 28px 36px; }
-        .card { background: #fff; border: 1px solid #e8e8e8; padding: 24px 28px; margin-bottom: 20px; }
+        .hero { background: #fff; border-bottom: 1px solid #e8e8e8; padding: 40px 36px; }
+        .hero h1 { font-size: 1.4em; font-weight: 700; line-height: 1.15; color: #111; }
+        .hero p { font-size: 0.8em; color: #6b6b6b; margin-top: 6px; }
+        .body { max-width: 860px; margin: 0 auto; padding: 32px 36px; }
+        .card {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+        }
+        .card:hover {
+            box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+            transform: translateY(-2px);
+            border-color: #1da0c3;
+        }
         .card-title { font-size: 0.7em; color: #1da0c3; letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 16px; }
         .taste-text { font-size: 0.82em; line-height: 1.9; color: #333; }
         .taste-text p { margin-bottom: 14px; }
@@ -1546,18 +1641,23 @@ TASTE_TEMPLATE = """
         .artist-chip { font-size: 0.75em; padding: 6px 14px; border: 1px solid #ddd; color: #444; border-radius: 2px; text-decoration: none; }
         .artist-chip:hover { border-color: #1da0c3; color: #1da0c3; }
         .loading { text-align: center; padding: 60px; font-size: 0.82em; color: #aaa; }
-        .refresh-btn { font-size: 0.75em; border: 1px solid #1da0c3; color: #1da0c3; background: none; padding: 6px 14px; cursor: pointer; border-radius: 2px; margin-top: 12px; }
+        .refresh-btn { font-size: 0.78em; font-weight: 700; border: 1px solid #1da0c3; color: #1da0c3; background: none; padding: 8px 18px; cursor: pointer; border-radius: 2px; margin-top: 12px; transition: background 0.15s, color 0.15s; }
         .refresh-btn:hover { background: #1da0c3; color: #fff; }
         body.dark { background: #0d0d0d; color: #e0e0e0; }
-        body.dark .hero, body.dark .card { background: #111; border-color: #222; }
+        body.dark .hero { background: #111; border-color: #222; }
+        body.dark .card { background: #161616; border-color: #262626; }
+        body.dark .card:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.45); border-color: #1da0c3; }
         body.dark .hero h1 { color: #fff; }
+        body.dark .hero p { color: #999; }
         body.dark .taste-text { color: #ccc; }
         body.dark .artist-chip { border-color: #333; color: #999; }
         body.dark .card-title { border-color: #222; }
         @media (max-width: 700px) {
-            .topbar { padding: 0 14px; }
-            .topbar-right { gap: 10px; }
-            .topbar-link { font-size: 0.65em; }
+            .topbar { padding: 0 10px; }
+            .topbar-brand { flex-shrink: 0; }
+            .topbar-right { gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-shrink: 1; min-width: 0; }
+            .topbar-right::-webkit-scrollbar { display: none; }
+            .topbar-link { font-size: 0.55em; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; }
             .hero { padding: 20px 16px; }
             .body { padding: 16px; }
             .artist-grid { gap: 8px; }
@@ -1626,7 +1726,34 @@ def taste_profile():
         rows = cur.fetchall()
         cur.close(); conn.close()
     except Exception as e:
-        return f"<h2>DB error: {e}</h2>", 500
+        return render_template_string("""<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Error — Waveline</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;}body{font-family:'Space Mono',monospace;background:#f5f5f3;margin:0;padding-top:60px;}
+.topbar{background:#000;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:fixed;top:0;left:0;right:0;z-index:100;}
+.topbar-brand{font-weight:700;font-size:0.85em;letter-spacing:2px;color:#fff;text-decoration:none;}
+.topbar-right{display:flex;gap:20px;align-items:center;}
+.topbar-link{font-size:0.62em;letter-spacing:2px;text-transform:uppercase;color:#1da0c3;text-decoration:none;}
+.box{background:#fff;border:1px solid #e8e8e8;padding:32px;max-width:520px;margin:60px auto;}
+h2{font-size:1em;color:#111;margin:0 0 12px;}
+p{font-size:0.8em;color:#666;line-height:1.7;}
+a.back{color:#1da0c3;font-size:0.8em;text-decoration:none;}
+</style></head><body>
+<div class="topbar">
+  <a href="/" class="topbar-brand">WAVELINE</a>
+  <div class="topbar-right">
+    <a href="/news" class="topbar-link">News</a>
+    <a href="/compare" class="topbar-link">Compare</a>
+    <a href="/profile" class="topbar-link">Taste Profile</a>
+  </div>
+</div>
+<div class="box">
+<h2>Something went wrong</h2>
+<p>Could not load your taste profile. This might be a temporary database issue — try refreshing.</p>
+<a href="/" class="back">← Back to dashboard</a>
+</div></body></html>
+"""), 500
 
     artists = [r[0] for r in rows]
     if not artists:
@@ -1677,29 +1804,41 @@ COMPARE_TEMPLATE = """
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Space Mono', monospace; background: #e2e2df; color: #111; }
+        body { font-family: 'Space Mono', monospace; background: #e2e2df; color: #111; font-size: 17px; line-height: 1.5; }
         .topbar { background: #111; color: #fff; padding: 0 24px; height: 44px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
         .topbar-brand { font-weight: 700; font-size: 0.95em; letter-spacing: 2px; color: #1da0c3; }
         .topbar-right { display: flex; align-items: center; gap: 16px; }
         .topbar-link { color: #1da0c3; font-size: 0.78em; text-decoration: none; }
         .topbar-link:hover { color: #fff; }
-        .hero { background: #fff; border-bottom: 1px solid #e8e8e8; padding: 28px 36px; }
-        .hero h1 { font-size: 1.3em; font-weight: 700; }
+        .hero { background: #fff; border-bottom: 1px solid #e8e8e8; padding: 36px 36px; }
+        .hero h1 { font-size: 1.3em; font-weight: 700; line-height: 1.15; }
         .compare-form { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
         .compare-form input { font-family: 'Space Mono', monospace; font-size: 0.82em; padding: 10px 16px; border: 1px solid #ddd; background: #fafafa; flex: 1; min-width: 180px; }
         .compare-form input:focus { outline: none; border-color: #1da0c3; }
-        .compare-form button { font-family: 'Space Mono', monospace; font-size: 0.82em; padding: 10px 22px; background: #111; color: #fff; border: none; cursor: pointer; }
-        .compare-form button:hover { background: #1da0c3; }
-        .body { max-width: 1060px; margin: 0 auto; padding: 28px 36px; }
-        .vs-row { display: grid; grid-template-columns: 1fr 52px 1fr; gap: 0; align-items: stretch; margin-bottom: 24px; }
+        .compare-form button { font-family: 'Space Mono', monospace; font-size: 0.88em; font-weight: 700; letter-spacing: 0.5px; padding: 12px 26px; background: #111; color: #fff; border: none; cursor: pointer; transition: background 0.15s, transform 0.15s; }
+        .compare-form button:hover { background: #1da0c3; transform: translateY(-1px); }
+        .body { max-width: 1060px; margin: 0 auto; padding: 32px 36px; }
+        .vs-row { display: grid; grid-template-columns: 1fr 52px 1fr; gap: 0; align-items: stretch; margin-bottom: 28px; }
         .vs-divider { display: flex; align-items: center; justify-content: center; font-size: 1.1em; font-weight: 700; color: #1da0c3; background: #e2e2df; border-top: 1px solid #e8e8e8; border-bottom: 1px solid #e8e8e8; }
-        .card { background: #fff; border: 1px solid #e8e8e8; overflow: hidden; }
+        .card {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+        }
+        .card:hover {
+            box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+            transform: translateY(-2px);
+            border-color: #1da0c3;
+        }
         .card-img { width: 100%; height: 160px; object-fit: cover; display: block; }
         .card-img-placeholder { width: 100%; height: 160px; background: linear-gradient(135deg, #1da0c3 0%, #0d7a9a 100%); display: flex; align-items: center; justify-content: center; font-size: 3em; color: #fff; font-weight: 700; }
-        .card-body { padding: 20px 24px; }
+        .card-body { padding: 24px 28px; }
         .card-label { font-size: 0.62em; color: #1da0c3; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
         .card-title { font-size: 0.7em; color: #1da0c3; letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 14px; }
-        .artist-heading { font-size: 1.25em; font-weight: 700; color: #111; margin-bottom: 12px; line-height: 1.2; }
+        .artist-heading { font-size: 1.25em; font-weight: 700; color: #111; margin-bottom: 12px; line-height: 1.15; }
         .insight-text { font-size: 0.8em; line-height: 1.85; color: #555; border-left: 2px solid #1da0c3; padding-left: 12px; margin-bottom: 16px; }
         .track-item { display: flex; align-items: center; justify-content: space-between; font-size: 0.78em; padding: 7px 0; border-bottom: 1px solid #f5f5f3; color: #444; }
         .track-item:last-child { border-bottom: none; }
@@ -1707,7 +1846,7 @@ COMPARE_TEMPLATE = """
         .track-play-btn:hover { background: #1da0c3; color: #fff; }
         .spotify-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font-size: 0.72em; color: #1db954; text-decoration: none; border: 1px solid #1db954; padding: 5px 12px; border-radius: 2px; }
         .spotify-btn:hover { background: #1db954; color: #fff; }
-        .verdict-card { background: #fff; border: 1px solid #e8e8e8; border-top: 3px solid #1da0c3; padding: 28px 32px; }
+        .verdict-card { background: #fff; border: 1px solid #e8e8e8; border-top: 3px solid #1da0c3; border-radius: 6px; padding: 32px 36px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .verdict-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
         .verdict-icon { font-size: 1.2em; }
         .verdict-title { font-size: 0.7em; color: #1da0c3; letter-spacing: 2px; text-transform: uppercase; }
@@ -1717,7 +1856,7 @@ COMPARE_TEMPLATE = """
         .verdict-text ul, .verdict-text ol { margin: 10px 0 14px 20px; }
         .verdict-text li { margin-bottom: 6px; }
         .verdict-text strong { font-weight: 700; }
-        .no-data { font-size: 0.8em; color: #aaa; }
+        .no-data { font-size: 0.8em; color: #888; }
         /* mini player */
         #mini-player { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #111; padding: 10px 20px; flex-direction: row; align-items: center; gap: 16px; z-index: 999; border-top: 2px solid #1da0c3; }
         #player-title { font-size: 0.8em; color: #fff; font-weight: 700; }
@@ -1726,18 +1865,23 @@ COMPARE_TEMPLATE = """
         .close-player { color: #555; font-size: 1.1em; cursor: pointer; padding: 4px 8px; }
         .close-player:hover { color: #fff; }
         body.dark { background: #0d0d0d; color: #e0e0e0; }
-        body.dark .hero, body.dark .card, body.dark .verdict-card { background: #111; border-color: #222; }
+        body.dark .hero { background: #111; border-color: #222; }
+        body.dark .card, body.dark .verdict-card { background: #161616; border-color: #262626; }
+        body.dark .card:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.45); border-color: #1da0c3; }
         body.dark .verdict-card { border-top-color: #1da0c3; }
         body.dark .vs-divider { background: #0d0d0d; border-color: #222; }
         body.dark .hero h1, body.dark .artist-heading { color: #fff; }
         body.dark .insight-text { color: #aaa; border-color: #1da0c3; }
         body.dark .verdict-text { color: #ccc; }
         body.dark .track-item { color: #999; border-color: #1a1a1a; }
+        body.dark .no-data { color: #999; }
         body.dark .compare-form input { background: #1a1a1a; border-color: #333; color: #e0e0e0; }
         @media (max-width: 700px) {
-            .topbar { padding: 0 14px; }
-            .topbar-right { gap: 8px; }
-            .topbar-link { font-size: 0.62em; }
+            .topbar { padding: 0 10px; }
+            .topbar-brand { flex-shrink: 0; }
+            .topbar-right { gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-shrink: 1; min-width: 0; }
+            .topbar-right::-webkit-scrollbar { display: none; }
+            .topbar-link { font-size: 0.55em; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; }
             .hero { padding: 20px 16px; }
             .compare-form { flex-direction: column; }
             .compare-form input, .compare-form button { width: 100%; }
@@ -2025,54 +2169,83 @@ NEWS_TEMPLATE = """
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Space Mono', monospace; background: #e2e2df; color: #111; }
+        body { font-family: 'Space Mono', monospace; background: #e2e2df; color: #111; font-size: 17px; line-height: 1.5; }
         .topbar { background: #111; color: #fff; padding: 0 24px; height: 44px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
         .topbar-brand { font-weight: 700; font-size: 0.95em; letter-spacing: 2px; color: #1da0c3; }
         .topbar-right { display: flex; align-items: center; gap: 16px; }
         .topbar-link { color: #1da0c3; font-size: 0.78em; text-decoration: none; }
         .topbar-link:hover { color: #fff; }
-        .hero { background: #fff; border-bottom: 1px solid #e8e8e8; padding: 28px 36px; display: flex; align-items: center; justify-content: space-between; }
-        .hero h1 { font-size: 1.3em; font-weight: 700; }
-        .hero p { font-size: 0.75em; color: #888; margin-top: 4px; }
-        .refresh-btn { font-size: 0.72em; border: 1px solid #ddd; color: #888; background: none; padding: 6px 14px; cursor: pointer; border-radius: 2px; }
+        .hero { background: #fff; border-bottom: 1px solid #e8e8e8; padding: 36px 36px; display: flex; align-items: center; justify-content: space-between; }
+        .hero h1 { font-size: 1.3em; font-weight: 700; line-height: 1.15; }
+        .hero p { font-size: 0.75em; color: #6b6b6b; margin-top: 4px; }
+        .refresh-btn { font-size: 0.76em; font-weight: 700; border: 1px solid #ddd; color: #888; background: none; padding: 8px 16px; cursor: pointer; border-radius: 2px; transition: border-color 0.15s, color 0.15s; }
         .refresh-btn:hover { border-color: #1da0c3; color: #1da0c3; }
         .layout { display: grid; grid-template-columns: 1fr 380px; gap: 0; min-height: calc(100vh - 100px); }
 
         /* ── NEWS ARTICLES ── */
-        .news-col { padding: 28px 32px; border-right: 1px solid #e8e8e8; }
+        .news-col { padding: 32px; border-right: 1px solid #e8e8e8; }
         .section-title { font-size: 0.68em; color: #1da0c3; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; }
-        .article { background: #fff; border: 1px solid #e8e8e8; padding: 16px 20px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; transition: border-color 0.15s; }
-        .article:hover { border-color: #1da0c3; }
+        .article {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            padding: 18px 22px;
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+        }
+        .article:hover { border-color: #1da0c3; box-shadow: 0 10px 24px rgba(0,0,0,0.10); transform: translateY(-2px); }
         .article-source { font-size: 0.62em; font-weight: 700; padding: 2px 8px; border-radius: 2px; color: #fff; display: inline-block; width: fit-content; }
         .article-title { font-size: 0.8em; color: #111; text-decoration: none; line-height: 1.5; }
         .article-title:hover { color: #1da0c3; }
-        .article-meta { font-size: 0.65em; color: #aaa; }
-        .no-articles { font-size: 0.8em; color: #aaa; padding: 20px 0; }
+        .article-meta { font-size: 0.65em; color: #888; }
+        .no-articles { font-size: 0.8em; color: #888; padding: 20px 0; }
 
         /* ── NEW RELEASES ── */
-        .releases-col { padding: 28px 24px; background: #fafaf8; }
+        .releases-col { padding: 32px 24px; background: #fafaf8; }
         .releases-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .release-card { background: #fff; border: 1px solid #e8e8e8; overflow: hidden; transition: border-color 0.15s; text-decoration: none; display: block; }
-        .release-card:hover { border-color: #1db954; }
+        .release-card {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            overflow: hidden;
+            text-decoration: none;
+            display: block;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+        }
+        .release-card:hover { border-color: #1db954; box-shadow: 0 10px 24px rgba(0,0,0,0.10); transform: translateY(-2px); }
         .release-card img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
         .release-card .no-img { width: 100%; aspect-ratio: 1; background: #1da0c3; display: flex; align-items: center; justify-content: center; font-size: 1.5em; color: #fff; }
         .release-info { padding: 8px 10px; }
         .release-name { font-size: 0.7em; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .release-artist { font-size: 0.65em; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+        .release-artist { font-size: 0.65em; color: #777; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
         .release-type { font-size: 0.6em; color: #1db954; margin-top: 2px; }
 
         /* ── DARK ── */
         body.dark { background: #0d0d0d; color: #e0e0e0; }
-        body.dark .hero, body.dark .article, body.dark .release-card { background: #111; border-color: #222; }
+        body.dark .hero { background: #111; border-color: #222; }
+        body.dark .article, body.dark .release-card { background: #161616; border-color: #262626; }
+        body.dark .article:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.45); border-color: #1da0c3; }
+        body.dark .release-card:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.45); border-color: #1db954; }
         body.dark .hero h1 { color: #fff; }
+        body.dark .hero p { color: #999; }
         body.dark .news-col { border-color: #222; }
         body.dark .releases-col { background: #0a0a0a; }
         body.dark .article-title { color: #e0e0e0; }
+        body.dark .article-meta { color: #999; }
+        body.dark .no-articles { color: #999; }
         body.dark .release-name { color: #e0e0e0; }
+        body.dark .release-artist { color: #999; }
         @media (max-width: 700px) {
-            .topbar { padding: 0 14px; }
-            .topbar-right { gap: 8px; }
-            .topbar-link { font-size: 0.62em; }
+            .topbar { padding: 0 10px; }
+            .topbar-brand { flex-shrink: 0; }
+            .topbar-right { gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-shrink: 1; min-width: 0; }
+            .topbar-right::-webkit-scrollbar { display: none; }
+            .topbar-link { font-size: 0.55em; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; }
             .hero { padding: 20px 16px; flex-direction: column; gap: 10px; align-items: flex-start; }
             .layout { grid-template-columns: 1fr; }
             .news-col { border-right: none; padding: 16px; }
@@ -2139,7 +2312,7 @@ NEWS_TEMPLATE = """
             {% endfor %}
         </div>
         {% else %}
-        <p style="font-size:0.8em;color:#aaa;">Could not load new releases — Spotify may be unavailable.</p>
+        <p style="font-size:0.8em;color:#888;">Could not load new releases — Spotify may be unavailable.</p>
         {% endif %}
     </div>
 </div>
