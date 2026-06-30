@@ -30,8 +30,17 @@ def markdown_preview(text, length=200):
     plain = html.unescape(" ".join(plain.split()))
     return plain[:length]
 
+def artist_titlecase(name):
+    """Capitalise the first letter of each word in an artist name for display,
+    without forcing the rest of each word to lowercase (preserves stylised
+    capitalisation like 'BlakeNor' or 'MGMT')."""
+    if not name:
+        return name
+    return " ".join(w[:1].upper() + w[1:] for w in name.split(" "))
+
 app.jinja_env.filters["markdown"] = render_markdown
 app.jinja_env.filters["markdown_preview"] = markdown_preview
+app.jinja_env.filters["titlecase"] = artist_titlecase
 
 LASTFM_API_KEY = os.getenv("LASTFM_API_KEY")
 LASTFM_BASE = "http://ws.audioscrobbler.com/2.0/"
@@ -837,7 +846,7 @@ HTML_TEMPLATE = """
             <div class="panel-title">Average Plays by Artist</div>
             {% for artist, avg, max_avg in artist_plays %}
             <div class="bar-row">
-                <span class="bar-name">{{ artist }}</span>
+                <span class="bar-name">{{ artist | titlecase }}</span>
                 <div class="bar-track">
                     <div class="bar-fill" style="width: {{ [((avg / max_avg) * 100)|int, 1]|max }}%"></div>
                 </div>
@@ -852,7 +861,7 @@ HTML_TEMPLATE = """
             {% for row in latest_insights %}
             <div class="insight-card">
                 <div class="insight-meta">
-                    <a href="/artist/{{ row.artist | urlencode }}" class="insight-artist" style="text-decoration:none;color:inherit;">{{ row.artist }}</a>
+                    <a href="/artist/{{ row.artist | urlencode }}" class="insight-artist" style="text-decoration:none;color:inherit;">{{ row.artist | titlecase }}</a>
                     <span class="insight-time">{{ row.searched_at.strftime('%d %b %Y  %H:%M') }}</span>
                 </div>
                 <div class="track-tags">
@@ -871,7 +880,7 @@ HTML_TEMPLATE = """
                     {% for s in row.similar_artists %}
                     <form method="POST" action="/search" style="display:inline;margin:0">
                         <input type="hidden" name="artist" value="{{ s }}">
-                        <button type="submit" class="similar-chip">{{ s }}</button>
+                        <button type="submit" class="similar-chip">{{ s | titlecase }}</button>
                     </form>
                     {% endfor %}
                 </div>
@@ -890,11 +899,11 @@ HTML_TEMPLATE = """
             {% for d in discovery %}
             <div class="discovery-card">
                 {% if d.image %}
-                <img src="{{ d.image }}" alt="{{ d.name }}" class="discovery-img">
+                <img src="{{ d.image }}" alt="{{ d.name | titlecase }}" class="discovery-img">
                 {% else %}
                 <div class="discovery-img"></div>
                 {% endif %}
-                <div class="discovery-name">{{ d.name }}</div>
+                <div class="discovery-name">{{ d.name | titlecase }}</div>
                 {% if d.nb_fan %}
                 <div class="discovery-fans">{{ "{:,}".format(d.nb_fan) }} fans</div>
                 {% endif %}
@@ -1155,9 +1164,9 @@ def search():
         return redirect(url_for("dashboard", message="Please enter an artist name.", error=True))
     try:
         run_pipeline(artist)
-        return redirect(url_for("dashboard", message=f"✅ {artist} analysed and saved successfully!"))
+        return redirect(url_for("dashboard", message=f"✅ {artist_titlecase(artist)} analysed and saved successfully!"))
     except Exception as e:
-        return redirect(url_for("dashboard", message=f"❌ Could not analyse {artist}: {str(e)}", error=True))
+        return redirect(url_for("dashboard", message=f"❌ Could not analyse {artist_titlecase(artist)}: {str(e)}", error=True))
 
 ARTIST_PROFILE_TEMPLATE = """
 <!DOCTYPE html>
@@ -1165,7 +1174,7 @@ ARTIST_PROFILE_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ artist_name }} — Waveline</title>
+    <title>{{ artist_name | titlecase }} — Waveline</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1266,14 +1275,14 @@ ARTIST_PROFILE_TEMPLATE = """
 
 <div class="profile-hero">
     {% if spotify.get('image') %}
-    <img src="{{ spotify.image }}" class="profile-img" alt="{{ artist_name }}">
+    <img src="{{ spotify.image }}" class="profile-img" alt="{{ artist_name | titlecase }}">
     {% elif deezer_image %}
-    <img src="{{ deezer_image }}" class="profile-img" alt="{{ artist_name }}">
+    <img src="{{ deezer_image }}" class="profile-img" alt="{{ artist_name | titlecase }}">
     {% else %}
     <div class="profile-img-placeholder">{{ artist_name[0] | upper }}</div>
     {% endif %}
     <div class="profile-meta">
-        <div class="profile-name">{{ artist_name }}</div>
+        <div class="profile-name">{{ artist_name | titlecase }}</div>
         <div class="profile-sources">
             {% if lastfm_listeners %}<span class="src-badge lastfm">Last.fm · {{ "{:,}".format(lastfm_listeners) }} listeners</span>{% endif %}
             {% if deezer_fans %}<span class="src-badge deezer">Deezer · {{ "{:,}".format(deezer_fans) }} fans</span>{% endif %}
@@ -1336,7 +1345,7 @@ ARTIST_PROFILE_TEMPLATE = """
         <div class="card-title">Similar Artists</div>
         <div class="chip-wrap">
             {% for name in similar_artists %}
-            <a href="/artist/{{ name | urlencode }}" class="chip">{{ name }}</a>
+            <a href="/artist/{{ name | urlencode }}" class="chip">{{ name | titlecase }}</a>
             {% endfor %}
         </div>
     </div>
@@ -1427,7 +1436,7 @@ a{color:#1da0c3;font-size:0.8em;}
 </style></head><body>
 <div class="topbar"><span class="topbar-brand">WAVELINE</span></div>
 <div class="box">
-<h2>Could not load {{ name }}</h2>
+<h2>Could not load {{ name | titlecase }}</h2>
 <p>{{ error }}</p>
 <a href="/">← Back to dashboard</a>
 </div></body></html>
@@ -1580,7 +1589,7 @@ TASTE_TEMPLATE = """
         <div class="card-title">Artists in Your Pipeline</div>
         <div class="artist-grid">
             {% for name in artists %}
-            <a href="/artist/{{ name | urlencode }}" class="artist-chip">{{ name }}</a>
+            <a href="/artist/{{ name | urlencode }}" class="artist-chip">{{ name | titlecase }}</a>
             {% endfor %}
         </div>
     </div>
@@ -1763,11 +1772,11 @@ COMPARE_TEMPLATE = """
 <div class="vs-row">
     <!-- Artist A -->
     <div class="card">
-        {% if a_data.image %}<img src="{{ a_data.image }}" class="card-img" alt="{{ a_data.name }}">
+        {% if a_data.image %}<img src="{{ a_data.image }}" class="card-img" alt="{{ a_data.name | titlecase }}">
         {% else %}<div class="card-img-placeholder">{{ a_data.name[0] | upper }}</div>{% endif %}
         <div class="card-body">
             <div class="card-label">Artist A</div>
-            <div class="artist-heading">{{ a_data.name }}</div>
+            <div class="artist-heading">{{ a_data.name | titlecase }}</div>
             <div class="insight-text">{{ a_data.insight | markdown_preview(280) }}…</div>
             {% for t in a_data.tracks %}
             <div class="track-item">
@@ -1789,11 +1798,11 @@ COMPARE_TEMPLATE = """
 
     <!-- Artist B -->
     <div class="card">
-        {% if b_data.image %}<img src="{{ b_data.image }}" class="card-img" alt="{{ b_data.name }}">
+        {% if b_data.image %}<img src="{{ b_data.image }}" class="card-img" alt="{{ b_data.name | titlecase }}">
         {% else %}<div class="card-img-placeholder">{{ b_data.name[0] | upper }}</div>{% endif %}
         <div class="card-body">
             <div class="card-label">Artist B</div>
-            <div class="artist-heading">{{ b_data.name }}</div>
+            <div class="artist-heading">{{ b_data.name | titlecase }}</div>
             <div class="insight-text">{{ b_data.insight | markdown_preview(280) }}…</div>
             {% for t in b_data.tracks %}
             <div class="track-item">
@@ -2123,7 +2132,7 @@ NEWS_TEMPLATE = """
                 {% endif %}
                 <div class="release-info">
                     <div class="release-name">{{ r.name }}</div>
-                    <div class="release-artist">{{ r.artist }}</div>
+                    <div class="release-artist">{{ r.artist | titlecase }}</div>
                     <div class="release-type">{{ r.type }} · {{ r.date }}</div>
                 </div>
             </a>
