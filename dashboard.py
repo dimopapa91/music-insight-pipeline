@@ -2,13 +2,36 @@ from flask import Flask, render_template_string, request, redirect, url_for
 import psycopg2
 import os
 import json
+import re
+import html
 import requests as http_requests
+import markdown as markdown_lib
+from markupsafe import Markup
 from dotenv import load_dotenv
 from pipeline import run_pipeline
 
 load_dotenv()
 
 app = Flask(__name__)
+
+def render_markdown(text):
+    """Render AI-generated Markdown text into safe HTML."""
+    if not text:
+        return Markup("")
+    escaped = html.escape(text)
+    return Markup(markdown_lib.markdown(escaped, extensions=["nl2br"]))
+
+def markdown_preview(text, length=200):
+    """Plain-text teaser derived from rendered Markdown, for truncated previews."""
+    if not text:
+        return ""
+    rendered = markdown_lib.markdown(text)
+    plain = re.sub(r"<[^>]+>", "", rendered)
+    plain = html.unescape(" ".join(plain.split()))
+    return plain[:length]
+
+app.jinja_env.filters["markdown"] = render_markdown
+app.jinja_env.filters["markdown_preview"] = markdown_preview
 
 LASTFM_API_KEY = os.getenv("LASTFM_API_KEY")
 LASTFM_BASE = "http://ws.audioscrobbler.com/2.0/"
@@ -511,6 +534,11 @@ HTML_TEMPLATE = """
         }
         .insight-preview { display: block; }
         .insight-full    { display: none; }
+        .insight-full p { margin-bottom: 10px; }
+        .insight-full p:last-child { margin-bottom: 0; }
+        .insight-full ul, .insight-full ol { margin: 8px 0 10px 20px; }
+        .insight-full li { margin-bottom: 4px; }
+        .insight-full strong { font-weight: 700; }
         .insight-toggle {
             margin-top: 8px;
             display: inline-block;
@@ -822,7 +850,6 @@ HTML_TEMPLATE = """
         <div class="panel">
             <div class="panel-title">Latest Insights</div>
             {% for row in latest_insights %}
-            {% set clean = row.insight | replace('##', '') | replace('**', '') | replace('# ', '') %}
             <div class="insight-card">
                 <div class="insight-meta">
                     <a href="/artist/{{ row.artist | urlencode }}" class="insight-artist" style="text-decoration:none;color:inherit;">{{ row.artist }}</a>
@@ -834,8 +861,8 @@ HTML_TEMPLATE = """
                     {% endfor %}
                 </div>
                 <div class="insight-body" id="body-{{ loop.index }}">
-                    <span class="insight-preview">{{ clean[:200] }}...</span>
-                    <span class="insight-full">{{ clean }}</span>
+                    <span class="insight-preview">{{ row.insight | markdown_preview(200) }}...</span>
+                    <div class="insight-full">{{ row.insight | markdown }}</div>
                 </div>
                 <button class="insight-toggle" onclick="toggleInsight({{ loop.index }}, this)">Read more</button>
                 {% if row.similar_artists %}
@@ -1172,6 +1199,11 @@ ARTIST_PROFILE_TEMPLATE = """
         .card { background: #fff; border: 1px solid #e8e8e8; padding: 22px 24px; }
         .card-title { font-size: 0.72em; color: #1da0c3; letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 16px; }
         .insight-text { font-size: 0.8em; line-height: 1.85; color: #333; }
+        .insight-text p { margin-bottom: 12px; }
+        .insight-text p:last-child { margin-bottom: 0; }
+        .insight-text ul, .insight-text ol { margin: 8px 0 12px 20px; }
+        .insight-text li { margin-bottom: 5px; }
+        .insight-text strong { font-weight: 700; }
         /* tracks */
         .track-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #f5f5f3; }
         .track-row:last-child { border-bottom: none; }
@@ -1285,7 +1317,7 @@ ARTIST_PROFILE_TEMPLATE = """
     <!-- Claude Insight -->
     <div class="card" style="grid-column: 1 / -1;">
         <div class="card-title">Artist Insight</div>
-        <div class="insight-text">{{ insight }}</div>
+        <div class="insight-text">{{ insight | markdown }}</div>
     </div>
 
     <!-- Top Tracks -->
@@ -1496,6 +1528,11 @@ TASTE_TEMPLATE = """
         .card { background: #fff; border: 1px solid #e8e8e8; padding: 24px 28px; margin-bottom: 20px; }
         .card-title { font-size: 0.7em; color: #1da0c3; letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 16px; }
         .taste-text { font-size: 0.82em; line-height: 1.9; color: #333; }
+        .taste-text p { margin-bottom: 14px; }
+        .taste-text p:last-child { margin-bottom: 0; }
+        .taste-text ul, .taste-text ol { margin: 10px 0 14px 20px; }
+        .taste-text li { margin-bottom: 6px; }
+        .taste-text strong { font-weight: 700; }
         .artist-grid { display: flex; flex-wrap: wrap; gap: 10px; }
         .artist-chip { font-size: 0.75em; padding: 6px 14px; border: 1px solid #ddd; color: #444; border-radius: 2px; text-decoration: none; }
         .artist-chip:hover { border-color: #1da0c3; color: #1da0c3; }
@@ -1534,7 +1571,7 @@ TASTE_TEMPLATE = """
 <div class="body">
     <div class="card">
         <div class="card-title">Your Taste Profile</div>
-        <div class="taste-text">{{ taste_analysis }}</div>
+        <div class="taste-text">{{ taste_analysis | markdown }}</div>
         <form method="POST" action="/profile/refresh" style="margin-top:16px;">
             <button type="submit" class="refresh-btn">↻ Refresh analysis</button>
         </form>
@@ -1666,6 +1703,11 @@ COMPARE_TEMPLATE = """
         .verdict-icon { font-size: 1.2em; }
         .verdict-title { font-size: 0.7em; color: #1da0c3; letter-spacing: 2px; text-transform: uppercase; }
         .verdict-text { font-size: 0.84em; line-height: 2; color: #333; }
+        .verdict-text p { margin-bottom: 14px; }
+        .verdict-text p:last-child { margin-bottom: 0; }
+        .verdict-text ul, .verdict-text ol { margin: 10px 0 14px 20px; }
+        .verdict-text li { margin-bottom: 6px; }
+        .verdict-text strong { font-weight: 700; }
         .no-data { font-size: 0.8em; color: #aaa; }
         /* mini player */
         #mini-player { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #111; padding: 10px 20px; flex-direction: row; align-items: center; gap: 16px; z-index: 999; border-top: 2px solid #1da0c3; }
@@ -1726,7 +1768,7 @@ COMPARE_TEMPLATE = """
         <div class="card-body">
             <div class="card-label">Artist A</div>
             <div class="artist-heading">{{ a_data.name }}</div>
-            <div class="insight-text">{{ a_data.insight[:280] }}…</div>
+            <div class="insight-text">{{ a_data.insight | markdown_preview(280) }}…</div>
             {% for t in a_data.tracks %}
             <div class="track-item">
                 <span>{{ t }}</span>
@@ -1752,7 +1794,7 @@ COMPARE_TEMPLATE = """
         <div class="card-body">
             <div class="card-label">Artist B</div>
             <div class="artist-heading">{{ b_data.name }}</div>
-            <div class="insight-text">{{ b_data.insight[:280] }}…</div>
+            <div class="insight-text">{{ b_data.insight | markdown_preview(280) }}…</div>
             {% for t in b_data.tracks %}
             <div class="track-item">
                 <span>{{ t }}</span>
@@ -1774,7 +1816,7 @@ COMPARE_TEMPLATE = """
         <span class="verdict-icon">◈</span>
         <span class="verdict-title">Sound Analysis</span>
     </div>
-    <div class="verdict-text">{{ verdict }}</div>
+    <div class="verdict-text">{{ verdict | markdown }}</div>
 </div>
 {% elif a or b %}
 <div class="card"><p class="no-data">Fetching artist data — if this persists, try again in a moment.</p></div>
