@@ -4,6 +4,7 @@ import os
 import json
 import re
 import html
+import logging
 import requests as http_requests
 import markdown as markdown_lib
 from markupsafe import Markup
@@ -1394,7 +1395,7 @@ ARTIST_PROFILE_TEMPLATE = """
     </div>
     <div class="stat-item">
         <div class="stat-label">Spotify Popularity</div>
-        <div class="stat-val">{{ spotify.popularity if spotify.get('popularity') else "—" }}<span style="font-size:0.5em;color:#888;">/100</span></div>
+        <div class="stat-val">{% if spotify.get('popularity') is not none and spotify %}{{ spotify.popularity }}{% else %}—{% endif %}<span style="font-size:0.5em;color:#888;">/100</span></div>
     </div>
 </div>
 
@@ -1545,6 +1546,8 @@ a{color:#1da0c3;font-size:0.8em;}
 
         # Spotify: genres, popularity, followers
         spotify = get_spotify_artist(name)
+        if not spotify:
+            logging.warning(f"get_spotify_artist() returned empty data for '{name}'")
 
         # Last.fm: listeners + total scrobbles
         lastfm_listeners = 0
