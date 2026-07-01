@@ -1254,9 +1254,8 @@ ARTIST_PROFILE_TEMPLATE = """
         .src-badge { font-size: 0.7em; padding: 3px 10px; border-radius: 2px; font-weight: 700; }
         .src-badge.lastfm { background: #d51007; color: #fff; }
         .src-badge.deezer { background: #a238ff; color: #fff; }
-        .src-badge.spotify { background: #1db954; color: #fff; }
         .genre-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-        .genre-tag { font-size: 0.68em; padding: 3px 10px; border: 1px solid #1db954; color: #1db954; border-radius: 2px; }
+        .genre-tag { font-size: 0.68em; padding: 3px 10px; border: 1px solid #d51007; color: #d51007; border-radius: 2px; }
         .spotify-link { display: inline-block; margin-top: 12px; font-size: 0.72em; color: #1db954; text-decoration: none; border: 1px solid #1db954; padding: 4px 12px; border-radius: 2px; }
         .spotify-link:hover { background: #1db954; color: #fff; }
         .profile-searches { font-size: 0.75em; color: #888; margin-top: 8px; }
@@ -1363,11 +1362,10 @@ ARTIST_PROFILE_TEMPLATE = """
         <div class="profile-sources">
             {% if lastfm_listeners %}<span class="src-badge lastfm">Last.fm · {{ "{:,}".format(lastfm_listeners) }} listeners</span>{% endif %}
             {% if deezer_fans %}<span class="src-badge deezer">Deezer · {{ "{:,}".format(deezer_fans) }} fans</span>{% endif %}
-            {% if spotify.get('followers') %}<span class="src-badge spotify">Spotify · {{ "{:,}".format(spotify.followers) }} followers</span>{% endif %}
         </div>
-        {% if spotify.get('genres') %}
+        {% if lastfm_tags %}
         <div class="genre-wrap">
-            {% for g in spotify.genres %}<span class="genre-tag">{{ g }}</span>{% endfor %}
+            {% for g in lastfm_tags %}<span class="genre-tag">{{ g }}</span>{% endfor %}
         </div>
         {% endif %}
         <div class="profile-searches">Searched {{ search_count }} time{{ 's' if search_count != 1 else '' }} in your pipeline · Last: {{ last_searched }}</div>
@@ -1392,10 +1390,6 @@ ARTIST_PROFILE_TEMPLATE = """
     <div class="stat-item">
         <div class="stat-label">Top Track Plays</div>
         <div class="stat-val">{{ top_playcount }}</div>
-    </div>
-    <div class="stat-item">
-        <div class="stat-label">Spotify Popularity</div>
-        <div class="stat-val">{% if spotify.get('popularity') is not none and spotify %}{{ spotify.popularity }}{% else %}—{% endif %}<span style="font-size:0.5em;color:#888;">/100</span></div>
     </div>
 </div>
 
@@ -1549,9 +1543,10 @@ a{color:#1da0c3;font-size:0.8em;}
         if not spotify:
             logging.warning(f"get_spotify_artist() returned empty data for '{name}'")
 
-        # Last.fm: listeners + total scrobbles
+        # Last.fm: listeners + total scrobbles + top tags
         lastfm_listeners = 0
         lastfm_scrobbles = 0
+        lastfm_tags = []
         try:
             resp = http_requests.get(LASTFM_BASE, params={
                 "method": "artist.getInfo",
@@ -1563,6 +1558,7 @@ a{color:#1da0c3;font-size:0.8em;}
             stats = info.get("artist", {}).get("stats", {})
             lastfm_listeners = int(stats.get("listeners", 0))
             lastfm_scrobbles = int(stats.get("playcount", 0))
+            lastfm_tags = [t["name"] for t in info.get("artist", {}).get("tags", {}).get("tag", [])[:4]]
         except Exception:
             pass
 
@@ -1581,6 +1577,7 @@ a{color:#1da0c3;font-size:0.8em;}
             deezer_fans=deezer_fans,
             lastfm_listeners=lastfm_listeners,
             lastfm_scrobbles=lastfm_scrobbles,
+            lastfm_tags=lastfm_tags,
             spotify=spotify,
             urlencode=quote
         )
