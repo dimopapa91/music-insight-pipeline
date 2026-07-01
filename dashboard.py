@@ -68,6 +68,27 @@ def get_spotify_token():
         pass
     return None
 
+@app.route("/debug/spotify")
+def debug_spotify():
+    from flask import jsonify
+    import base64
+    try:
+        creds = base64.b64encode(f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}".encode()).decode()
+        resp = http_requests.post("https://accounts.spotify.com/api/token",
+            headers={"Authorization": f"Basic {creds}"},
+            data={"grant_type": "client_credentials"}, timeout=5)
+        data = resp.json()
+        if resp.status_code == 200 and "access_token" in data:
+            return jsonify({"success": True})
+        return jsonify({
+            "success": False,
+            "status_code": resp.status_code,
+            "error": data.get("error"),
+            "error_description": data.get("error_description")
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
 def get_spotify_artist(artist_name):
     """Returns dict with genres, popularity, followers — or empty dict on failure."""
     token = get_spotify_token()
