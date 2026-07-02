@@ -1198,6 +1198,27 @@ def api_artists():
         from flask import jsonify
         return jsonify([])
 
+@app.route("/api/stats")
+def api_stats():
+    """Public stats for the portfolio site (dimospapageorgiou.com)."""
+    from flask import jsonify
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*), COUNT(DISTINCT artist_name), MAX(searched_at) FROM searches")
+        total, unique, last = cur.fetchone()
+        cur.close()
+        conn.close()
+        resp = jsonify({
+            "total_searches": total,
+            "unique_artists": unique,
+            "last_run": last.strftime("%d %b %Y") if last else None,
+        })
+    except Exception:
+        resp = jsonify({})
+    resp.headers["Access-Control-Allow-Origin"] = "https://dimospapageorgiou.com"
+    return resp
+
 @app.route("/preview")
 def preview():
     artist = request.args.get("artist", "")
