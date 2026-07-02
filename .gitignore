@@ -4,3 +4,7 @@ __pycache__/
 *.pyc
 *.log
 .cache
+
+# Personal files
+*.docx
+.DS_Store
