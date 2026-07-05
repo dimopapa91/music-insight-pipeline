@@ -2,7 +2,11 @@ import logging
 from apscheduler.schedulers.blocking import BlockingScheduler
 from pipeline import run_pipeline
 from email_digest import send_digest
+from models import init_db
 import random
+
+# Ensure the schema (including searches.user_id) exists before any pipeline run.
+init_db()
 
 # Set up logging so we can see what's happening
 logging.basicConfig(

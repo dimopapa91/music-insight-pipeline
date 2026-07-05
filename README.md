@@ -4,6 +4,7 @@ A full-stack music data engineering project built with Python, Flask, and Postgr
 
 ## Features
 
+- **User accounts & profiles** — sign up / log in (Flask-Login, hashed passwords); every user gets a public profile at `/u/<username>` built from the artists they've searched, plus an editable bio
 - **Artist search** — fetches top tracks from Last.fm, generates written insights via the Anthropic Claude API, stores results in PostgreSQL
 - **Artist profiles** — dedicated pages per artist with Spotify photo, Last.fm listener counts, Deezer fan count, Spotify popularity, genre tags, top track previews, and similar artists
 - **Inline track previews** — 30-second Deezer audio previews via a floating mini player
@@ -37,6 +38,9 @@ A full-stack music data engineering project built with Python, Flask, and Postgr
 waveline/
 ├── dashboard.py      # Flask app — routes and templates
 ├── db.py             # Shared PostgreSQL connection + db_cursor context manager
+├── models.py         # User model + schema init (users, posts, follows, likes)
+├── auth.py           # Blueprint — register / login / logout (Flask-Login)
+├── profiles.py       # Blueprint — public profiles (/u/<username>) + settings
 ├── pipeline.py       # ETL: Last.fm fetch → Claude analysis → PostgreSQL
 ├── scheduler.py      # APScheduler daily jobs + weekly email digest
 ├── email_digest.py   # Weekly HTML email builder and sender
@@ -133,6 +137,9 @@ python3 email_digest.py
 | Route | Description |
 |-------|-------------|
 | `/` | Main dashboard — search, stats, recent insights |
+| `/register`, `/login`, `/logout` | Account sign-up and session auth |
+| `/u/<username>` | Public user profile (searched artists + bio) |
+| `/settings` | Edit your own profile (login required) |
 | `/artist/<name>` | Full artist profile with multi-source data |
 | `/compare?a=X&b=Y` | Side-by-side artist comparison |
 | `/profile` | Your personal taste profile |

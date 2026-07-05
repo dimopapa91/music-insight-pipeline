@@ -88,15 +88,15 @@ Write in plain prose only. No markdown, no headers, no bullet points, no bold or
         logging.error(f"Unexpected error during Claude analysis: {e}")
         raise
 
-def save_to_db(artist_name, tracks, insight):
-    """Save search results to PostgreSQL"""
+def save_to_db(artist_name, tracks, insight, user_id=None):
+    """Save search results to PostgreSQL, optionally attributed to a user."""
     conn = None
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO searches (artist_name, top_tracks, claude_insight) VALUES (%s, %s, %s)",
-            (artist_name, json.dumps(tracks), insight)
+            "INSERT INTO searches (artist_name, top_tracks, claude_insight, user_id) VALUES (%s, %s, %s, %s)",
+            (artist_name, json.dumps(tracks), insight, user_id)
         )
         conn.commit()
         cur.close()
@@ -110,13 +110,13 @@ def save_to_db(artist_name, tracks, insight):
         if conn:
             conn.close()
 
-def run_pipeline(artist_name):
-    """Run the full pipeline for a given artist"""
+def run_pipeline(artist_name, user_id=None):
+    """Run the full pipeline for a given artist, optionally attributed to a user."""
     logging.info(f"Pipeline started for: {artist_name}")
     try:
         tracks = get_top_tracks(artist_name)
         insight = analyse_with_claude(artist_name, tracks)
-        save_to_db(artist_name, tracks, insight)
+        save_to_db(artist_name, tracks, insight, user_id=user_id)
         logging.info(f"Pipeline completed successfully for: {artist_name}")
         return insight
     except Exception as e:

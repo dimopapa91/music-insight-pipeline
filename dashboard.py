@@ -8,12 +8,41 @@ import requests as http_requests
 import markdown as markdown_lib
 from markupsafe import Markup
 from dotenv import load_dotenv
+from flask_login import LoginManager, current_user
 from pipeline import run_pipeline
 from db import get_db_connection, db_cursor
+from models import User, init_db
+from auth import auth_bp
+from profiles import profiles_bp
 
 load_dotenv()
 
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "dev-insecure-secret-change-me")
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    # Only require HTTPS-only cookies in production (Railway sets RAILWAY_ENVIRONMENT)
+    SESSION_COOKIE_SECURE=os.getenv("RAILWAY_ENVIRONMENT") is not None,
+)
+
+login_manager = LoginManager(app)
+login_manager.login_view = "auth.login"
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    try:
+        return User.get(int(user_id))
+    except Exception:
+        return None
+
+
+app.register_blueprint(auth_bp)
+app.register_blueprint(profiles_bp)
+
+# Ensure all application tables exist (idempotent — safe on every boot/worker).
+init_db()
 
 def render_markdown(text):
     """Render AI-generated Markdown text into safe HTML."""
@@ -844,6 +873,13 @@ HTML_TEMPLATE = """
             <a href="/news" class="topbar-link" style="text-decoration:none">News</a>
             <a href="/compare" class="topbar-link" style="text-decoration:none">Compare</a>
             <a href="/profile" class="topbar-link" style="text-decoration:none">Taste Profile</a>
+            {% if current_user.is_authenticated %}
+            <a href="/me" class="topbar-link" style="text-decoration:none">@{{ current_user.username }}</a>
+            <a href="/logout" class="topbar-link" style="text-decoration:none">Log out</a>
+            {% else %}
+            <a href="/login" class="topbar-link" style="text-decoration:none">Log in</a>
+            <a href="/register" class="topbar-link" style="text-decoration:none">Sign up</a>
+            {% endif %}
             <span class="live-pill"><span class="dot"></span>Live</span>
             <button id="dark-btn" onclick="toggleDark()" style="background:none;border:1px solid #333;color:#888;font-size:0.85em;padding:3px 8px;cursor:pointer;border-radius:3px;">◑</button>
         </div>
@@ -1225,7 +1261,8 @@ def search():
     if not artist:
         return redirect(url_for("dashboard", message="Please enter an artist name.", error=True))
     try:
-        run_pipeline(artist)
+        uid = current_user.id if current_user.is_authenticated else None
+        run_pipeline(artist, user_id=uid)
         return redirect(url_for("dashboard", message=f"✅ {artist_titlecase(artist)} analysed and saved successfully!"))
     except Exception as e:
         return redirect(url_for("dashboard", message=f"❌ Could not analyse {artist_titlecase(artist)}: {str(e)}", error=True))
