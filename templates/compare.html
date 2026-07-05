@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Compare Artists — Waveline</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Space Mono', monospace; background: #e2e2df; color: #111; font-size: 17px; line-height: 1.5; }
+        .topbar { background: #111; color: #fff; padding: 0 24px; height: 44px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .topbar-brand { font-weight: 700; font-size: 0.95em; letter-spacing: 2px; color: #1da0c3; }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .topbar-link { color: #1da0c3; font-size: 0.78em; text-decoration: none; }
+        .topbar-link:hover { color: #fff; }
+        .hero { background: #fff; border-bottom: 1px solid #e8e8e8; padding: 36px 36px; }
+        .hero h1 { font-size: 1.3em; font-weight: 700; line-height: 1.15; }
+        .compare-form { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+        .compare-form input { font-family: 'Space Mono', monospace; font-size: 0.82em; padding: 10px 16px; border: 1px solid #ddd; background: #fafafa; flex: 1; min-width: 180px; }
+        .compare-form input:focus { outline: none; border-color: #1da0c3; }
+        .compare-form button { font-family: 'Space Mono', monospace; font-size: 0.88em; font-weight: 700; letter-spacing: 0.5px; padding: 12px 26px; background: #111; color: #fff; border: none; cursor: pointer; transition: background 0.15s, transform 0.15s; }
+        .compare-form button:hover { background: #1da0c3; transform: translateY(-1px); }
+        .body { max-width: 1060px; margin: 0 auto; padding: 32px 36px; }
+        .vs-row { display: grid; grid-template-columns: 1fr 52px 1fr; gap: 0; align-items: stretch; margin-bottom: 28px; }
+        .vs-divider { display: flex; align-items: center; justify-content: center; font-size: 1.1em; font-weight: 700; color: #1da0c3; background: #e2e2df; border-top: 1px solid #e8e8e8; border-bottom: 1px solid #e8e8e8; }
+        .card {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+        }
+        .card:hover {
+            box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+            transform: translateY(-2px);
+            border-color: #1da0c3;
+        }
+        .card-img { width: 100%; height: 160px; object-fit: cover; display: block; }
+        .card-img-placeholder { width: 100%; height: 160px; background: linear-gradient(135deg, #1da0c3 0%, #0d7a9a 100%); display: flex; align-items: center; justify-content: center; font-size: 3em; color: #fff; font-weight: 700; }
+        .card-body { padding: 24px 28px; }
+        .card-label { font-size: 0.62em; color: #1da0c3; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+        .card-title { font-size: 0.7em; color: #1da0c3; letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 14px; }
+        .artist-heading { font-size: 1.25em; font-weight: 700; color: #111; margin-bottom: 12px; line-height: 1.15; }
+        .insight-text { font-size: 0.8em; line-height: 1.85; color: #555; border-left: 2px solid #1da0c3; padding-left: 12px; margin-bottom: 16px; }
+        .track-item { display: flex; align-items: center; justify-content: space-between; font-size: 0.78em; padding: 7px 0; border-bottom: 1px solid #f5f5f3; color: #444; }
+        .track-item:last-child { border-bottom: none; }
+        .track-play-btn { font-size: 0.72em; color: #1da0c3; cursor: pointer; border: 1px solid #1da0c3; padding: 2px 8px; border-radius: 2px; background: none; white-space: nowrap; }
+        .track-play-btn:hover { background: #1da0c3; color: #fff; }
+        .spotify-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font-size: 0.72em; color: #1db954; text-decoration: none; border: 1px solid #1db954; padding: 5px 12px; border-radius: 2px; }
+        .spotify-btn:hover { background: #1db954; color: #fff; }
+        .verdict-card { background: #fff; border: 1px solid #e8e8e8; border-top: 3px solid #1da0c3; border-radius: 6px; padding: 32px 36px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .verdict-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .verdict-icon { font-size: 1.2em; }
+        .verdict-title { font-size: 0.7em; color: #1da0c3; letter-spacing: 2px; text-transform: uppercase; }
+        .verdict-text { font-size: 0.84em; line-height: 2; color: #333; }
+        .verdict-text p { margin-bottom: 14px; }
+        .verdict-text p:last-child { margin-bottom: 0; }
+        .verdict-text ul, .verdict-text ol { margin: 10px 0 14px 20px; }
+        .verdict-text li { margin-bottom: 6px; }
+        .verdict-text strong { font-weight: 700; }
+        .no-data { font-size: 0.8em; color: #888; }
+        /* mini player */
+        #mini-player { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #111; padding: 10px 20px; flex-direction: row; align-items: center; gap: 16px; z-index: 999; border-top: 2px solid #1da0c3; }
+        #player-title { font-size: 0.8em; color: #fff; font-weight: 700; }
+        #player-artist { font-size: 0.72em; color: #888; }
+        audio { flex: 1; height: 28px; }
+        .close-player { color: #555; font-size: 1.1em; cursor: pointer; padding: 4px 8px; }
+        .close-player:hover { color: #fff; }
+        body.dark { background: #0d0d0d; color: #e0e0e0; }
+        body.dark .hero { background: #111; border-color: #222; }
+        body.dark .card, body.dark .verdict-card { background: #161616; border-color: #262626; }
+        body.dark .card:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.45); border-color: #1da0c3; }
+        body.dark .verdict-card { border-top-color: #1da0c3; }
+        body.dark .vs-divider { background: #0d0d0d; border-color: #222; }
+        body.dark .hero h1, body.dark .artist-heading { color: #fff; }
+        body.dark .insight-text { color: #aaa; border-color: #1da0c3; }
+        body.dark .verdict-text { color: #ccc; }
+        body.dark .track-item { color: #999; border-color: #1a1a1a; }
+        body.dark .no-data { color: #999; }
+        body.dark .compare-form input { background: #1a1a1a; border-color: #333; color: #e0e0e0; }
+        @media (max-width: 700px) {
+            .topbar { padding: 0 10px; }
+            .topbar-brand { flex-shrink: 0; }
+            .topbar-right { gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-shrink: 1; min-width: 0; }
+            .topbar-right::-webkit-scrollbar { display: none; }
+            .topbar-link { font-size: 0.55em; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; }
+            .hero { padding: 20px 16px; }
+            .compare-form { flex-direction: column; }
+            .compare-form input, .compare-form button { width: 100%; }
+            .body { padding: 16px; }
+            .vs-row { grid-template-columns: 1fr; }
+            .vs-divider { height: 44px; border: none; border-top: 1px solid #e8e8e8; border-bottom: 1px solid #e8e8e8; }
+            .verdict-card { padding: 18px 16px; }
+            #mini-player { flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
+            #mini-player audio { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <span class="topbar-brand">WAVELINE</span>
+    <div class="topbar-right">
+        <a href="/" class="topbar-link">Dashboard</a>
+        <a href="/profile" class="topbar-link">Taste Profile</a>
+        <button id="dark-btn" onclick="toggleDark()" style="background:none;border:1px solid #333;color:#888;font-size:0.85em;padding:3px 8px;cursor:pointer;border-radius:3px;">◑</button>
+    </div>
+</div>
+<div class="hero">
+    <h1>Compare Artists</h1>
+    <form method="GET" action="/compare" class="compare-form">
+        <input type="text" name="a" placeholder="First artist" value="{{ a or '' }}" required>
+        <input type="text" name="b" placeholder="Second artist" value="{{ b or '' }}" required>
+        <button type="submit">Compare</button>
+    </form>
+</div>
+<div class="body">
+{% if a_data and b_data %}
+<div class="vs-row">
+    <!-- Artist A -->
+    <div class="card">
+        {% if a_data.image %}<img src="{{ a_data.image }}" class="card-img" alt="{{ a_data.name | titlecase }}">
+        {% else %}<div class="card-img-placeholder">{{ a_data.name[0] | upper }}</div>{% endif %}
+        <div class="card-body">
+            <div class="card-label">Artist A</div>
+            <div class="artist-heading">{{ a_data.name | titlecase }}</div>
+            <div class="insight-text">{{ a_data.insight | markdown_preview(280) }}…</div>
+            {% for t in a_data.tracks %}
+            <div class="track-item">
+                <span>{{ t }}</span>
+                <button class="track-play-btn" onclick="playTrack('{{ a_data.name }}', '{{ t }}')">▶ Play</button>
+            </div>
+            {% endfor %}
+            {% if a_data.spotify_url %}
+            <a href="{{ a_data.spotify_url }}" target="_blank" class="spotify-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#1db954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                Open on Spotify
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- VS -->
+    <div class="vs-divider">VS</div>
+
+    <!-- Artist B -->
+    <div class="card">
+        {% if b_data.image %}<img src="{{ b_data.image }}" class="card-img" alt="{{ b_data.name | titlecase }}">
+        {% else %}<div class="card-img-placeholder">{{ b_data.name[0] | upper }}</div>{% endif %}
+        <div class="card-body">
+            <div class="card-label">Artist B</div>
+            <div class="artist-heading">{{ b_data.name | titlecase }}</div>
+            <div class="insight-text">{{ b_data.insight | markdown_preview(280) }}…</div>
+            {% for t in b_data.tracks %}
+            <div class="track-item">
+                <span>{{ t }}</span>
+                <button class="track-play-btn" onclick="playTrack('{{ b_data.name }}', '{{ t }}')">▶ Play</button>
+            </div>
+            {% endfor %}
+            {% if b_data.spotify_url %}
+            <a href="{{ b_data.spotify_url }}" target="_blank" class="spotify-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#1db954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                Open on Spotify
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="verdict-card">
+    <div class="verdict-header">
+        <span class="verdict-icon">◈</span>
+        <span class="verdict-title">Sound Analysis</span>
+    </div>
+    <div class="verdict-text">{{ verdict | markdown }}</div>
+</div>
+{% elif a or b %}
+<div class="card"><p class="no-data">Fetching artist data — if this persists, try again in a moment.</p></div>
+{% endif %}
+</div>
+
+<!-- Mini Player -->
+<div id="mini-player">
+    <div>
+        <div id="player-title">—</div>
+        <div id="player-artist">—</div>
+    </div>
+    <audio id="audio-player" controls>
+        <source id="audio-src" src="" type="audio/mpeg">
+    </audio>
+    <span class="close-player" onclick="closeMiniPlayer()">✕</span>
+</div>
+
+<script>
+    async function playTrack(artist, track) {
+        try {
+            var resp = await fetch('/preview?artist=' + encodeURIComponent(artist) + '&track=' + encodeURIComponent(track));
+            var data = await resp.json();
+            if (data.preview_url) {
+                document.getElementById('player-title').textContent = data.title;
+                document.getElementById('player-artist').textContent = data.artist;
+                var audio = document.getElementById('audio-player');
+                document.getElementById('audio-src').src = data.preview_url;
+                audio.load(); audio.play();
+                document.getElementById('mini-player').style.display = 'flex';
+            } else {
+                window.open('https://open.spotify.com/search/' + encodeURIComponent(artist + ' ' + track), '_blank');
+            }
+        } catch(e) {
+            window.open('https://open.spotify.com/search/' + encodeURIComponent(artist + ' ' + track), '_blank');
+        }
+    }
+    function closeMiniPlayer() {
+        document.getElementById('audio-player').pause();
+        document.getElementById('mini-player').style.display = 'none';
+    }
+    function toggleDark() {
+        var isDark = document.body.classList.toggle('dark');
+        localStorage.setItem('dark', isDark ? '1' : '0');
+        document.getElementById('dark-btn').textContent = isDark ? '☀' : '◑';
+    }
+    (function() {
+        if (localStorage.getItem('dark') === '1') {
+            document.body.classList.add('dark');
+            var btn = document.getElementById('dark-btn');
+            if (btn) btn.textContent = '☀';
+        }
+    })();
+</script>
+</body>
+</html>

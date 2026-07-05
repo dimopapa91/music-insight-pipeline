@@ -36,7 +36,13 @@ A full-stack music data engineering project built with Python, Flask, and Postgr
 
 ```
 waveline/
-├── dashboard.py      # Flask app — routes and templates
+├── dashboard.py      # App entry point — config, login, filters, blueprint wiring (gunicorn dashboard:app)
+├── services.py       # Shared data clients (Spotify/Last.fm/Deezer/RSS) + Jinja filters
+├── views_main.py     # Blueprint — dashboard, search, JSON APIs, preview
+├── views_artist.py   # Blueprint — /artist/<name> and /compare
+├── views_taste.py    # Blueprint — /profile taste analysis
+├── views_news.py     # Blueprint — /news feed
+├── templates/        # Jinja page templates (index, artist_profile, taste_profile, compare, news)
 ├── db.py             # Shared PostgreSQL connection + db_cursor context manager
 ├── models.py         # User model + schema init (users, posts, follows, likes)
 ├── auth.py           # Blueprint — register / login / logout (Flask-Login)

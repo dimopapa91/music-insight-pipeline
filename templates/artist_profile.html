@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ artist_name | titlecase }} — Waveline</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Space Mono', monospace; background: #e2e2df; color: #111; font-size: 17px; line-height: 1.5; }
+        /* topbar */
+        .topbar { background: #111; color: #fff; padding: 0 24px; height: 44px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .topbar-brand { font-weight: 700; font-size: 0.95em; letter-spacing: 2px; color: #1da0c3; }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .topbar-link { color: #1da0c3; font-size: 0.78em; text-decoration: none; }
+        .topbar-link:hover { color: #fff; }
+        /* hero */
+        .profile-hero { display: flex; align-items: center; gap: 28px; padding: 44px 36px 32px; background: #fff; border-bottom: 1px solid #e8e8e8; }
+        .profile-img { width: 120px; height: 120px; object-fit: cover; border-radius: 4px; background: #eee; }
+        .profile-img-placeholder { width: 120px; height: 120px; background: #1da0c3; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 2.5em; color: #fff; font-weight: 700; }
+        .profile-meta { flex: 1; }
+        .profile-name { font-size: 2em; font-weight: 700; color: #111; line-height: 1.1; }
+        .profile-sources { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+        .src-badge { font-size: 0.7em; padding: 3px 10px; border-radius: 2px; font-weight: 700; }
+        .src-badge.lastfm { background: #d51007; color: #fff; }
+        .src-badge.deezer { background: #a238ff; color: #fff; }
+        .genre-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .genre-tag { font-size: 0.68em; padding: 3px 10px; border: 1px solid #d51007; color: #d51007; border-radius: 2px; }
+        .spotify-link { display: inline-block; margin-top: 12px; font-size: 0.72em; color: #1db954; text-decoration: none; border: 1px solid #1db954; padding: 4px 12px; border-radius: 2px; }
+        .spotify-link:hover { background: #1db954; color: #fff; }
+        .profile-searches { font-size: 0.75em; color: #888; margin-top: 8px; }
+        .back-link { font-size: 0.78em; color: #1da0c3; text-decoration: none; border: 1px solid #1da0c3; padding: 5px 12px; border-radius: 2px; }
+        .back-link:hover { background: #1da0c3; color: #fff; }
+        /* layout */
+        .profile-body { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; padding: 32px 36px; max-width: 1100px; margin: 0 auto; }
+        .card {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            padding: 26px 28px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+        }
+        .card:hover {
+            box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+            transform: translateY(-2px);
+            border-color: #1da0c3;
+        }
+        .card-title { font-size: 0.72em; color: #1da0c3; letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 16px; }
+        .insight-text { font-size: 0.8em; line-height: 1.85; color: #333; }
+        .insight-text p { margin-bottom: 12px; }
+        .insight-text p:last-child { margin-bottom: 0; }
+        .insight-text ul, .insight-text ol { margin: 8px 0 12px 20px; }
+        .insight-text li { margin-bottom: 5px; }
+        .insight-text strong { font-weight: 700; }
+        /* tracks */
+        .track-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #f5f5f3; }
+        .track-row:last-child { border-bottom: none; }
+        .track-name { font-size: 0.8em; color: #222; cursor: pointer; }
+        .track-name:hover { color: #1da0c3; }
+        .track-plays { font-size: 0.72em; color: #888; }
+        .play-btn { font-size: 0.75em; color: #1da0c3; cursor: pointer; border: 1px solid #1da0c3; padding: 2px 8px; border-radius: 2px; background: none; }
+        .play-btn:hover { background: #1da0c3; color: #fff; }
+        /* similar chips */
+        .chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+        .chip { font-size: 0.75em; padding: 5px 12px; border: 1px solid #ddd; color: #444; cursor: pointer; border-radius: 2px; text-decoration: none; }
+        .chip:hover { border-color: #1da0c3; color: #1da0c3; }
+        /* stats row */
+        .stat-row { display: flex; justify-content: space-around; padding: 26px 36px; background: #111; }
+        .stat-item { text-align: center; }
+        .stat-label { font-size: 0.65em; color: #1da0c3; letter-spacing: 1px; text-transform: uppercase; }
+        .stat-val { font-size: 2.1em; font-weight: 700; letter-spacing: -0.5px; color: #fff; margin-top: 6px; }
+        /* mini player */
+        #mini-player { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #111; padding: 10px 20px; flex-direction: row; align-items: center; gap: 16px; z-index: 999; border-top: 2px solid #1da0c3; }
+        #player-title { font-size: 0.8em; color: #fff; font-weight: 700; }
+        #player-artist { font-size: 0.72em; color: #888; }
+        audio { flex: 1; height: 28px; }
+        .close-player { color: #555; font-size: 1.1em; cursor: pointer; padding: 4px 8px; }
+        .close-player:hover { color: #fff; }
+        /* dark mode */
+        body.dark { background: #0d0d0d; color: #e0e0e0; }
+        body.dark .profile-hero { background: #111; border-color: #222; }
+        body.dark .card { background: #161616; border-color: #262626; }
+        body.dark .card:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.45); border-color: #1da0c3; }
+        body.dark .profile-name { color: #fff; }
+        body.dark .profile-searches { color: #999; }
+        body.dark .insight-text { color: #ccc; }
+        body.dark .track-row { border-color: #1a1a1a; }
+        body.dark .track-name { color: #ddd; }
+        body.dark .track-plays { color: #999; }
+        body.dark .chip { border-color: #333; color: #999; }
+        body.dark .card-title { border-color: #222; }
+        @media (max-width: 700px) {
+            .topbar { padding: 0 10px; }
+            .topbar-brand { flex-shrink: 0; }
+            .topbar-right { gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-shrink: 1; min-width: 0; }
+            .topbar-right::-webkit-scrollbar { display: none; }
+            .topbar-link { font-size: 0.55em; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; }
+            .profile-hero { flex-direction: column; padding: 20px 16px; gap: 16px; }
+            .profile-img, .profile-img-placeholder { width: 90px; height: 90px; }
+            .profile-name { font-size: 1.5em; }
+            .stat-row { flex-wrap: wrap; gap: 0; padding: 12px 8px; }
+            .stat-item { width: 50%; padding: 10px 0; text-align: center; }
+            .profile-body { grid-template-columns: 1fr; padding: 16px; gap: 16px; }
+            .card { padding: 16px; }
+            #mini-player { flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
+            #mini-player audio { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <span class="topbar-brand">WAVELINE</span>
+    <div class="topbar-right">
+        <a href="/compare" class="topbar-link">Compare</a>
+        <a href="/profile" class="topbar-link">Taste Profile</a>
+        <button id="dark-btn" onclick="toggleDark()" style="background:none;border:1px solid #333;color:#888;font-size:0.85em;padding:3px 8px;cursor:pointer;border-radius:3px;">◑</button>
+    </div>
+</div>
+
+<div class="profile-hero">
+    {% if spotify.get('image') %}
+    <img src="{{ spotify.image }}" class="profile-img" alt="{{ artist_name | titlecase }}">
+    {% elif deezer_image %}
+    <img src="{{ deezer_image }}" class="profile-img" alt="{{ artist_name | titlecase }}">
+    {% else %}
+    <div class="profile-img-placeholder">{{ artist_name[0] | upper }}</div>
+    {% endif %}
+    <div class="profile-meta">
+        <div class="profile-name">{{ artist_name | titlecase }}</div>
+        <div class="profile-sources">
+            {% if lastfm_listeners %}<span class="src-badge lastfm">Last.fm · {{ "{:,}".format(lastfm_listeners) }} listeners</span>{% endif %}
+            {% if deezer_fans %}<span class="src-badge deezer">Deezer · {{ "{:,}".format(deezer_fans) }} fans</span>{% endif %}
+        </div>
+        {% if lastfm_tags %}
+        <div class="genre-wrap">
+            {% for g in lastfm_tags %}<span class="genre-tag">{{ g }}</span>{% endfor %}
+        </div>
+        {% endif %}
+        <div class="profile-searches">Searched {{ search_count }} time{{ 's' if search_count != 1 else '' }} in your pipeline · Last: {{ last_searched }}</div>
+        {% if spotify.get('spotify_url') %}<a href="{{ spotify.spotify_url }}" target="_blank" class="spotify-link">▶ Open on Spotify</a>{% endif %}
+    </div>
+    <a href="/" class="back-link">← Back</a>
+</div>
+
+<div class="stat-row">
+    <div class="stat-item">
+        <div class="stat-label">Last.fm Listeners</div>
+        <div class="stat-val">{{ "{:,}".format(lastfm_listeners) if lastfm_listeners else "—" }}</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-label">Total Scrobbles</div>
+        <div class="stat-val">{% if lastfm_scrobbles > 1000000 %}{{ "%.1fM" | format(lastfm_scrobbles / 1000000) }}{% elif lastfm_scrobbles %}{{ "{:,}".format(lastfm_scrobbles) }}{% else %}—{% endif %}</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-label">Deezer Fans</div>
+        <div class="stat-val">{% if deezer_fans > 1000000 %}{{ "%.1fM" | format(deezer_fans / 1000000) }}{% elif deezer_fans %}{{ "{:,}".format(deezer_fans) }}{% else %}—{% endif %}</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-label">Top Track Plays</div>
+        <div class="stat-val">{{ top_playcount }}</div>
+    </div>
+</div>
+
+<div class="profile-body">
+    <!-- Claude Insight -->
+    <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-title">Artist Insight</div>
+        <div class="insight-text">{{ insight | markdown }}</div>
+    </div>
+
+    <!-- Top Tracks -->
+    <div class="card">
+        <div class="card-title">Top Tracks</div>
+        {% for track in tracks %}
+        <div class="track-row">
+            <span class="track-name" onclick="playTrack('{{ artist_name }}', '{{ track.name }}')">▶ {{ track.name }}</span>
+            <span class="track-plays">{{ "{:,}".format(track.plays) }} plays</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Similar Artists -->
+    <div class="card">
+        <div class="card-title">Similar Artists</div>
+        <div class="chip-wrap">
+            {% for name in similar_artists %}
+            <a href="/artist/{{ name | urlencode }}" class="chip">{{ name | titlecase }}</a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Mini Player -->
+<div id="mini-player">
+    <div>
+        <div id="player-title">—</div>
+        <div id="player-artist">—</div>
+    </div>
+    <audio id="audio-player" controls>
+        <source id="audio-src" src="" type="audio/mpeg">
+    </audio>
+    <span class="close-player" onclick="closeMiniPlayer()">✕</span>
+</div>
+
+<script>
+    function toggleDark() {
+        var isDark = document.body.classList.toggle('dark');
+        localStorage.setItem('dark', isDark ? '1' : '0');
+        document.getElementById('dark-btn').textContent = isDark ? '☀' : '◑';
+    }
+    (function() {
+        if (localStorage.getItem('dark') === '1') {
+            document.body.classList.add('dark');
+            var btn = document.getElementById('dark-btn');
+            if (btn) btn.textContent = '☀';
+        }
+    })();
+
+    async function playTrack(artist, track) {
+        try {
+            var resp = await fetch('/preview?artist=' + encodeURIComponent(artist) + '&track=' + encodeURIComponent(track));
+            var data = await resp.json();
+            if (data.preview_url) {
+                document.getElementById('player-title').textContent = data.title;
+                document.getElementById('player-artist').textContent = data.artist;
+                var audio = document.getElementById('audio-player');
+                document.getElementById('audio-src').src = data.preview_url;
+                audio.load(); audio.play();
+                document.getElementById('mini-player').style.display = 'flex';
+            } else {
+                window.open('https://open.spotify.com/search/' + encodeURIComponent(artist + ' ' + track), '_blank');
+            }
+        } catch(e) {
+            window.open('https://open.spotify.com/search/' + encodeURIComponent(artist + ' ' + track), '_blank');
+        }
+    }
+    function closeMiniPlayer() {
+        document.getElementById('audio-player').pause();
+        document.getElementById('mini-player').style.display = 'none';
+    }
+</script>
+</body>
+</html>

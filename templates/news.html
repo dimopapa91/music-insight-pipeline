@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Music News — Waveline</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Space Mono', monospace; background: #e2e2df; color: #111; font-size: 17px; line-height: 1.5; }
+        .topbar { background: #111; color: #fff; padding: 0 24px; height: 44px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .topbar-brand { font-weight: 700; font-size: 0.95em; letter-spacing: 2px; color: #1da0c3; }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .topbar-link { color: #1da0c3; font-size: 0.78em; text-decoration: none; }
+        .topbar-link:hover { color: #fff; }
+        .hero { background: #fff; border-bottom: 1px solid #e8e8e8; padding: 36px 36px; display: flex; align-items: center; justify-content: space-between; }
+        .hero h1 { font-size: 1.3em; font-weight: 700; line-height: 1.15; }
+        .hero p { font-size: 0.75em; color: #6b6b6b; margin-top: 4px; }
+        .refresh-btn { font-size: 0.76em; font-weight: 700; border: 1px solid #ddd; color: #888; background: none; padding: 8px 16px; cursor: pointer; border-radius: 2px; transition: border-color 0.15s, color 0.15s; }
+        .refresh-btn:hover { border-color: #1da0c3; color: #1da0c3; }
+        .layout { display: grid; grid-template-columns: 1fr 380px; gap: 0; min-height: calc(100vh - 100px); }
+
+        /* ── NEWS ARTICLES ── */
+        .news-col { padding: 32px; border-right: 1px solid #e8e8e8; }
+        .section-title { font-size: 0.68em; color: #1da0c3; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; }
+        .article {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            padding: 18px 22px;
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+        }
+        .article:hover { border-color: #1da0c3; box-shadow: 0 10px 24px rgba(0,0,0,0.10); transform: translateY(-2px); }
+        .article-source { font-size: 0.62em; font-weight: 700; padding: 2px 8px; border-radius: 2px; color: #fff; display: inline-block; width: fit-content; }
+        .article-title { font-size: 0.8em; color: #111; text-decoration: none; line-height: 1.5; }
+        .article-title:hover { color: #1da0c3; }
+        .article-meta { font-size: 0.65em; color: #888; }
+        .no-articles { font-size: 0.8em; color: #888; padding: 20px 0; }
+
+        /* ── NEW RELEASES ── */
+        .releases-col { padding: 32px 24px; background: #fafaf8; }
+        .releases-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .release-card {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            overflow: hidden;
+            text-decoration: none;
+            display: block;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+        }
+        .release-card:hover { border-color: #1db954; box-shadow: 0 10px 24px rgba(0,0,0,0.10); transform: translateY(-2px); }
+        .release-card img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+        .release-card .no-img { width: 100%; aspect-ratio: 1; background: #1da0c3; display: flex; align-items: center; justify-content: center; font-size: 1.5em; color: #fff; }
+        .release-info { padding: 8px 10px; }
+        .release-name { font-size: 0.7em; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .release-artist { font-size: 0.65em; color: #777; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+        .release-type { font-size: 0.6em; color: #1db954; margin-top: 2px; }
+
+        /* ── DARK ── */
+        body.dark { background: #0d0d0d; color: #e0e0e0; }
+        body.dark .hero { background: #111; border-color: #222; }
+        body.dark .article, body.dark .release-card { background: #161616; border-color: #262626; }
+        body.dark .article:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.45); border-color: #1da0c3; }
+        body.dark .release-card:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.45); border-color: #1db954; }
+        body.dark .hero h1 { color: #fff; }
+        body.dark .hero p { color: #999; }
+        body.dark .news-col { border-color: #222; }
+        body.dark .releases-col { background: #0a0a0a; }
+        body.dark .article-title { color: #e0e0e0; }
+        body.dark .article-meta { color: #999; }
+        body.dark .no-articles { color: #999; }
+        body.dark .release-name { color: #e0e0e0; }
+        body.dark .release-artist { color: #999; }
+        @media (max-width: 700px) {
+            .topbar { padding: 0 10px; }
+            .topbar-brand { flex-shrink: 0; }
+            .topbar-right { gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-shrink: 1; min-width: 0; }
+            .topbar-right::-webkit-scrollbar { display: none; }
+            .topbar-link { font-size: 0.55em; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; }
+            .hero { padding: 20px 16px; flex-direction: column; gap: 10px; align-items: flex-start; }
+            .layout { grid-template-columns: 1fr; }
+            .news-col { border-right: none; padding: 16px; }
+            .releases-col { padding: 16px; }
+            .releases-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <span class="topbar-brand">WAVELINE</span>
+    <div class="topbar-right">
+        <a href="/" class="topbar-link">Dashboard</a>
+        <a href="/profile" class="topbar-link">Taste Profile</a>
+        <a href="/compare" class="topbar-link">Compare</a>
+        <button id="dark-btn" onclick="toggleDark()" style="background:none;border:1px solid #333;color:#888;font-size:0.85em;padding:3px 8px;cursor:pointer;border-radius:3px;">◑</button>
+    </div>
+</div>
+<div class="hero">
+    <div>
+        <h1>Music News</h1>
+        <p>Latest from Pitchfork, NME, The Guardian & RA · New releases via Spotify</p>
+    </div>
+    <form method="POST" action="/news/refresh">
+        <button type="submit" class="refresh-btn">↻ Refresh</button>
+    </form>
+</div>
+<div class="layout">
+
+    <!-- LEFT: NEWS ARTICLES -->
+    <div class="news-col">
+        <div class="section-title">Latest Music News</div>
+        {% if articles %}
+            {% for a in articles %}
+            <div class="article">
+                <span class="article-source" style="background:{{ a.color }}">{{ a.source }}</span>
+                <a href="{{ a.link }}" target="_blank" class="article-title">{{ a.title }}</a>
+                {% if a.pub %}<span class="article-meta">{{ a.pub }}</span>{% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="no-articles">Could not load articles — check your connection and try refreshing.</p>
+        {% endif %}
+    </div>
+
+    <!-- RIGHT: NEW RELEASES -->
+    <div class="releases-col">
+        <div class="section-title">New Releases</div>
+        {% if releases %}
+        <div class="releases-grid">
+            {% for r in releases %}
+            <a href="{{ r.url }}" target="_blank" class="release-card">
+                {% if r.image %}
+                <img src="{{ r.image }}" alt="{{ r.name }}">
+                {% else %}
+                <div class="no-img">♪</div>
+                {% endif %}
+                <div class="release-info">
+                    <div class="release-name">{{ r.name }}</div>
+                    <div class="release-artist">{{ r.artist | titlecase }}</div>
+                    <div class="release-type">{{ r.type }} · {{ r.date }}</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="font-size:0.8em;color:#888;">Could not load new releases — Spotify may be unavailable.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function toggleDark() {
+        var isDark = document.body.classList.toggle('dark');
+        localStorage.setItem('dark', isDark ? '1' : '0');
+        document.getElementById('dark-btn').textContent = isDark ? '☀' : '◑';
+    }
+    (function() {
+        if (localStorage.getItem('dark') === '1') {
+            document.body.classList.add('dark');
+            var btn = document.getElementById('dark-btn');
+            if (btn) btn.textContent = '☀';
+        }
+    })();
+</script>
+</body>
+</html>

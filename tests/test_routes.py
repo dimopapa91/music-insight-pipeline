@@ -4,6 +4,7 @@ import contextlib
 import datetime
 
 import dashboard
+import views_main
 
 
 class FakeCursor:
@@ -30,7 +31,7 @@ def _fake_db_cursor(one=None, all_rows=None):
 
 def test_api_stats_returns_json_and_cors(monkeypatch):
     monkeypatch.setattr(
-        dashboard, "db_cursor",
+        views_main, "db_cursor",
         _fake_db_cursor(one=(5, 3, datetime.datetime(2026, 7, 5))),
     )
     client = dashboard.app.test_client()
@@ -44,7 +45,7 @@ def test_api_stats_returns_json_and_cors(monkeypatch):
 
 def test_api_artists_returns_list(monkeypatch):
     monkeypatch.setattr(
-        dashboard, "db_cursor",
+        views_main, "db_cursor",
         _fake_db_cursor(all_rows=[("Radiohead",), ("SZA",)]),
     )
     client = dashboard.app.test_client()
@@ -58,7 +59,7 @@ def test_api_stats_degrades_gracefully_on_db_error(monkeypatch):
     def boom(commit=False):
         raise RuntimeError("db down")
         yield  # pragma: no cover
-    monkeypatch.setattr(dashboard, "db_cursor", boom)
+    monkeypatch.setattr(views_main, "db_cursor", boom)
     client = dashboard.app.test_client()
     resp = client.get("/api/stats")
     # Should not 500 — returns empty JSON with CORS header still set

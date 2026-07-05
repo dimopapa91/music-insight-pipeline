@@ -78,7 +78,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for("dashboard"))
+    return redirect(url_for("main.dashboard"))
 
 
 AUTH_TEMPLATE = """
