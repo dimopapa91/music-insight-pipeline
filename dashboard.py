@@ -1,5 +1,4 @@
 from flask import Flask, render_template_string, request, redirect, url_for
-import psycopg2
 import os
 import json
 import re
@@ -10,6 +9,7 @@ import markdown as markdown_lib
 from markupsafe import Markup
 from dotenv import load_dotenv
 from pipeline import run_pipeline
+from db import get_db_connection, db_cursor
 
 load_dotenv()
 
@@ -166,14 +166,6 @@ def get_discovery_artists(searched_artists):
         except Exception:
             discovery.append({"name": artist, "image": "", "nb_fan": 0})
     return discovery
-
-def get_db_connection():
-    database_url = os.getenv("DATABASE_URL")
-    if database_url:
-        # Railway provides DATABASE_URL — use it directly
-        return psycopg2.connect(database_url)
-    # Local development fallback
-    return psycopg2.connect(dbname="music_insights", user=os.getenv("USER"))
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -1108,60 +1100,57 @@ HTML_TEMPLATE = """
 """
 
 def get_dashboard_data():
-    conn = get_db_connection()
-    cur = conn.cursor()
+    with db_cursor() as cur:
+        cur.execute("SELECT COUNT(*) FROM searches")
+        total_searches = cur.fetchone()[0]
 
-    cur.execute("SELECT COUNT(*) FROM searches")
-    total_searches = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(DISTINCT artist_name) FROM searches")
+        unique_artists = cur.fetchone()[0]
 
-    cur.execute("SELECT COUNT(DISTINCT artist_name) FROM searches")
-    unique_artists = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM searches WHERE DATE(searched_at) = CURRENT_DATE")
+        searches_today = cur.fetchone()[0]
 
-    cur.execute("SELECT COUNT(*) FROM searches WHERE DATE(searched_at) = CURRENT_DATE")
-    searches_today = cur.fetchone()[0]
+        cur.execute("SELECT artist_name, top_tracks FROM searches")
+        rows = cur.fetchall()
+        artist_avg = {}
+        for artist_name, top_tracks in rows:
+            tracks = top_tracks if isinstance(top_tracks, list) else json.loads(top_tracks)
+            plays = [int(t["playcount"]) for t in tracks]
+            avg = sum(plays) // len(plays)
+            if artist_name not in artist_avg:
+                artist_avg[artist_name] = []
+            artist_avg[artist_name].append(avg)
+        final_avgs = {k: sum(v) // len(v) for k, v in artist_avg.items()}
+        sorted_avgs = sorted(final_avgs.items(), key=lambda x: x[1], reverse=True)
+        max_avg = sorted_avgs[0][1] if sorted_avgs else 1
+        artist_plays = [(a, avg, max_avg) for a, avg in sorted_avgs]
 
-    cur.execute("SELECT artist_name, top_tracks FROM searches")
-    rows = cur.fetchall()
-    artist_avg = {}
-    for artist_name, top_tracks in rows:
-        tracks = top_tracks if isinstance(top_tracks, list) else json.loads(top_tracks)
-        plays = [int(t["playcount"]) for t in tracks]
-        avg = sum(plays) // len(plays)
-        if artist_name not in artist_avg:
-            artist_avg[artist_name] = []
-        artist_avg[artist_name].append(avg)
-    final_avgs = {k: sum(v) // len(v) for k, v in artist_avg.items()}
-    sorted_avgs = sorted(final_avgs.items(), key=lambda x: x[1], reverse=True)
-    max_avg = sorted_avgs[0][1] if sorted_avgs else 1
-    artist_plays = [(a, avg, max_avg) for a, avg in sorted_avgs]
+        cur.execute("""
+            SELECT * FROM (
+                SELECT DISTINCT ON (artist_name) artist_name, claude_insight, searched_at, top_tracks
+                FROM searches
+                ORDER BY artist_name, searched_at DESC
+            ) sub
+            ORDER BY searched_at DESC LIMIT 5
+        """)
 
-    cur.execute("""
-        SELECT * FROM (
-            SELECT DISTINCT ON (artist_name) artist_name, claude_insight, searched_at, top_tracks
-            FROM searches
-            ORDER BY artist_name, searched_at DESC
-        ) sub
-        ORDER BY searched_at DESC LIMIT 5
-    """)
+        class Row:
+            def __init__(self, r):
+                self.artist = r[0]
+                self.insight = r[1]
+                self.searched_at = r[2]
+                tracks_raw = r[3] if isinstance(r[3], list) else json.loads(r[3])
+                self.top_tracks = [t["name"] for t in tracks_raw[:4]]
+                self.similar_artists = get_similar_artists(r[0])
 
-    class Row:
-        def __init__(self, r):
-            self.artist = r[0]
-            self.insight = r[1]
-            self.searched_at = r[2]
-            tracks_raw = r[3] if isinstance(r[3], list) else json.loads(r[3])
-            self.top_tracks = [t["name"] for t in tracks_raw[:4]]
-            self.similar_artists = get_similar_artists(r[0])
+        latest_insights = [Row(r) for r in cur.fetchall()]
 
-    latest_insights = [Row(r) for r in cur.fetchall()]
+        # Latest releases for all searched artists
+        cur.execute("SELECT DISTINCT artist_name FROM searches ORDER BY artist_name")
+        all_artists = [r[0] for r in cur.fetchall()]
 
-    # Latest releases for all searched artists
-    cur.execute("SELECT DISTINCT artist_name FROM searches ORDER BY artist_name")
-    all_artists = [r[0] for r in cur.fetchall()]
+    # DB connection released before the (slower) external discovery calls
     discovery = get_discovery_artists(all_artists)
-
-    cur.close()
-    conn.close()
 
     return total_searches, unique_artists, searches_today, artist_plays, latest_insights, discovery
 
@@ -1185,17 +1174,13 @@ def dashboard():
 
 @app.route("/api/artists")
 def api_artists():
+    from flask import jsonify
     try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT DISTINCT artist_name FROM searches ORDER BY artist_name")
-        artists = [row[0] for row in cur.fetchall()]
-        cur.close()
-        conn.close()
-        from flask import jsonify
+        with db_cursor() as cur:
+            cur.execute("SELECT DISTINCT artist_name FROM searches ORDER BY artist_name")
+            artists = [row[0] for row in cur.fetchall()]
         return jsonify(artists)
     except Exception:
-        from flask import jsonify
         return jsonify([])
 
 @app.route("/api/stats")
@@ -1203,12 +1188,9 @@ def api_stats():
     """Public stats for the portfolio site (dimospapageorgiou.com)."""
     from flask import jsonify
     try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT COUNT(*), COUNT(DISTINCT artist_name), MAX(searched_at) FROM searches")
-        total, unique, last = cur.fetchone()
-        cur.close()
-        conn.close()
+        with db_cursor() as cur:
+            cur.execute("SELECT COUNT(*), COUNT(DISTINCT artist_name), MAX(searched_at) FROM searches")
+            total, unique, last = cur.fetchone()
         resp = jsonify({
             "total_searches": total,
             "unique_artists": unique,
@@ -1499,17 +1481,18 @@ ARTIST_PROFILE_TEMPLATE = """
 @app.route("/artist/<path:artist_name>")
 def artist_profile(artist_name):
     try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT artist_name, claude_insight, searched_at, top_tracks
-            FROM searches
-            WHERE LOWER(artist_name) = LOWER(%s)
-            ORDER BY searched_at DESC LIMIT 1
-        """, (artist_name,))
-        row = cur.fetchone()
+        with db_cursor() as cur:
+            cur.execute("""
+                SELECT artist_name, claude_insight, searched_at, top_tracks
+                FROM searches
+                WHERE LOWER(artist_name) = LOWER(%s)
+                ORDER BY searched_at DESC LIMIT 1
+            """, (artist_name,))
+            row = cur.fetchone()
+            if row:
+                cur.execute("SELECT COUNT(*) FROM searches WHERE LOWER(artist_name) = LOWER(%s)", (artist_name,))
+                search_count = cur.fetchone()[0]
         if not row:
-            cur.close(); conn.close()
             # Artist not in DB — run the pipeline automatically, then reload
             try:
                 run_pipeline(artist_name)
@@ -1533,10 +1516,6 @@ a{color:#1da0c3;font-size:0.8em;}
 <a href="/">← Back to dashboard</a>
 </div></body></html>
 """, name=artist_name, error=str(e)), 500
-
-        cur.execute("SELECT COUNT(*) FROM searches WHERE LOWER(artist_name) = LOWER(%s)", (artist_name,))
-        search_count = cur.fetchone()[0]
-        cur.close(); conn.close()
 
         name, insight, last_searched, top_tracks_raw = row
         tracks_list = top_tracks_raw if isinstance(top_tracks_raw, list) else json.loads(top_tracks_raw)
@@ -1759,14 +1738,12 @@ def taste_profile():
     import anthropic as _anthropic
     from urllib.parse import quote
     try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT DISTINCT ON (artist_name) artist_name, top_tracks
-            FROM searches ORDER BY artist_name, searched_at DESC
-        """)
-        rows = cur.fetchall()
-        cur.close(); conn.close()
+        with db_cursor() as cur:
+            cur.execute("""
+                SELECT DISTINCT ON (artist_name) artist_name, top_tracks
+                FROM searches ORDER BY artist_name, searched_at DESC
+            """)
+            rows = cur.fetchall()
     except Exception as e:
         return render_template_string("""<!DOCTYPE html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -2072,15 +2049,13 @@ COMPARE_TEMPLATE = """
 
 def get_artist_db(name):
     try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT artist_name, claude_insight, top_tracks FROM searches
-            WHERE LOWER(artist_name) = LOWER(%s)
-            ORDER BY searched_at DESC LIMIT 1
-        """, (name,))
-        row = cur.fetchone()
-        cur.close(); conn.close()
+        with db_cursor() as cur:
+            cur.execute("""
+                SELECT artist_name, claude_insight, top_tracks FROM searches
+                WHERE LOWER(artist_name) = LOWER(%s)
+                ORDER BY searched_at DESC LIMIT 1
+            """, (name,))
+            row = cur.fetchone()
         if not row: return None
         tracks_raw = row[2] if isinstance(row[2], list) else json.loads(row[2])
         spotify = get_spotify_artist(row[0])

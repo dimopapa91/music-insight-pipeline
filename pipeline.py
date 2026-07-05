@@ -6,6 +6,8 @@ import psycopg2
 import anthropic
 from dotenv import load_dotenv
 
+from db import get_db_connection
+
 load_dotenv()
 
 LASTFM_API_KEY = os.getenv("LASTFM_API_KEY")
@@ -20,18 +22,6 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
-
-def get_db_connection():
-    try:
-        database_url = os.getenv("DATABASE_URL")
-        if database_url:
-            conn = psycopg2.connect(database_url)
-        else:
-            conn = psycopg2.connect(dbname="music_insights", user=os.getenv("USER"))
-        return conn
-    except psycopg2.OperationalError as e:
-        logging.error(f"Database connection failed: {e}")
-        raise
 
 def get_top_tracks(artist_name):
     """Fetch top tracks for a given artist from Last.fm"""

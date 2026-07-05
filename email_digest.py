@@ -12,11 +12,12 @@ import os
 import json
 import smtplib
 import logging
-import psycopg2
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+
+from db import db_cursor
 
 load_dotenv()
 
@@ -30,33 +31,25 @@ logging.basicConfig(
 )
 
 
-def get_db_connection():
-    return psycopg2.connect(dbname="music_insights", user=os.getenv("USER"))
-
-
 def get_weekly_data():
     """Fetch this week's searches from the DB"""
-    conn = get_db_connection()
-    cur = conn.cursor()
     one_week_ago = datetime.now() - timedelta(days=7)
-    cur.execute("""
-        SELECT * FROM (
-            SELECT DISTINCT ON (artist_name)
-                artist_name, claude_insight, searched_at, top_tracks
-            FROM searches
-            WHERE searched_at >= %s
-            ORDER BY artist_name, searched_at DESC
-        ) sub
-        ORDER BY searched_at DESC
-        LIMIT 8
-    """, (one_week_ago,))
-    rows = cur.fetchall()
+    with db_cursor() as cur:
+        cur.execute("""
+            SELECT * FROM (
+                SELECT DISTINCT ON (artist_name)
+                    artist_name, claude_insight, searched_at, top_tracks
+                FROM searches
+                WHERE searched_at >= %s
+                ORDER BY artist_name, searched_at DESC
+            ) sub
+            ORDER BY searched_at DESC
+            LIMIT 8
+        """, (one_week_ago,))
+        rows = cur.fetchall()
 
-    cur.execute("SELECT COUNT(*) FROM searches WHERE searched_at >= %s", (one_week_ago,))
-    total_this_week = cur.fetchone()[0]
-
-    cur.close()
-    conn.close()
+        cur.execute("SELECT COUNT(*) FROM searches WHERE searched_at >= %s", (one_week_ago,))
+        total_this_week = cur.fetchone()[0]
     return rows, total_this_week
 
 

@@ -1,18 +1,16 @@
-import psycopg2
 import os
 import json
 import requests
 from dotenv import load_dotenv
 import anthropic
 
+from db import get_db_connection
+
 load_dotenv()
 
 LASTFM_API_KEY = os.getenv("LASTFM_API_KEY")
 BASE_URL = "http://ws.audioscrobbler.com/2.0/"
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-
-def get_db_connection():
-    return psycopg2.connect(dbname="music_insights", user=os.getenv("USER"))
 
 def get_artist_tags(artist_name):
     """Fetch genre tags for an artist from Last.fm"""

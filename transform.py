@@ -1,13 +1,11 @@
-import psycopg2
 import os
 import json
 from dotenv import load_dotenv
 from collections import Counter
 
-load_dotenv()
+from db import get_db_connection
 
-def get_db_connection():
-    return psycopg2.connect(dbname="music_insights", user=os.getenv("USER"))
+load_dotenv()
 
 def most_searched_artists():
     """Which artists have been analysed most?"""
@@ -93,12 +91,17 @@ def total_stats():
     print(f"  Total searches run: {total}")
     print(f"  Unique artists analysed: {unique}")
 
-# Run all transformations
-print("=" * 40)
-print("   MUSIC INSIGHT PIPELINE — REPORT")
-print("=" * 40)
-total_stats()
-most_searched_artists()
-average_plays_per_artist()
-searches_over_time()
-print("\n" + "=" * 40)
+def run_report():
+    """Print the full analytics report to the console."""
+    print("=" * 40)
+    print("   MUSIC INSIGHT PIPELINE — REPORT")
+    print("=" * 40)
+    total_stats()
+    most_searched_artists()
+    average_plays_per_artist()
+    searches_over_time()
+    print("\n" + "=" * 40)
+
+
+if __name__ == "__main__":
+    run_report()

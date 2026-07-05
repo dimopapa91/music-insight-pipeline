@@ -35,12 +35,20 @@ A full-stack music data engineering project built with Python, Flask, and Postgr
 
 ```
 waveline/
-├── dashboard.py      # Flask app — all routes and templates
+├── dashboard.py      # Flask app — routes and templates
+├── db.py             # Shared PostgreSQL connection + db_cursor context manager
 ├── pipeline.py       # ETL: Last.fm fetch → Claude analysis → PostgreSQL
 ├── scheduler.py      # APScheduler daily jobs + weekly email digest
 ├── email_digest.py   # Weekly HTML email builder and sender
-├── pipeline.log      # Auto-generated run logs
-└── .env              # API keys (not committed)
+├── transform.py      # Analytics report (run directly)
+├── genre_trends.py   # Genre trend analysis (run directly)
+├── main.py           # CLI entry point for a one-off pipeline run
+├── tests/            # pytest suite (helpers, pipeline, db, routes)
+├── .github/workflows/ci.yml   # GitHub Actions — runs tests on push/PR
+├── requirements.txt  # Pinned runtime dependencies
+├── requirements-dev.txt       # Runtime + test dependencies
+├── Procfile          # Production start command (gunicorn)
+└── .env              # API keys (not committed — see .env.example)
 ```
 
 ## Setup
@@ -92,11 +100,23 @@ GMAIL_APP_PASSWORD=your_gmail_app_password
 
 ## Usage
 
-**Run the dashboard:**
+**Run the dashboard (local development):**
 ```bash
 python3 dashboard.py
 ```
 Then open `http://localhost:5000` in your browser.
+
+**Run in production (gunicorn):**
+```bash
+gunicorn dashboard:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
+```
+This is the command in the `Procfile`, used automatically on Railway.
+
+**Run the tests:**
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
 
 **Run the scheduled pipeline:**
 ```bash
