@@ -676,6 +676,7 @@
             <a href="/compare" class="topbar-link" style="text-decoration:none">Compare</a>
             <a href="/profile" class="topbar-link" style="text-decoration:none">Taste Profile</a>
             {% if current_user.is_authenticated %}
+            <a href="/notifications" class="topbar-link" style="text-decoration:none">🔔{% if unread_notifications %} {{ unread_notifications }}{% endif %}</a>
             <a href="/me" class="topbar-link" style="text-decoration:none">@{{ current_user.username }}</a>
             <a href="/logout" class="topbar-link" style="text-decoration:none">Log out</a>
             {% else %}

@@ -5,7 +5,9 @@ A full-stack music data engineering project built with Python, Flask, and Postgr
 ## Features
 
 - **User accounts & profiles** — sign up / log in (Flask-Login, hashed passwords); every user gets a public profile at `/u/<username>` built from the artists they've searched, plus an editable bio
-- **Community feed** — post music thoughts and discoveries (optionally tagged with an artist), follow other listeners, and like/comment; a Following / Discover feed at `/feed`, with posts also shown on each profile
+- **Community feed** — post music thoughts and discoveries (optionally tagged with an artist), follow other listeners, and like/comment; a paginated Following / Discover feed at `/feed`, with posts also shown on each profile and relative timestamps ("2h ago")
+- **Notifications** — a navbar bell with an unread count and a `/notifications` page when someone likes, comments on, or follows you
+- **Richer profiles** — optional location, website/social link, and favourite genres alongside the bio
 - **Artist search** — fetches top tracks from Last.fm, generates written insights via the Anthropic Claude API, stores results in PostgreSQL
 - **Artist profiles** — dedicated pages per artist with Spotify photo, Last.fm listener counts, Deezer fan count, Spotify popularity, genre tags, top track previews, and similar artists
 - **Inline track previews** — 30-second Deezer audio previews via a floating mini player
@@ -48,8 +50,9 @@ waveline/
 ├── models.py         # User model + schema init (users, posts, follows, likes)
 ├── auth.py           # Blueprint — register / login / logout (Flask-Login)
 ├── profiles.py       # Blueprint — public profiles (/u/<username>) + settings + follow
-├── social.py         # Data layer for posts, likes, comments, follows
+├── social.py         # Data layer for posts, likes, comments, follows, notifications
 ├── views_feed.py     # Blueprint — community feed, posting, likes, comments
+├── views_notifications.py  # Blueprint — notifications page
 ├── pipeline.py       # ETL: Last.fm fetch → Claude analysis → PostgreSQL
 ├── scheduler.py      # APScheduler daily jobs + weekly email digest
 ├── email_digest.py   # Weekly HTML email builder and sender
@@ -150,8 +153,9 @@ python3 email_digest.py
 | `/u/<username>` | Public user profile (searched artists, posts, bio) |
 | `/u/<username>/follow` | Follow / unfollow a user (login required) |
 | `/settings` | Edit your own profile (login required) |
-| `/feed` | Community feed — Following / Discover tabs |
+| `/feed` | Community feed — Following / Discover tabs, paginated |
 | `/post` · `/post/<id>/like` · `/post/<id>/comment` | Post, like, comment (login required) |
+| `/notifications` | Your likes / comments / follows notifications (login required) |
 | `/artist/<name>` | Full artist profile with multi-source data |
 | `/compare?a=X&b=Y` | Side-by-side artist comparison |
 | `/profile` | Your personal taste profile |

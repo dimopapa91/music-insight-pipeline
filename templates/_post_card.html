@@ -2,7 +2,7 @@
     <div class="post-head">
         <a class="post-author" href="/u/{{ post.username }}">@{{ post.username }}</a>
         {% if post.artist %}<a class="post-artist" href="/artist/{{ post.artist | urlencode }}">♪ {{ post.artist }}</a>{% endif %}
-        <span class="post-time">{{ post.created_at.strftime('%d %b %Y · %H:%M') }}</span>
+        <span class="post-time">{{ post.created_at | timeago }}</span>
     </div>
     <div class="post-body">{{ post.body }}</div>
     <div class="post-actions">
@@ -21,7 +21,7 @@
     {% if post.comments %}
     <div class="comments">
         {% for c in post.comments %}
-        <div class="comment"><a class="c-author" href="/u/{{ c.username }}">@{{ c.username }}</a> {{ c.body }}</div>
+        <div class="comment"><a class="c-author" href="/u/{{ c.username }}">@{{ c.username }}</a> {{ c.body }} <span class="c-time">· {{ c.created_at | timeago }}</span></div>
         {% endfor %}
     </div>
     {% endif %}

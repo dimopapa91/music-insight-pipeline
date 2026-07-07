@@ -9,11 +9,11 @@ dashboard:app`` (see Procfile).
 import os
 
 from flask import Flask
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from dotenv import load_dotenv
 
 from models import User, init_db
-from services import render_markdown, markdown_preview, artist_titlecase
+from services import render_markdown, markdown_preview, artist_titlecase, timeago
 from auth import auth_bp
 from profiles import profiles_bp
 from views_main import main_bp
@@ -21,6 +21,8 @@ from views_artist import artist_bp
 from views_taste import taste_bp
 from views_news import news_bp
 from views_feed import feed_bp
+from views_notifications import notifications_bp
+from social import count_unread
 
 load_dotenv()
 
@@ -50,6 +52,7 @@ def load_user(user_id):
 app.jinja_env.filters["markdown"] = render_markdown
 app.jinja_env.filters["markdown_preview"] = markdown_preview
 app.jinja_env.filters["titlecase"] = artist_titlecase
+app.jinja_env.filters["timeago"] = timeago
 
 # ── Blueprints ──────────────────────────────────────────────────────
 app.register_blueprint(auth_bp)
@@ -59,6 +62,18 @@ app.register_blueprint(artist_bp)
 app.register_blueprint(taste_bp)
 app.register_blueprint(news_bp)
 app.register_blueprint(feed_bp)
+app.register_blueprint(notifications_bp)
+
+
+@app.context_processor
+def inject_unread_notifications():
+    """Make the unread-notifications badge count available to every template."""
+    try:
+        if current_user.is_authenticated:
+            return {"unread_notifications": count_unread(current_user.id)}
+    except Exception:
+        pass
+    return {"unread_notifications": 0}
 
 # Ensure all application tables exist (idempotent — safe on every boot/worker).
 init_db()

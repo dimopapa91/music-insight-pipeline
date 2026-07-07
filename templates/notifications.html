@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Notifications — Waveline</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Space Mono', monospace; background: #e2e2df; color: #111; }
+        .topbar { background: #111; color: #fff; padding: 0 24px; height: 44px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .topbar-brand { font-weight: 700; font-size: 0.95em; letter-spacing: 2px; color: #1da0c3; text-decoration: none; }
+        .topbar-right { display: flex; gap: 16px; align-items: center; }
+        .topbar-link { color: #1da0c3; font-size: 0.78em; text-decoration: none; }
+        .topbar-link:hover { color: #fff; }
+        .wrap { max-width: 620px; margin: 0 auto; padding: 34px 20px 60px; }
+        h1 { font-size: 1.4em; margin-bottom: 20px; }
+        .notif { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; padding: 14px 18px; margin-bottom: 10px; font-size: 0.85em; color: #333; text-decoration: none; }
+        .notif:hover { border-color: #1da0c3; }
+        .notif.unread { border-left: 3px solid #1da0c3; background: #f4fbfd; }
+        .notif-actor { font-weight: 700; color: #111; }
+        .notif-time { margin-left: auto; font-size: 0.82em; color: #aaa; white-space: nowrap; }
+        .empty { background: #fff; border: 1px dashed #ccc; border-radius: 8px; padding: 30px 24px; text-align: center; font-size: 0.85em; color: #999; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <a href="/" class="topbar-brand">WAVELINE</a>
+        <div class="topbar-right">
+            <a href="/" class="topbar-link">Dashboard</a>
+            <a href="/feed" class="topbar-link">Feed</a>
+            <a href="/me" class="topbar-link">@{{ current_user.username }}</a>
+            <a href="/logout" class="topbar-link">Log out</a>
+        </div>
+    </div>
+    <div class="wrap">
+        <h1>Notifications</h1>
+        {% if items %}
+            {% for n in items %}
+            <a class="notif{{ ' unread' if not n.is_read }}" href="{{ '/u/' ~ n.actor if n.type == 'follow' else '/feed' }}">
+                <span class="notif-actor">@{{ n.actor }}</span>
+                <span>
+                {% if n.type == 'like' %}liked your post
+                {% elif n.type == 'comment' %}commented on your post
+                {% else %}started following you{% endif %}
+                </span>
+                <span class="notif-time">{{ n.created_at | timeago }}</span>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="empty">No notifications yet — likes, comments and follows will show up here.</div>
+        {% endif %}
+    </div>
+</body>
+</html>

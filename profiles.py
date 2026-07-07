@@ -64,7 +64,10 @@ def settings():
     saved = False
     if request.method == "POST":
         bio = request.form.get("bio", "").strip()[:500]
-        current_user.update_bio(bio)
+        location = request.form.get("location", "").strip()[:120]
+        website = request.form.get("website", "").strip()[:255]
+        genres = request.form.get("genres", "").strip()[:255]
+        current_user.update_profile(bio, location, website, genres)
         saved = True
     return render_template_string(SETTINGS_TEMPLATE, user=current_user, saved=saved)
 
@@ -76,6 +79,7 @@ _TOPBAR = """
             <a href="/" class="topbar-link">Dashboard</a>
             <a href="/feed" class="topbar-link">Feed</a>
             {% if current_user.is_authenticated %}
+                <a href="/notifications" class="topbar-link">🔔{% if unread_notifications %} <span class="nbadge">{{ unread_notifications }}</span>{% endif %}</a>
                 <a href="/me" class="topbar-link">@{{ current_user.username }}</a>
                 <a href="/settings" class="topbar-link">Settings</a>
                 <a href="/logout" class="topbar-link">Log out</a>
@@ -119,6 +123,12 @@ _STYLE = """
         button { margin-top: 16px; font-family: inherit; font-size: 0.8em; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #fff; background: #111; border: none; padding: 12px 26px; border-radius: 4px; cursor: pointer; }
         button:hover { background: #1da0c3; }
         .saved { font-size: 0.78em; color: #1a8f4c; margin-top: 12px; }
+        input[type=text] { width: 100%; font-family: inherit; font-size: 0.88em; padding: 11px 14px; border: 1px solid #ddd; border-radius: 4px; background: #fafafa; color: #111; margin-bottom: 4px; }
+        input[type=text]:focus { outline: none; border-color: #1da0c3; background: #fff; }
+        .nbadge { background: #e0245e; color: #fff; border-radius: 10px; font-size: 0.85em; padding: 0 6px; }
+        .pweb { color: #1da0c3; text-decoration: none; }
+        .genre-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .gchip { font-size: 0.68em; text-transform: uppercase; letter-spacing: 0.5px; color: #1da0c3; border: 1px solid #1da0c3; border-radius: 20px; padding: 3px 11px; }
         .follow-btn { font-family: inherit; font-size: 0.72em; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; color: #fff; background: #1da0c3; border: 1px solid #1da0c3; padding: 8px 18px; border-radius: 3px; cursor: pointer; margin: 0; }
         .follow-btn.following { background: #fff; color: #1da0c3; }
         .follow-btn:hover { opacity: 0.85; }
@@ -164,9 +174,10 @@ PROFILE_TEMPLATE = """
             <div style="flex:1;">
                 <div class="pname">@{{ user.username }}</div>
                 <div class="pmeta">
-                    {% if user.created_at %}Joined {{ user.created_at.strftime('%B %Y') }}{% endif %}
+                    {% if user.location %}📍 {{ user.location }} · {% endif %}{% if user.created_at %}Joined {{ user.created_at.strftime('%B %Y') }}{% endif %}{% if user.website %} · <a href="{{ user.website }}" target="_blank" rel="noopener nofollow" class="pweb">{{ user.website | replace('https://', '') | replace('http://', '') }}</a>{% endif %}
                 </div>
                 {% if user.bio %}<div class="pbio">{{ user.bio }}</div>{% endif %}
+                {% if user.genre_list %}<div class="genre-chips">{% for g in user.genre_list %}<span class="gchip">{{ g }}</span>{% endfor %}</div>{% endif %}
                 <div class="counts">
                     <div class="count"><b>{{ artists|length }}</b> <span>artists</span></div>
                     <div class="count"><b>{{ followers }}</b> <span>followers</span></div>
@@ -225,6 +236,12 @@ SETTINGS_TEMPLATE = """
             <form method="POST" action="/settings">
                 <label>Bio</label>
                 <textarea name="bio" maxlength="500" placeholder="Tell people what you're into…">{{ user.bio }}</textarea>
+                <label>Location</label>
+                <input type="text" name="location" maxlength="120" value="{{ user.location }}" placeholder="e.g. Manchester, UK">
+                <label>Website or social link</label>
+                <input type="text" name="website" maxlength="255" value="{{ user.website }}" placeholder="https://…">
+                <label>Favourite genres</label>
+                <input type="text" name="genres" maxlength="255" value="{{ user.genres }}" placeholder="comma-separated — e.g. jazz, hip-hop, ambient">
                 <button type="submit">Save</button>
             </form>
             <p style="font-size:0.75em;color:#999;margin-top:18px;">Your public profile: <a href="/u/{{ user.username }}" style="color:#1da0c3;">/u/{{ user.username }}</a></p>

@@ -58,6 +58,33 @@ def artist_titlecase(name):
     return " ".join(w[:1].upper() + w[1:] for w in name.split(" "))
 
 
+def timeago(dt):
+    """Relative time string like 'just now', '5m ago', '3h ago', '2d ago'.
+    Falls back to an absolute date for anything older than ~30 days.
+    DB timestamps are UTC (CURRENT_TIMESTAMP on Railway), so compare to utcnow.
+    """
+    if not dt or not hasattr(dt, "year"):
+        return ""
+    import datetime as _dt
+    now = _dt.datetime.utcnow()
+    delta = now - dt
+    secs = delta.total_seconds()
+    if secs < 0:
+        secs = 0
+    if secs < 45:
+        return "just now"
+    mins = secs / 60
+    if mins < 60:
+        return f"{int(mins)}m ago"
+    hours = mins / 60
+    if hours < 24:
+        return f"{int(hours)}h ago"
+    days = hours / 24
+    if days < 30:
+        return f"{int(days)}d ago"
+    return dt.strftime("%d %b %Y")
+
+
 # ── Spotify ─────────────────────────────────────────────────────────
 
 def get_spotify_token():

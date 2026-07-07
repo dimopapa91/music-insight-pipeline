@@ -16,14 +16,22 @@ def _safe_redirect(target, default):
     return redirect(default)
 
 
+PER_PAGE = 15
+
+
 @feed_bp.route("/feed")
 def feed():
     tab = request.args.get("tab")
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+    except (TypeError, ValueError):
+        page = 1
     viewer_id = current_user.id if current_user.is_authenticated else None
     if tab not in ("following", "discover"):
         tab = "following" if viewer_id else "discover"
-    posts = get_feed(viewer_id, scope=tab)
-    return render_template("feed.html", posts=posts, tab=tab)
+    posts = get_feed(viewer_id, scope=tab, page=page, per_page=PER_PAGE)
+    has_next = len(posts) == PER_PAGE
+    return render_template("feed.html", posts=posts, tab=tab, page=page, has_next=has_next)
 
 
 @feed_bp.route("/post", methods=["POST"])

@@ -66,15 +66,17 @@ def delete_post(post_id, user_id):
         return cur.rowcount > 0
 
 
-def get_feed(viewer_id, scope="discover", limit=50):
-    """scope='following' → viewer's own posts + people they follow; else global."""
-    params = {"viewer": viewer_id, "limit": limit}
+def get_feed(viewer_id, scope="discover", page=1, per_page=15):
+    """scope='following' → viewer's own posts + people they follow; else global.
+    Paginated: returns at most per_page posts for the given 1-based page."""
+    page = max(1, int(page or 1))
+    params = {"viewer": viewer_id, "limit": per_page, "offset": (page - 1) * per_page}
     if scope == "following" and viewer_id:
         where = (" WHERE p.user_id = %(viewer)s "
                  " OR p.user_id IN (SELECT followee_id FROM follows WHERE follower_id = %(viewer)s) ")
     else:
         where = ""
-    sql = POST_SELECT + where + " ORDER BY p.created_at DESC LIMIT %(limit)s"
+    sql = POST_SELECT + where + " ORDER BY p.created_at DESC LIMIT %(limit)s OFFSET %(offset)s"
     with db_cursor() as cur:
         cur.execute(sql, params)
         posts = [_row_to_post(r) for r in cur.fetchall()]
@@ -82,9 +84,11 @@ def get_feed(viewer_id, scope="discover", limit=50):
     return posts
 
 
-def get_user_posts(user_id, viewer_id=None, limit=50):
-    params = {"viewer": viewer_id, "uid": user_id, "limit": limit}
-    sql = POST_SELECT + " WHERE p.user_id = %(uid)s ORDER BY p.created_at DESC LIMIT %(limit)s"
+def get_user_posts(user_id, viewer_id=None, page=1, per_page=15):
+    page = max(1, int(page or 1))
+    params = {"viewer": viewer_id, "uid": user_id,
+              "limit": per_page, "offset": (page - 1) * per_page}
+    sql = POST_SELECT + " WHERE p.user_id = %(uid)s ORDER BY p.created_at DESC LIMIT %(limit)s OFFSET %(offset)s"
     with db_cursor() as cur:
         cur.execute(sql, params)
         posts = [_row_to_post(r) for r in cur.fetchall()]
@@ -104,6 +108,7 @@ def toggle_like(user_id, post_id):
             cur.execute("INSERT INTO likes (user_id, post_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
                         (user_id, post_id))
             liked = True
+            _notify_post_owner(cur, post_id, user_id, "like")
         cur.execute("SELECT COUNT(*) FROM likes WHERE post_id = %s", (post_id,))
         count = cur.fetchone()[0]
     return liked, count
@@ -118,7 +123,9 @@ def add_comment(user_id, post_id, body):
     with db_cursor(commit=True) as cur:
         cur.execute("INSERT INTO comments (post_id, user_id, body) VALUES (%s, %s, %s) RETURNING id",
                     (post_id, user_id, body))
-        return cur.fetchone()[0]
+        cid = cur.fetchone()[0]
+        _notify_post_owner(cur, post_id, user_id, "comment")
+        return cid
 
 
 # ── Follows ─────────────────────────────────────────────────────────
@@ -136,6 +143,9 @@ def toggle_follow(follower_id, followee_id):
             return False
         cur.execute("INSERT INTO follows (follower_id, followee_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
                     (follower_id, followee_id))
+        cur.execute(
+            "INSERT INTO notifications (user_id, actor_id, type) VALUES (%s, %s, 'follow')",
+            (followee_id, follower_id))
         return True
 
 
@@ -153,3 +163,43 @@ def get_follow_counts(user_id):
         cur.execute("SELECT COUNT(*) FROM follows WHERE follower_id = %s", (user_id,))
         following = cur.fetchone()[0]
     return followers, following
+
+
+# ── Notifications ───────────────────────────────────────────────────
+
+def _notify_post_owner(cur, post_id, actor_id, kind):
+    """Insert a like/comment notification for a post's owner (skips self-actions).
+    Runs inside an existing cursor/transaction."""
+    cur.execute("SELECT user_id FROM posts WHERE id = %s", (post_id,))
+    row = cur.fetchone()
+    if row and row[0] != actor_id:
+        cur.execute(
+            "INSERT INTO notifications (user_id, actor_id, type, post_id) VALUES (%s, %s, %s, %s)",
+            (row[0], actor_id, kind, post_id))
+
+
+def get_notifications(user_id, limit=30):
+    with db_cursor() as cur:
+        cur.execute("""
+            SELECT n.id, n.type, n.post_id, n.is_read, n.created_at, u.username
+            FROM notifications n
+            JOIN users u ON u.id = n.actor_id
+            WHERE n.user_id = %s
+            ORDER BY n.created_at DESC
+            LIMIT %s
+        """, (user_id, limit))
+        return [{"id": r[0], "type": r[1], "post_id": r[2], "is_read": r[3],
+                 "created_at": r[4], "actor": r[5]} for r in cur.fetchall()]
+
+
+def count_unread(user_id):
+    with db_cursor() as cur:
+        cur.execute("SELECT COUNT(*) FROM notifications WHERE user_id = %s AND is_read = FALSE",
+                    (user_id,))
+        return cur.fetchone()[0]
+
+
+def mark_all_read(user_id):
+    with db_cursor(commit=True) as cur:
+        cur.execute("UPDATE notifications SET is_read = TRUE WHERE user_id = %s AND is_read = FALSE",
+                    (user_id,))

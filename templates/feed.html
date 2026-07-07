@@ -52,6 +52,12 @@
         .comment-form input:focus { outline: none; border-color: #1da0c3; background: #fff; }
         .empty { background: #fff; border: 1px dashed #ccc; border-radius: 8px; padding: 30px 24px; text-align: center; font-size: 0.85em; color: #999; }
         .empty a { color: #1da0c3; text-decoration: none; }
+        .nbadge { background: #e0245e; color: #fff; border-radius: 10px; font-size: 0.85em; padding: 0 6px; }
+        .c-time { color: #aaa; font-size: 0.9em; }
+        .pager { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
+        .page-link { font-size: 0.76em; color: #1da0c3; text-decoration: none; border: 1px solid #1da0c3; border-radius: 20px; padding: 7px 16px; }
+        .page-link:hover { background: #1da0c3; color: #fff; }
+        .page-num { font-size: 0.72em; color: #999; }
     </style>
 </head>
 <body>
@@ -61,6 +67,7 @@
             <a href="/" class="topbar-link">Dashboard</a>
             <a href="/feed" class="topbar-link">Feed</a>
             {% if current_user.is_authenticated %}
+                <a href="/notifications" class="topbar-link">🔔{% if unread_notifications %} <span class="nbadge">{{ unread_notifications }}</span>{% endif %}</a>
                 <a href="/me" class="topbar-link">@{{ current_user.username }}</a>
                 <a href="/logout" class="topbar-link">Log out</a>
             {% else %}
@@ -91,13 +98,22 @@
             <a href="/feed?tab=discover" class="tab{{ ' active' if tab == 'discover' }}">Discover</a>
         </div>
 
-        {% set next = '/feed?tab=' ~ tab %}
+        {% set next = '/feed?tab=' ~ tab ~ '&page=' ~ page %}
         {% if posts %}
             {% for post in posts %}{% include "_post_card.html" %}{% endfor %}
+            {% if page > 1 or has_next %}
+            <div class="pager">
+                {% if page > 1 %}<a class="page-link" href="/feed?tab={{ tab }}&page={{ page - 1 }}">← Newer</a>{% else %}<span></span>{% endif %}
+                <span class="page-num">Page {{ page }}</span>
+                {% if has_next %}<a class="page-link" href="/feed?tab={{ tab }}&page={{ page + 1 }}">Older →</a>{% else %}<span></span>{% endif %}
+            </div>
+            {% endif %}
         {% else %}
             <div class="empty">
             {% if tab == 'following' %}
                 Nothing here yet — follow some people (open a profile and hit Follow), or check <a href="/feed?tab=discover">Discover</a>.
+            {% elif page > 1 %}
+                No more posts. <a href="/feed?tab={{ tab }}">Back to the top</a>.
             {% else %}
                 No posts yet. {% if current_user.is_authenticated %}Be the first to share something!{% else %}<a href="/register">Sign up</a> to start the conversation.{% endif %}
             {% endif %}

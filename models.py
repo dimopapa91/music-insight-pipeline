@@ -28,6 +28,10 @@ SCHEMA = [
     """,
     # Link searches to the user who ran them (existing rows stay NULL = anonymous)
     "ALTER TABLE searches ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)",
+    # Richer profile fields (added later — safe on existing users)
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS location VARCHAR(120) DEFAULT ''",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS website  VARCHAR(255) DEFAULT ''",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS genres   VARCHAR(255) DEFAULT ''",
     # Phase 2 (feed) tables — created now so the feed needs no further migration
     """
     CREATE TABLE IF NOT EXISTS posts (
@@ -63,6 +67,18 @@ SCHEMA = [
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """,
+    """
+    CREATE TABLE IF NOT EXISTS notifications (
+        id         SERIAL PRIMARY KEY,
+        user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,  -- recipient
+        actor_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,  -- who did it
+        type       VARCHAR(20) NOT NULL,                                     -- like | comment | follow
+        post_id    INTEGER REFERENCES posts(id) ON DELETE CASCADE,
+        is_read    BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, is_read)",
 ]
 
 
@@ -78,30 +94,46 @@ def init_db():
 
 
 class User(UserMixin):
-    def __init__(self, id, username, email, password_hash, bio="", created_at=None):
+    def __init__(self, id, username, email, password_hash, bio="",
+                 location="", website="", genres="", created_at=None):
         self.id = id
         self.username = username
         self.email = email
         self.password_hash = password_hash
         self.bio = bio or ""
+        self.location = location or ""
+        self.website = website or ""
+        self.genres = genres or ""
         self.created_at = created_at
+
+    @property
+    def genre_list(self):
+        return [g.strip() for g in (self.genres or "").split(",") if g.strip()]
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    def update_bio(self, bio):
+    def update_profile(self, bio, location="", website="", genres=""):
         with db_cursor(commit=True) as cur:
-            cur.execute("UPDATE users SET bio = %s WHERE id = %s", (bio, self.id))
-        self.bio = bio
+            cur.execute(
+                "UPDATE users SET bio = %s, location = %s, website = %s, genres = %s WHERE id = %s",
+                (bio, location, website, genres, self.id),
+            )
+        self.bio, self.location, self.website, self.genres = bio, location, website, genres
 
-    _COLUMNS = "id, username, email, password_hash, bio, created_at"
+    # Backwards-compatible alias
+    def update_bio(self, bio):
+        self.update_profile(bio, self.location, self.website, self.genres)
+
+    _COLUMNS = "id, username, email, password_hash, bio, location, website, genres, created_at"
 
     @classmethod
     def _from_row(cls, row):
         if not row:
             return None
-        return cls(id=row[0], username=row[1], email=row[2],
-                   password_hash=row[3], bio=row[4], created_at=row[5])
+        return cls(id=row[0], username=row[1], email=row[2], password_hash=row[3],
+                   bio=row[4], location=row[5], website=row[6], genres=row[7],
+                   created_at=row[8])
 
     @classmethod
     def get(cls, user_id):

@@ -29,7 +29,7 @@ def _post(id=5, username="alice", body="Loving this new album", user_id=2):
 
 def test_feed_discover_renders_posts_and_comments(monkeypatch):
     monkeypatch.setattr(views_feed, "get_feed",
-                        lambda viewer_id, scope="discover", limit=50: [_post()])
+                        lambda viewer_id, scope="discover", page=1, per_page=15: [_post()])
     client = dashboard.app.test_client()
     resp = client.get("/feed?tab=discover")
     assert resp.status_code == 200
