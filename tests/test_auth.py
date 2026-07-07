@@ -88,6 +88,8 @@ def test_public_profile_renders(monkeypatch):
     monkeypatch.setattr(User, "get_by_username", classmethod(lambda cls, u: fake if u == "alice" else None))
     monkeypatch.setattr(profiles, "get_user_searched_artists", lambda uid: ["Radiohead", "SZA"])
     monkeypatch.setattr(profiles, "get_follow_counts", lambda uid: (0, 0))
+    monkeypatch.setattr(profiles, "get_user_posts", lambda uid, viewer_id=None: [])
+    monkeypatch.setattr(profiles, "is_following", lambda a, b: False)
     client = dashboard.app.test_client()
     resp = client.get("/u/alice")
     assert resp.status_code == 200

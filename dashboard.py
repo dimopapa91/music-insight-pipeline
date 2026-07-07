@@ -20,6 +20,7 @@ from views_main import main_bp
 from views_artist import artist_bp
 from views_taste import taste_bp
 from views_news import news_bp
+from views_feed import feed_bp
 
 load_dotenv()
 
@@ -57,6 +58,7 @@ app.register_blueprint(main_bp)
 app.register_blueprint(artist_bp)
 app.register_blueprint(taste_bp)
 app.register_blueprint(news_bp)
+app.register_blueprint(feed_bp)
 
 # Ensure all application tables exist (idempotent — safe on every boot/worker).
 init_db()

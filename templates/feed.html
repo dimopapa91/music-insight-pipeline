@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Feed — Waveline</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Space Mono', monospace; background: #e2e2df; color: #111; }
+        .topbar { background: #111; color: #fff; padding: 0 24px; height: 44px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .topbar-brand { font-weight: 700; font-size: 0.95em; letter-spacing: 2px; color: #1da0c3; text-decoration: none; }
+        .topbar-right { display: flex; gap: 16px; align-items: center; }
+        .topbar-link { color: #1da0c3; font-size: 0.78em; text-decoration: none; }
+        .topbar-link:hover { color: #fff; }
+        .wrap { max-width: 620px; margin: 0 auto; padding: 30px 20px 60px; }
+        h1 { font-size: 1.4em; margin-bottom: 4px; }
+        .sub { font-size: 0.75em; color: #777; margin-bottom: 22px; }
+        .compose { background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; padding: 18px 20px; margin-bottom: 20px; }
+        .compose textarea { width: 100%; min-height: 74px; font-family: inherit; font-size: 0.9em; border: 1px solid #ddd; border-radius: 5px; padding: 12px; background: #fafafa; resize: vertical; }
+        .compose textarea:focus { outline: none; border-color: #1da0c3; background: #fff; }
+        .compose-row { display: flex; gap: 10px; margin-top: 10px; }
+        .compose-row input { flex: 1; font-family: inherit; font-size: 0.82em; border: 1px solid #ddd; border-radius: 5px; padding: 9px 12px; background: #fafafa; }
+        .compose-row input:focus { outline: none; border-color: #1da0c3; background: #fff; }
+        .compose-row button, .comment-form button { font-family: inherit; font-size: 0.78em; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #fff; background: #111; border: none; border-radius: 5px; padding: 9px 22px; cursor: pointer; }
+        .compose-row button:hover, .comment-form button:hover { background: #1da0c3; }
+        .signin-prompt { background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; font-size: 0.82em; color: #555; }
+        .signin-prompt a { color: #1da0c3; text-decoration: none; }
+        .tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+        .tab { font-size: 0.74em; letter-spacing: 1px; text-transform: uppercase; color: #777; text-decoration: none; padding: 7px 16px; border: 1px solid #ddd; border-radius: 20px; background: #fff; }
+        .tab.active { background: #1da0c3; color: #fff; border-color: #1da0c3; }
+        .post { background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; padding: 18px 20px; margin-bottom: 14px; }
+        .post-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+        .post-author { font-weight: 700; font-size: 0.9em; color: #111; text-decoration: none; }
+        .post-author:hover { color: #1da0c3; }
+        .post-artist { font-size: 0.72em; color: #1da0c3; text-decoration: none; border: 1px solid #1da0c3; border-radius: 3px; padding: 2px 8px; }
+        .post-time { font-size: 0.68em; color: #999; margin-left: auto; }
+        .post-body { font-size: 0.9em; line-height: 1.6; color: #222; white-space: pre-wrap; word-wrap: break-word; }
+        .post-actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+        .inline { display: inline; }
+        .act-btn { font-family: inherit; font-size: 0.74em; color: #666; background: none; border: 1px solid #e2e2e2; border-radius: 5px; padding: 4px 10px; cursor: pointer; }
+        button.act-btn:hover { border-color: #1da0c3; color: #1da0c3; }
+        .like-btn.liked { color: #e0245e; border-color: #e0245e; }
+        .del-btn { color: #b00; }
+        button.del-btn:hover { border-color: #b00; color: #b00; }
+        .comments { margin-top: 12px; border-top: 1px solid #f0f0f0; padding-top: 10px; }
+        .comment { font-size: 0.82em; color: #333; padding: 5px 0; line-height: 1.5; }
+        .c-author { font-weight: 700; color: #111; text-decoration: none; }
+        .c-author:hover { color: #1da0c3; }
+        .comment-form { display: flex; gap: 8px; margin-top: 10px; }
+        .comment-form input { flex: 1; font-family: inherit; font-size: 0.82em; border: 1px solid #ddd; border-radius: 5px; padding: 8px 12px; background: #fafafa; }
+        .comment-form input:focus { outline: none; border-color: #1da0c3; background: #fff; }
+        .empty { background: #fff; border: 1px dashed #ccc; border-radius: 8px; padding: 30px 24px; text-align: center; font-size: 0.85em; color: #999; }
+        .empty a { color: #1da0c3; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <a href="/" class="topbar-brand">WAVELINE</a>
+        <div class="topbar-right">
+            <a href="/" class="topbar-link">Dashboard</a>
+            <a href="/feed" class="topbar-link">Feed</a>
+            {% if current_user.is_authenticated %}
+                <a href="/me" class="topbar-link">@{{ current_user.username }}</a>
+                <a href="/logout" class="topbar-link">Log out</a>
+            {% else %}
+                <a href="/login" class="topbar-link">Log in</a>
+                <a href="/register" class="topbar-link">Sign up</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="wrap">
+        <h1>Community Feed</h1>
+        <div class="sub">Share what you're listening to and discover what others are into.</div>
+
+        {% if current_user.is_authenticated %}
+        <form method="POST" action="/post" class="compose">
+            <textarea name="body" placeholder="Share a thought or a new discovery…" maxlength="1000" required></textarea>
+            <div class="compose-row">
+                <input type="text" name="artist" placeholder="Tag an artist (optional)" maxlength="255">
+                <button type="submit">Post</button>
+            </div>
+        </form>
+        {% else %}
+        <div class="signin-prompt"><a href="/login">Log in</a> or <a href="/register">sign up</a> to post, like and join the conversation.</div>
+        {% endif %}
+
+        <div class="tabs">
+            <a href="/feed?tab=following" class="tab{{ ' active' if tab == 'following' }}">Following</a>
+            <a href="/feed?tab=discover" class="tab{{ ' active' if tab == 'discover' }}">Discover</a>
+        </div>
+
+        {% set next = '/feed?tab=' ~ tab %}
+        {% if posts %}
+            {% for post in posts %}{% include "_post_card.html" %}{% endfor %}
+        {% else %}
+            <div class="empty">
+            {% if tab == 'following' %}
+                Nothing here yet — follow some people (open a profile and hit Follow), or check <a href="/feed?tab=discover">Discover</a>.
+            {% else %}
+                No posts yet. {% if current_user.is_authenticated %}Be the first to share something!{% else %}<a href="/register">Sign up</a> to start the conversation.{% endif %}
+            {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

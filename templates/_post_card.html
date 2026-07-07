@@ -1,0 +1,35 @@
+<div class="post">
+    <div class="post-head">
+        <a class="post-author" href="/u/{{ post.username }}">@{{ post.username }}</a>
+        {% if post.artist %}<a class="post-artist" href="/artist/{{ post.artist | urlencode }}">♪ {{ post.artist }}</a>{% endif %}
+        <span class="post-time">{{ post.created_at.strftime('%d %b %Y · %H:%M') }}</span>
+    </div>
+    <div class="post-body">{{ post.body }}</div>
+    <div class="post-actions">
+        <form method="POST" action="/post/{{ post.id }}/like" class="inline">
+            <input type="hidden" name="next" value="{{ next }}">
+            <button type="submit" class="act-btn like-btn{{ ' liked' if post.liked }}"{% if not current_user.is_authenticated %} disabled title="Log in to like"{% endif %}>♥ {{ post.like_count }}</button>
+        </form>
+        <span class="act-btn">💬 {{ post.comment_count }}</span>
+        {% if current_user.is_authenticated and current_user.id == post.user_id %}
+        <form method="POST" action="/post/{{ post.id }}/delete" class="inline" onsubmit="return confirm('Delete this post?')">
+            <input type="hidden" name="next" value="{{ next }}">
+            <button type="submit" class="act-btn del-btn">Delete</button>
+        </form>
+        {% endif %}
+    </div>
+    {% if post.comments %}
+    <div class="comments">
+        {% for c in post.comments %}
+        <div class="comment"><a class="c-author" href="/u/{{ c.username }}">@{{ c.username }}</a> {{ c.body }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if current_user.is_authenticated %}
+    <form method="POST" action="/post/{{ post.id }}/comment" class="comment-form">
+        <input type="hidden" name="next" value="{{ next }}">
+        <input type="text" name="body" placeholder="Add a comment…" maxlength="500" required>
+        <button type="submit">Reply</button>
+    </form>
+    {% endif %}
+</div>

@@ -5,6 +5,7 @@ A full-stack music data engineering project built with Python, Flask, and Postgr
 ## Features
 
 - **User accounts & profiles** — sign up / log in (Flask-Login, hashed passwords); every user gets a public profile at `/u/<username>` built from the artists they've searched, plus an editable bio
+- **Community feed** — post music thoughts and discoveries (optionally tagged with an artist), follow other listeners, and like/comment; a Following / Discover feed at `/feed`, with posts also shown on each profile
 - **Artist search** — fetches top tracks from Last.fm, generates written insights via the Anthropic Claude API, stores results in PostgreSQL
 - **Artist profiles** — dedicated pages per artist with Spotify photo, Last.fm listener counts, Deezer fan count, Spotify popularity, genre tags, top track previews, and similar artists
 - **Inline track previews** — 30-second Deezer audio previews via a floating mini player
@@ -46,7 +47,9 @@ waveline/
 ├── db.py             # Shared PostgreSQL connection + db_cursor context manager
 ├── models.py         # User model + schema init (users, posts, follows, likes)
 ├── auth.py           # Blueprint — register / login / logout (Flask-Login)
-├── profiles.py       # Blueprint — public profiles (/u/<username>) + settings
+├── profiles.py       # Blueprint — public profiles (/u/<username>) + settings + follow
+├── social.py         # Data layer for posts, likes, comments, follows
+├── views_feed.py     # Blueprint — community feed, posting, likes, comments
 ├── pipeline.py       # ETL: Last.fm fetch → Claude analysis → PostgreSQL
 ├── scheduler.py      # APScheduler daily jobs + weekly email digest
 ├── email_digest.py   # Weekly HTML email builder and sender
@@ -144,8 +147,11 @@ python3 email_digest.py
 |-------|-------------|
 | `/` | Main dashboard — search, stats, recent insights |
 | `/register`, `/login`, `/logout` | Account sign-up and session auth |
-| `/u/<username>` | Public user profile (searched artists + bio) |
+| `/u/<username>` | Public user profile (searched artists, posts, bio) |
+| `/u/<username>/follow` | Follow / unfollow a user (login required) |
 | `/settings` | Edit your own profile (login required) |
+| `/feed` | Community feed — Following / Discover tabs |
+| `/post` · `/post/<id>/like` · `/post/<id>/comment` | Post, like, comment (login required) |
 | `/artist/<name>` | Full artist profile with multi-source data |
 | `/compare?a=X&b=Y` | Side-by-side artist comparison |
 | `/profile` | Your personal taste profile |
