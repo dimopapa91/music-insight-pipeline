@@ -1,938 +1,320 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Waveline</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+{% extends "base.html" %}
+{% block title %}Waveline — Discover artists{% endblock %}
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #e2e2df;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1440' height='320' viewBox='0 0 1440 320'%3E%3Cpath fill='none' stroke='%231da0c3' stroke-width='1.2' stroke-opacity='0.10' d='M0,160 C60,130 120,190 180,160 C240,130 300,100 360,130 C420,160 480,200 540,170 C600,140 660,110 720,140 C780,170 840,210 900,180 C960,150 1020,100 1080,130 C1140,160 1200,200 1260,170 C1320,140 1380,130 1440,150'/%3E%3Cpath fill='none' stroke='%231da0c3' stroke-width='1' stroke-opacity='0.07' d='M0,200 C80,170 160,230 240,200 C320,170 400,130 480,160 C560,190 640,220 720,190 C800,160 880,120 960,150 C1040,180 1120,210 1200,185 C1280,160 1360,150 1440,170'/%3E%3Cpath fill='none' stroke='%231da0c3' stroke-width='0.8' stroke-opacity='0.06' d='M0,120 C100,100 200,150 300,120 C400,90 500,70 600,100 C700,130 800,160 900,130 C1000,100 1100,80 1200,110 C1300,140 1380,130 1440,120'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: center 60%;
-            background-size: 120% auto;
-            color: #111;
-            min-height: 100vh;
-            font-size: 17px;
-            line-height: 1.5;
-            transition: background 0.2s, color 0.2s;
-        }
+{% block head_extra %}
+<style>
+  /* ── Discover page ── */
+  .dv-hero { padding: var(--wv-8) 0 var(--wv-6); }
+  .dv-hero h1 { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.9rem, 5vw, 3rem); line-height: 1.08; letter-spacing: -.5px; max-width: 16ch; }
+  .dv-hero .dv-sub { font-size: clamp(1rem, 2.2vw, 1.15rem); color: var(--wv-ink-2); max-width: 52ch; margin-top: var(--wv-3); }
+  .dv-searchcard { margin-top: var(--wv-5); max-width: 620px; }
+  .dv-searchrow { display: flex; gap: var(--wv-2); }
+  .dv-searchrow input {
+    flex: 1; min-width: 0; height: 52px; padding: 0 18px; font-size: 1rem; font-family: var(--wv-font-body);
+    background: var(--wv-surface); color: var(--wv-ink); border: 1.5px solid var(--wv-border-2); border-radius: var(--wv-radius);
+  }
+  .dv-searchrow input:focus { outline: none; border-color: var(--wv-accent); box-shadow: 0 0 0 3px var(--wv-accent-soft); }
+  .dv-searchrow .wv-btn { height: 52px; }
+  .dv-search-wrap { position: relative; }
+  .dv-suggestions {
+    display: none; position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30;
+    background: var(--wv-surface); border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius); box-shadow: var(--wv-shadow-md); overflow: hidden;
+  }
+  .dv-suggestion { padding: 11px 16px; cursor: pointer; font-size: .95rem; }
+  .dv-suggestion:hover, .dv-suggestion[aria-selected="true"] { background: var(--wv-accent-soft); color: var(--wv-accent-ink); }
+  .dv-examples { display: flex; flex-wrap: wrap; gap: var(--wv-2); align-items: center; margin-top: var(--wv-4); }
+  .dv-examples .lbl { font-size: .82rem; color: var(--wv-muted); font-family: var(--wv-font-display); text-transform: uppercase; letter-spacing: 1px; }
+  .dv-examples form { margin: 0; }
+  .dv-getline { margin-top: var(--wv-4); font-size: .9rem; color: var(--wv-muted); }
+  .dv-status { margin-top: var(--wv-3); font-size: .82rem; color: var(--wv-muted); }
 
+  /* Pathways */
+  .dv-path { display: block; text-decoration: none; color: inherit; padding: var(--wv-5); height: 100%; transition: transform var(--wv-motion) var(--wv-ease), border-color var(--wv-motion) var(--wv-ease), box-shadow var(--wv-motion) var(--wv-ease); }
+  .dv-path:hover { transform: translateY(-2px); border-color: var(--wv-accent); box-shadow: var(--wv-shadow-md); }
+  .dv-path .ic { font-size: 1.4rem; }
+  .dv-path h3 { font-family: var(--wv-font-display); font-size: .95rem; margin: var(--wv-3) 0 4px; }
+  .dv-path p { font-size: .86rem; color: var(--wv-muted); }
 
-        /* ── DARK MODE ── */
-        body.dark { background-color: #0d0d0d; color: #e0e0e0; }
-        body.dark .hero { background: #111; border-color: #222; }
-        body.dark .hero h1 { color: #fff; }
-        body.dark .hero-sub { color: #999; }
-        body.dark .search-wrap { background: #111; border-color: #222; }
-        body.dark .search-form input { background: #1a1a1a; border-color: #333; color: #e0e0e0; }
-        body.dark .search-form input::placeholder { color: #444; }
-        body.dark .suggestions { background: #1a1a1a; border-color: #333; }
-        body.dark .suggestion { color: #e0e0e0; }
-        body.dark .suggestion:hover { background: #222; }
-        body.dark .alert { background: #1a1600; border-color: #333; }
-        body.dark .panel { background: #111; border-color: #222; }
-        body.dark .panel-title { color: #e0e0e0; border-color: #333; }
-        body.dark .bar-name { color: #aaa; }
-        body.dark .bar-track { background: #262626; }
-        body.dark .bar-val { color: #aaa; }
-        body.dark .insight-card { background: #161616; border-color: #262626; }
-        body.dark .insight-card:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.45); border-color: #1da0c3; }
-        body.dark .insight-artist { color: #e0e0e0; }
-        body.dark .insight-time { color: #888; }
-        body.dark .insight-body { color: #999; }
-        body.dark .similar-label { color: #888; }
-        body.dark .track-tag { background: #1a1a1a; border-color: #2a2a2a; color: #888; }
-        body.dark .similar-chip { background: #1a1a1a; border-color: #2a2a2a; color: #e0e0e0; }
-        body.dark .discovery-section { background: #111; border-color: #222; }
-        body.dark .discovery-header { color: #e0e0e0; border-color: #444; }
-        body.dark .discovery-card { background: #161616; border-color: #262626; }
-        body.dark .discovery-card:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.45); border-color: #1da0c3; }
-        body.dark .discovery-name { color: #e0e0e0; }
-        body.dark .discovery-fans { color: #999; }
-        body.dark .discovery-img { border-color: #222; background: #1a1a1a; }
-        body.dark .footer { background: #000; }
+  /* Recently analysed rows */
+  .dv-recent { display: grid; gap: var(--wv-2); }
+  .dv-row { display: flex; align-items: center; gap: var(--wv-4); padding: var(--wv-3) var(--wv-4); border: 1px solid var(--wv-border); border-radius: var(--wv-radius); background: var(--wv-surface); text-decoration: none; color: inherit; transition: border-color var(--wv-motion) var(--wv-ease); }
+  .dv-row:hover { border-color: var(--wv-accent); }
+  .dv-row .nm { font-family: var(--wv-font-display); font-weight: 700; font-size: .95rem; }
+  .dv-row .ctx { color: var(--wv-muted); font-size: .85rem; margin-left: auto; text-align: right; }
+  .dv-row .go { color: var(--wv-accent-ink); font-family: var(--wv-font-display); font-size: .7rem; letter-spacing: 1px; text-transform: uppercase; flex-shrink: 0; }
+  @media (max-width: 560px) { .dv-row .ctx { display: none; } }
 
-        /* ── TICKER ── */
-        .ticker {
-            background: #1da0c3;
-            color: #fff;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.65em;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            padding: 6px 0;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-        .ticker-inner {
-            display: inline-block;
-            animation: ticker 28s linear infinite;
-        }
-        .ticker-inner span { margin-right: 60px; }
-        @keyframes ticker {
-            0%   { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
+  /* Insight summary cards */
+  .dv-insight { padding: var(--wv-5); display: flex; flex-direction: column; gap: var(--wv-3); }
+  .dv-insight .top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--wv-3); }
+  .dv-insight .artist { font-family: var(--wv-font-display); font-weight: 700; font-size: 1.05rem; text-decoration: none; color: var(--wv-ink); }
+  .dv-insight .artist:hover { color: var(--wv-accent-ink); }
+  .dv-insight .date { font-size: .78rem; color: var(--wv-muted); white-space: nowrap; }
+  .dv-tracks { display: flex; flex-wrap: wrap; gap: 6px; }
+  .dv-track { font-size: .78rem; padding: 4px 10px; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill); background: var(--wv-surface-2); color: var(--wv-ink-2); cursor: pointer; }
+  .dv-track:hover { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
+  .dv-summary { font-size: .92rem; color: var(--wv-ink-2); line-height: 1.6; }
+  .dv-similar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .dv-similar .lbl { font-size: .72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--wv-muted); font-family: var(--wv-font-display); }
+  .dv-insight .foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: var(--wv-2); }
 
-        /* ── NTS-STYLE TOPBAR ── */
-        .topbar {
-            background: #000;
-            padding: 0 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 48px;
-        }
-        .topbar-brand {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.85em;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #fff;
-        }
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        .topbar-link {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.62em;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #1da0c3;
-        }
-        .live-pill {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 3px;
-            padding: 4px 10px;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.6em;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #fff;
-        }
-        .dot {
-            width: 6px; height: 6px;
-            background: #1da0c3;
-            border-radius: 50%;
-            animation: blink 2s infinite;
-        }
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50%       { opacity: 0.2; }
-        }
+  /* Discovery cards */
+  .dv-disc { padding: var(--wv-4); text-align: center; }
+  .dv-disc img, .dv-disc .ph { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; margin: 0 auto var(--wv-3); background: var(--wv-surface-2); border: 1px solid var(--wv-border); }
+  .dv-disc .nm { font-family: var(--wv-font-display); font-weight: 700; font-size: .9rem; }
+  .dv-disc .fans { font-size: .78rem; color: var(--wv-muted); margin: 2px 0 var(--wv-3); }
 
-        /* ── HERO / HEADER ── */
-        .hero {
-            background: #fff;
-            border-bottom: 2px solid #111;
-            padding: 56px 30px 44px;
-            text-align: center;
-        }
-        .hero-eyebrow {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.65em;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: #1da0c3;
-            margin-bottom: 14px;
-        }
-        .hero h1 {
-            font-family: 'Space Mono', monospace;
-            font-size: 3em;
-            font-weight: 700;
-            letter-spacing: -2px;
-            line-height: 1;
-            text-transform: uppercase;
-            color: #111;
-        }
-        .hero-sub {
-            font-size: 0.78em;
-            color: #6b6b6b;
-            margin-top: 16px;
-            letter-spacing: 1px;
-        }
+  /* Final CTA */
+  .dv-cta { text-align: center; padding: var(--wv-7) var(--wv-5); }
+  .dv-cta h2 { font-family: var(--wv-font-display); font-size: 1.3rem; margin-bottom: var(--wv-2); }
+  .dv-cta p { color: var(--wv-muted); margin-bottom: var(--wv-5); }
+  .dv-cta .row { display: flex; gap: var(--wv-3); justify-content: center; flex-wrap: wrap; }
 
-        /* ── SEARCH ── */
-        .search-wrap {
-            background: #fff;
-            border-bottom: 1px solid #ddd;
-            padding: 28px 30px;
-            display: flex;
-            justify-content: center;
-            position: relative;
-            z-index: 50;
-        }
-        .search-form-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 440px;
-            z-index: 50;
-        }
-        .search-form {
-            display: flex;
-            width: 100%;
-        }
-        .suggestions {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 60px;
-            background: #fff;
-            border: 1px solid #1da0c3;
-            border-top: none;
-            z-index: 999;
-            display: none;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-        }
-        .suggestion {
-            padding: 9px 20px;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.75em;
-            cursor: pointer;
-            color: #333;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .suggestion:hover { background: #e2e2df; }
-        .search-form input {
-            flex: 1;
-            padding: 11px 20px;
-            background: #e2e2df;
-            border: 1px solid #ddd;
-            border-right: none;
-            border-radius: 3px 0 0 3px;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.78em;
-            color: #111;
-            outline: none;
-            transition: border-color 0.15s;
-        }
-        .search-form input::placeholder { color: #bbb; }
-        .search-form input:focus { border-color: #1da0c3; }
-        .search-form button {
-            padding: 12px 26px;
-            background: #111;
-            color: #fff;
-            border: none;
-            border-radius: 0 3px 3px 0;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.78em;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: background 0.15s, transform 0.15s;
-        }
-        .search-form button:hover { background: #1da0c3; transform: translateY(-1px); }
+  /* Mini player */
+  .dv-player { display: none; position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 120; align-items: center; gap: var(--wv-4); background: var(--wv-surface); border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-lg); box-shadow: var(--wv-shadow-md); padding: var(--wv-3) var(--wv-4); max-width: calc(100vw - 32px); }
+  .dv-player .pi { display: flex; flex-direction: column; min-width: 0; }
+  .dv-player .pt { font-weight: 600; font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dv-player .pa { font-size: .75rem; color: var(--wv-muted); }
+  .dv-player audio { height: 34px; }
+  .dv-player .pc { background: none; border: none; color: var(--wv-muted); font-size: 1rem; cursor: pointer; }
+</style>
+{% endblock %}
 
-        .alert {
-            padding: 11px 30px;
-            background: #fffbf0;
-            border-bottom: 1px solid #f0e68c;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.72em;
-            color: #7a6000;
-        }
-        .alert.error { background: #fff5f5; border-bottom-color: #fcc; color: #c0392b; }
+{% block content %}
+<div class="wv-container">
 
-        /* ── STATS ── */
-        .stats-strip {
-            display: flex;
-            background: #111;
-            border-bottom: 2px solid #1da0c3;
-        }
-        .stat {
-            flex: 1;
-            padding: 26px 30px;
-            border-right: 1px solid #222;
-        }
-        .stat:last-child { border-right: none; }
-        .stat-number {
-            font-family: 'Space Mono', monospace;
-            font-size: 2.5em;
-            font-weight: 700;
-            letter-spacing: -1px;
-            color: #fff;
-            line-height: 1;
-        }
-        .stat-label {
-            font-size: 0.72em;
-            color: #1da0c3;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            margin-top: 8px;
-            font-family: 'Space Mono', monospace;
-        }
+  <!-- HERO (search-first) -->
+  <section class="dv-hero" id="top" aria-labelledby="dv-title">
+    <p class="wv-eyebrow">Music discovery · Manchester</p>
+    <h1 id="dv-title">Discover what makes an artist stand out.</h1>
+    <p class="dv-sub">Search any artist for listening data, top tracks, AI-powered insights and similar artists worth exploring.</p>
 
-        /* keep content above body::before symbols */
-        .topbar, .stats-strip, .alert, .main-grid, .discovery-section, .ticker-wrap {
-            position: relative;
-            z-index: 1;
-        }
-
-        /* ── TWO-COLUMN GRID ── */
-        .main-grid {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-        }
-
-        /* ── PANELS ── */
-        .panel {
-            padding: 36px;
-            background: #fff;
-            border-right: 1px solid #e8e8e8;
-        }
-        .panel:last-child { border-right: none; }
-        .panel-title {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.62em;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: #111;
-            margin-bottom: 24px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #111;
-        }
-
-        /* ── BARS ── */
-        .bar-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 18px;
-        }
-        .bar-name {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.74em;
-            color: #2a2a2a;
-            width: 140px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .bar-track {
-            flex: 1;
-            height: 8px;
-            background: #e6e6e6;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .bar-fill {
-            height: 100%;
-            background: #1da0c3;
-            border-radius: 4px;
-        }
-        .bar-val {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.72em;
-            font-weight: 700;
-            color: #444;
-            width: 100px;
-            text-align: right;
-        }
-
-        /* ── INSIGHT CARDS ── */
-        .insight-card {
-            padding: 20px 22px;
-            margin-bottom: 14px;
-            background: #fff;
-            border: 1px solid #ececec;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
-        }
-        .insight-card:last-child { margin-bottom: 0; }
-        .insight-card:hover {
-            box-shadow: 0 10px 24px rgba(0,0,0,0.10);
-            transform: translateY(-2px);
-            border-color: #1da0c3;
-        }
-        .insight-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        .insight-artist {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.84em;
-            font-weight: 700;
-            color: #111;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .insight-time {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.62em;
-            color: #888;
-            letter-spacing: 1px;
-        }
-        .track-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-        .track-tag {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.6em;
-            color: #555;
-            background: #f0f0f0;
-            border: 1px solid #e0e0e0;
-            border-radius: 2px;
-            padding: 2px 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 180px;
-            text-decoration: none;
-            cursor: pointer;
-            transition: background 0.15s, color 0.15s;
-        }
-        .track-tag:hover {
-            background: #111;
-            color: #fff;
-            border-color: #111;
-        }
-        .insight-body {
-            font-size: 0.8em;
-            color: #555;
-            line-height: 1.75;
-        }
-        .insight-preview { display: block; }
-        .insight-full    { display: none; }
-        .insight-full p { margin-bottom: 10px; }
-        .insight-full p:last-child { margin-bottom: 0; }
-        .insight-full ul, .insight-full ol { margin: 8px 0 10px 20px; }
-        .insight-full li { margin-bottom: 4px; }
-        .insight-full strong { font-weight: 700; }
-        .insight-toggle {
-            margin-top: 8px;
-            display: inline-block;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.65em;
-            letter-spacing: 1px;
-            color: #1da0c3;
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 0;
-            text-decoration: underline;
-            text-underline-offset: 3px;
-        }
-        .insight-toggle:hover { color: #111; }
-
-        /* ── SIMILAR ARTISTS ── */
-        .similar-section {
-            margin-top: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 6px;
-        }
-        .similar-label {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.6em;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #888;
-            margin-right: 4px;
-        }
-        .similar-chip {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.64em;
-            font-weight: 700;
-            color: #111;
-            background: #f0f0f0;
-            border: 1px solid #ddd;
-            border-radius: 2px;
-            padding: 4px 12px;
-            cursor: pointer;
-            transition: background 0.15s, border-color 0.15s;
-        }
-        .similar-chip:hover {
-            background: #1da0c3;
-            border-color: #1da0c3;
-            color: #fff;
-        }
-
-        /* ── DISCOVERY SECTION ── */
-        .discovery-section {
-            background: #fff;
-            border-top: 1px solid #e8e8e8;
-            padding: 36px;
-        }
-        .discovery-header {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.62em;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: #111;
-            margin-bottom: 24px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #111;
-        }
-        .discovery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 20px;
-        }
-        .discovery-card {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding: 12px;
-            background: #fff;
-            border: 1px solid #ececec;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
-        }
-        .discovery-card:hover {
-            box-shadow: 0 10px 24px rgba(0,0,0,0.10);
-            transform: translateY(-3px);
-            border-color: #1da0c3;
-        }
-        .discovery-img {
-            width: 100%;
-            aspect-ratio: 1;
-            object-fit: cover;
-            border: 1px solid #eee;
-            background: #e2e2df;
-        }
-        .discovery-name {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.7em;
-            font-weight: 700;
-            color: #111;
-            line-height: 1.3;
-        }
-        .discovery-fans {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.6em;
-            color: #777;
-        }
-        .discovery-btn {
-            margin-top: 4px;
-            padding: 8px 0;
-            background: #111;
-            color: #fff;
-            border: none;
-            border-radius: 3px;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.68em;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: background 0.15s, transform 0.15s;
-            width: 100%;
-        }
-        .discovery-btn:hover { background: #1da0c3; transform: translateY(-1px); }
-
-        /* ── MINI PLAYER ── */
-        .mini-player {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            background: #111;
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 30px;
-            z-index: 1000;
-            border-top: 2px solid #1da0c3;
-            gap: 20px;
-        }
-        .player-info {
-            display: flex;
-            flex-direction: column;
-            min-width: 160px;
-        }
-        .player-title {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.75em;
-            color: #fff;
-            font-weight: 700;
-        }
-        .player-artist {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.62em;
-            color: #1da0c3;
-            margin-top: 2px;
-        }
-        .player-note {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.55em;
-            color: #999;
-            margin-top: 2px;
-        }
-        #audio-player {
-            flex: 1;
-            height: 32px;
-            accent-color: #1da0c3;
-        }
-        .player-close {
-            background: none;
-            border: none;
-            color: #555;
-            font-size: 1em;
-            cursor: pointer;
-            padding: 4px 8px;
-        }
-        .player-close:hover { color: #fff; }
-
-        /* ── FOOTER ── */
-        .footer {
-            background: #000;
-            padding: 20px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .footer-brand {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.7em;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #fff;
-        }
-        .footer-sub {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.6em;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #888;
-        }
-
-        /* ── MOBILE ── */
-        @media (max-width: 700px) {
-            .topbar { padding: 0 10px; }
-            .topbar-brand { font-size: 0.8em; letter-spacing: 1px; flex-shrink: 0; }
-            .topbar-right { gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-shrink: 1; min-width: 0; }
-            .topbar-right::-webkit-scrollbar { display: none; }
-            .topbar-link { font-size: 0.55em; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; }
-            .live-pill { display: none; }
-            .ticker { display: none; }
-            .hero { padding: 24px 16px 20px; }
-            .hero h1 { font-size: 2em; }
-            .hero-eyebrow { font-size: 0.6em; }
-            .hero-sub { font-size: 0.75em; }
-            .search-wrap { padding: 14px 16px; }
-            .search-form-wrapper { max-width: 100%; }
-            .stats-strip { gap: 0; }
-            .stat { padding: 14px 12px; }
-            .stat-num { font-size: 1.6em; }
-            .stat-label { font-size: 0.6em; }
-            .main-grid { grid-template-columns: 1fr; }
-            .panel { border-right: none; border-bottom: 1px solid #e8e8e8; }
-            .bar-row { gap: 6px; }
-            .bar-name { font-size: 0.62em; min-width: 80px; }
-            .insight-card { padding: 14px 16px; }
-            .insight-artist { font-size: 0.78em; }
-            .track-tags { gap: 6px; }
-            .track-tag { font-size: 0.65em; padding: 4px 8px; }
-            .similar-chips { gap: 6px; }
-            .similar-chip { font-size: 0.6em; }
-            .discovery-section { padding: 20px 16px; }
-            .discovery-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-            .footer { flex-direction: column; gap: 8px; text-align: center; padding: 16px; }
-            #mini-player { flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
-            #mini-player audio { width: 100%; }
-        }
-    </style>
-</head>
-<body>
-
-    <!-- TICKER -->
-    <div class="ticker">
-        <div class="ticker-inner">
-            <span>Waveline — Live</span>
-            <span>Last.fm · Spotify · Deezer</span>
-            <span>Manchester, UK — 2026</span>
-            <span>Real-time Music Discovery</span>
-            <span>Waveline — Live</span>
-            <span>Last.fm · Spotify · Deezer</span>
-            <span>Manchester, UK — 2026</span>
-            <span>Real-time Music Discovery</span>
+    <form method="POST" action="/search" id="search-form" class="dv-searchcard" autocomplete="off" role="search" aria-label="Search for an artist">
+      <div class="dv-search-wrap">
+        <div class="dv-searchrow">
+          <label class="wv-sr-only" for="artist-input">Artist name</label>
+          <input type="text" name="artist" id="artist-input" placeholder="Search an artist…"
+                 autocomplete="off" autocapitalize="words" role="combobox" aria-expanded="false"
+                 aria-controls="suggestions" aria-autocomplete="list" required>
+          <button type="submit" class="wv-btn wv-btn-primary">Analyse</button>
         </div>
-    </div>
-
-    <!-- TOPBAR -->
-    <div class="topbar">
-        <span class="topbar-brand">WAVELINE</span>
-        <div class="topbar-right">
-            <a href="/feed" class="topbar-link" style="text-decoration:none">Feed</a>
-            <a href="/news" class="topbar-link" style="text-decoration:none">News</a>
-            <a href="/compare" class="topbar-link" style="text-decoration:none">Compare</a>
-            <a href="/profile" class="topbar-link" style="text-decoration:none">Taste Profile</a>
-            {% if current_user.is_authenticated %}
-            <a href="/notifications" class="topbar-link" style="text-decoration:none">🔔{% if unread_notifications %} {{ unread_notifications }}{% endif %}</a>
-            <a href="/me" class="topbar-link" style="text-decoration:none">@{{ current_user.username }}</a>
-            <a href="/logout" class="topbar-link" style="text-decoration:none">Log out</a>
-            {% else %}
-            <a href="/login" class="topbar-link" style="text-decoration:none">Log in</a>
-            <a href="/register" class="topbar-link" style="text-decoration:none">Sign up</a>
-            {% endif %}
-            <span class="live-pill"><span class="dot"></span>Live</span>
-            <button id="dark-btn" onclick="toggleDark()" style="background:none;border:1px solid #333;color:#888;font-size:0.85em;padding:3px 8px;cursor:pointer;border-radius:3px;">◑</button>
-        </div>
-    </div>
-
-    <!-- HERO -->
-    <div class="hero">
-        <div class="hero-eyebrow">Music Discovery · Manchester</div>
-        <h1>Waveline</h1>
-        <p class="hero-sub">Search any artist — get instant insights into their top tracks</p>
-    </div>
-
-    <!-- SEARCH -->
-    <form method="POST" action="/search" id="search-form" autocomplete="off">
-        <div class="search-wrap">
-            <div class="search-form-wrapper">
-                <div class="search-form">
-                    <input type="text" name="artist" id="artist-input" placeholder="Search an artist…" required />
-                    <button type="submit">Analyse</button>
-                </div>
-                <div id="suggestions" class="suggestions"></div>
-            </div>
-        </div>
+        <div id="suggestions" class="dv-suggestions" role="listbox" aria-label="Artist suggestions"></div>
+      </div>
     </form>
 
+    <div class="dv-examples">
+      <span class="lbl">Try</span>
+      {% for ex in ['Radiohead', 'SZA', 'Nujabes', 'Vince Staples'] %}
+      <form method="POST" action="/search">
+        <input type="hidden" name="artist" value="{{ ex }}">
+        <button type="submit" class="wv-chip">{{ ex }}</button>
+      </form>
+      {% endfor %}
+    </div>
+    <p class="dv-getline">You'll get listener counts, top tracks, an AI-written analysis and a set of similar artists to explore next.</p>
+
     {% if message %}
-    <div class="alert {{ 'error' if error else '' }}">{{ message }}</div>
+    <div class="wv-notice {{ 'wv-notice-error' if error else 'wv-notice-info' }}" style="margin-top:var(--wv-4);" role="status">{{ message }}</div>
     {% endif %}
 
-    <!-- STATS -->
-    <div class="stats-strip">
-        <div class="stat">
-            <div class="stat-number">{{ total_searches }}</div>
-            <div class="stat-label">Total Searches</div>
-        </div>
-        <div class="stat">
-            <div class="stat-number">{{ unique_artists }}</div>
-            <div class="stat-label">Unique Artists</div>
-        </div>
-        <div class="stat">
-            <div class="stat-number">{{ searches_today }}</div>
-            <div class="stat-label">Today</div>
-        </div>
-    </div>
-
-    <!-- MAIN GRID -->
-    <div class="main-grid">
-
-        <!-- LEFT: PLAYS CHART -->
-        <div class="panel">
-            <div class="panel-title">Average Plays by Artist</div>
-            {% for artist, avg, max_avg in artist_plays %}
-            <div class="bar-row">
-                <span class="bar-name">{{ artist | titlecase }}</span>
-                <div class="bar-track">
-                    <div class="bar-fill" style="width: {{ [((avg / max_avg) * 100)|int, 1]|max }}%"></div>
-                </div>
-                <span class="bar-val">{{ "{:,}".format(avg) }}</span>
-            </div>
-            {% endfor %}
-        </div>
-
-        <!-- RIGHT: INSIGHTS -->
-        <div class="panel">
-            <div class="panel-title">Latest Insights</div>
-            {% for row in latest_insights %}
-            <div class="insight-card">
-                <div class="insight-meta">
-                    <a href="/artist/{{ row.artist | urlencode }}" class="insight-artist" style="text-decoration:none;color:inherit;">{{ row.artist | titlecase }}</a>
-                    <span class="insight-time">{{ row.searched_at.strftime('%d %b %Y  %H:%M') }}</span>
-                </div>
-                <div class="track-tags">
-                    {% for t in row.top_tracks %}
-                    <a class="track-tag" href="#" onclick="playTrack('{{ row.artist }}', '{{ t }}'); return false;">▶ {{ t }}</a>
-                    {% endfor %}
-                </div>
-                <div class="insight-body" id="body-{{ loop.index }}">
-                    <span class="insight-preview">{{ row.insight | markdown_preview(200) }}...</span>
-                    <div class="insight-full">{{ row.insight | markdown }}</div>
-                </div>
-                <button class="insight-toggle" onclick="toggleInsight({{ loop.index }}, this)">Read more</button>
-                {% if row.similar_artists %}
-                <div class="similar-section">
-                    <span class="similar-label">Similar</span>
-                    {% for s in row.similar_artists %}
-                    <form method="POST" action="/search" style="display:inline;margin:0">
-                        <input type="hidden" name="artist" value="{{ s }}">
-                        <button type="submit" class="similar-chip">{{ s | titlecase }}</button>
-                    </form>
-                    {% endfor %}
-                </div>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-
-    </div>
-
-    <!-- DISCOVERY -->
-    {% if discovery %}
-    <div class="discovery-section">
-        <div class="discovery-header">Discover · Similar Artists You Haven't Explored Yet</div>
-        <div class="discovery-grid">
-            {% for d in discovery %}
-            <div class="discovery-card">
-                {% if d.image %}
-                <img src="{{ d.image }}" alt="{{ d.name | titlecase }}" class="discovery-img">
-                {% else %}
-                <div class="discovery-img"></div>
-                {% endif %}
-                <div class="discovery-name">{{ d.name | titlecase }}</div>
-                {% if d.nb_fan %}
-                <div class="discovery-fans">{{ "{:,}".format(d.nb_fan) }} fans</div>
-                {% endif %}
-                <form method="POST" action="/search" style="margin:0">
-                    <input type="hidden" name="artist" value="{{ d.name }}">
-                    <button type="submit" class="discovery-btn">Analyse</button>
-                </form>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
+    {% if unique_artists and total_searches %}
+    <p class="dv-status">Waveline has analysed {{ unique_artists }} artist{{ 's' if unique_artists != 1 }} across {{ total_searches }} search{{ 'es' if total_searches != 1 }}{% if searches_today %}, {{ searches_today }} today{% endif %}.</p>
     {% endif %}
+  </section>
 
-    <!-- MINI PLAYER -->
-    <div class="mini-player" id="mini-player">
-        <div class="player-info">
-            <span class="player-title" id="player-title">-</span>
-            <span class="player-artist" id="player-artist">-</span>
-            <span class="player-note">30s preview via Deezer</span>
+  <!-- PRODUCT PATHWAYS -->
+  <section class="wv-section-tight" aria-label="What you can do">
+    <div class="wv-grid wv-grid-4">
+      <a class="wv-card dv-path" href="#top">
+        <span class="ic" aria-hidden="true">🔎</span>
+        <h3>Analyse an artist</h3>
+        <p>Search anyone for stats, top tracks and an AI insight.</p>
+      </a>
+      <a class="wv-card dv-path" href="#discover">
+        <span class="ic" aria-hidden="true">🧭</span>
+        <h3>Discover similar music</h3>
+        <p>Follow recommendations to artists you haven't heard yet.</p>
+      </a>
+      <a class="wv-card dv-path" href="/compare">
+        <span class="ic" aria-hidden="true">⚖️</span>
+        <h3>Compare two artists</h3>
+        <p>See how two artists stack up, side by side.</p>
+      </a>
+      <a class="wv-card dv-path" href="/profile">
+        <span class="ic" aria-hidden="true">🎧</span>
+        <h3>Build a taste profile</h3>
+        <p>Turn your searches into a picture of your taste.</p>
+      </a>
+    </div>
+  </section>
+
+  <!-- RECENTLY ANALYSED -->
+  {% if latest_insights %}
+  <section class="wv-section-tight" aria-labelledby="recent-h">
+    <div class="wv-section-head">
+      <h2 class="wv-h2" id="recent-h">Recently analysed</h2>
+    </div>
+    <div class="dv-recent">
+      {% for row in latest_insights[:6] %}
+      <a class="dv-row" href="/artist/{{ row.artist | urlencode }}">
+        <span class="nm">{{ row.artist | titlecase }}</span>
+        {% if row.top_tracks %}<span class="ctx">Top track · {{ row.top_tracks[0] }}</span>{% endif %}
+        <span class="go">View →</span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- LATEST INSIGHTS (summaries only; full article on artist page) -->
+  {% if latest_insights %}
+  <section class="wv-section-tight" aria-labelledby="insights-h">
+    <div class="wv-section-head">
+      <h2 class="wv-h2" id="insights-h">Latest insights</h2>
+    </div>
+    <div class="wv-grid wv-grid-3">
+      {% for row in latest_insights[:3] %}
+      <article class="wv-card dv-insight">
+        <div class="top">
+          <a class="artist" href="/artist/{{ row.artist | urlencode }}">{{ row.artist | titlecase }}</a>
+          <span class="date">{{ row.searched_at.strftime('%d %b %Y') }}</span>
         </div>
-        <audio id="audio-player" controls>
-            <source id="audio-src" src="" type="audio/mp3">
-        </audio>
-        <button class="player-close" onclick="closeMiniPlayer()">✕</button>
+        {% if row.top_tracks %}
+        <div class="dv-tracks">
+          {% for t in row.top_tracks[:4] %}
+          <button type="button" class="dv-track" onclick="wvPlay('{{ row.artist|e }}', {{ t|tojson }}, this)">▶ {{ t }}</button>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <p class="dv-summary">{{ row.insight | markdown_preview(240) }}…</p>
+        {% if row.similar_artists %}
+        <div class="dv-similar">
+          <span class="lbl">Similar</span>
+          {% for s in row.similar_artists[:3] %}
+          <form method="POST" action="/search" style="margin:0;display:inline;">
+            <input type="hidden" name="artist" value="{{ s }}">
+            <button type="submit" class="wv-chip wv-btn-sm" style="min-height:30px;">{{ s | titlecase }}</button>
+          </form>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <div class="foot">
+          <a class="wv-link" href="/artist/{{ row.artist | urlencode }}">Read full insight →</a>
+        </div>
+      </article>
+      {% endfor %}
     </div>
+  </section>
+  {% endif %}
 
-    <!-- FOOTER -->
-    <div class="footer">
-        <span class="footer-brand">Waveline</span>
-        <span class="footer-sub">Built by Dimos Dimitrios Papageorgiou · Manchester · 2026</span>
+  <!-- DISCOVERY RECOMMENDATIONS -->
+  {% if discovery %}
+  <section class="wv-section-tight" id="discover" aria-labelledby="disc-h">
+    <div class="wv-section-head">
+      <div>
+        <h2 class="wv-h2" id="disc-h">Discover next</h2>
+        <p style="color:var(--wv-muted);font-size:.88rem;margin-top:4px;">Similar to artists explored on Waveline — ones you haven't analysed yet.</p>
+      </div>
     </div>
+    <div class="wv-grid wv-grid-4">
+      {% for d in discovery[:8] %}
+      <div class="wv-card dv-disc">
+        {% if d.image %}<img src="{{ d.image }}" alt="" loading="lazy" width="84" height="84">{% else %}<div class="ph" aria-hidden="true"></div>{% endif %}
+        <div class="nm">{{ d.name | titlecase }}</div>
+        {% if d.nb_fan %}<div class="fans">{{ "{:,}".format(d.nb_fan) }} fans</div>{% else %}<div class="fans">&nbsp;</div>{% endif %}
+        <form method="POST" action="/search" style="margin:0;">
+          <input type="hidden" name="artist" value="{{ d.name }}">
+          <button type="submit" class="wv-btn wv-btn-ghost wv-btn-sm">Analyse</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
 
-    <script>
-    async function playTrack(artist, track) {
-        var tag = event.target;
-        tag.textContent = '⏳ ' + track;
-        try {
-            var resp = await fetch('/preview?artist=' + encodeURIComponent(artist) + '&track=' + encodeURIComponent(track));
-            var data = await resp.json();
-            if (data.preview_url) {
-                document.getElementById('player-title').textContent = data.title;
-                document.getElementById('player-artist').textContent = data.artist;
-                var audio = document.getElementById('audio-player');
-                document.getElementById('audio-src').src = data.preview_url;
-                audio.load();
-                audio.play();
-                document.getElementById('mini-player').style.display = 'flex';
-            } else {
-                window.open('https://open.spotify.com/search/' + encodeURIComponent(artist + ' ' + track), '_blank');
-            }
-        } catch(e) {
-            window.open('https://open.spotify.com/search/' + encodeURIComponent(artist + ' ' + track), '_blank');
-        }
-        tag.textContent = '▶ ' + track;
+  <!-- FINAL CTA -->
+  <section class="wv-card dv-cta wv-section-tight" style="margin-bottom:var(--wv-6);">
+    <h2>Keep exploring</h2>
+    <p>Search another artist, build your taste profile, or join the community.</p>
+    <div class="row">
+      <a class="wv-btn wv-btn-primary" href="#top">Search an artist</a>
+      <a class="wv-btn wv-btn-ghost" href="/profile">Taste profile</a>
+      <a class="wv-btn wv-btn-ghost" href="/feed">Community</a>
+    </div>
+  </section>
+</div>
+
+<!-- MINI PLAYER -->
+<div class="dv-player" id="mini-player" role="region" aria-label="Track preview">
+  <div class="pi">
+    <span class="pt" id="player-title">—</span>
+    <span class="pa" id="player-artist">30s preview via Deezer</span>
+  </div>
+  <audio id="audio-player" controls preload="none"><source id="audio-src" src="" type="audio/mp3"></audio>
+  <button class="pc" onclick="wvClosePlayer()" aria-label="Close preview">✕</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Deezer 30s preview
+  async function wvPlay(artist, track, el) {
+    var original = el.textContent;
+    el.textContent = '⏳ ' + track;
+    try {
+      var resp = await fetch('/preview?artist=' + encodeURIComponent(artist) + '&track=' + encodeURIComponent(track));
+      var data = await resp.json();
+      if (data.preview_url) {
+        document.getElementById('player-title').textContent = data.title;
+        document.getElementById('player-artist').textContent = data.artist;
+        document.getElementById('audio-src').src = data.preview_url;
+        var audio = document.getElementById('audio-player');
+        audio.load(); audio.play();
+        document.getElementById('mini-player').style.display = 'flex';
+      } else {
+        window.open('https://open.spotify.com/search/' + encodeURIComponent(artist + ' ' + track), '_blank', 'noopener');
+      }
+    } catch (e) {
+      window.open('https://open.spotify.com/search/' + encodeURIComponent(artist + ' ' + track), '_blank', 'noopener');
     }
+    el.textContent = original;
+  }
+  function wvClosePlayer() {
+    var a = document.getElementById('audio-player'); a.pause();
+    document.getElementById('mini-player').style.display = 'none';
+  }
 
-    function closeMiniPlayer() {
-        document.getElementById('audio-player').pause();
-        document.getElementById('mini-player').style.display = 'none';
+  // "/" focuses search
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault(); document.getElementById('artist-input').focus();
     }
+  });
 
-    function toggleInsight(i, btn) {
-        var body = document.getElementById('body-' + i);
-        var preview = body.querySelector('.insight-preview');
-        var full    = body.querySelector('.insight-full');
-        if (full.style.display !== 'block') {
-            preview.style.display = 'none';
-            full.style.display    = 'block';
-            btn.textContent = 'Show less';
-        } else {
-            preview.style.display = 'block';
-            full.style.display    = 'none';
-            btn.textContent = 'Read more';
-        }
-    }
-
-    // ── DARK MODE ──
-    function toggleDark() {
-        var isDark = document.body.classList.toggle('dark');
-        localStorage.setItem('dark', isDark ? '1' : '0');
-        document.getElementById('dark-btn').textContent = isDark ? '☀' : '◑';
-    }
-    (function() {
-        if (localStorage.getItem('dark') === '1') {
-            document.body.classList.add('dark');
-            var btn = document.getElementById('dark-btn');
-            if (btn) btn.textContent = '☀';
-        }
-    })();
-
-    // ── KEYBOARD SHORTCUT: / to focus search ──
-    document.addEventListener('keydown', function(e) {
-        if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
-            e.preventDefault();
-            document.getElementById('artist-input').focus();
-        }
-        if (e.key === 'Escape') {
-            document.getElementById('suggestions').style.display = 'none';
-        }
-    });
-
-    // ── SEARCH AUTOCOMPLETE ──
+  // Search autocomplete
+  (function () {
     var allArtists = [];
-    fetch('/api/artists').then(r => r.json()).then(data => { allArtists = data; });
-
+    fetch('/api/artists').then(function (r) { return r.json(); }).then(function (d) { allArtists = d || []; }).catch(function () {});
     var input = document.getElementById('artist-input');
-    var sugBox = document.getElementById('suggestions');
-
-    input.addEventListener('input', function() {
-        var q = this.value.trim().toLowerCase();
-        sugBox.innerHTML = '';
-        if (!q || q.length < 1) { sugBox.style.display = 'none'; return; }
-        var matches = allArtists.filter(a => a.toLowerCase().includes(q)).slice(0, 6);
-        if (matches.length === 0) { sugBox.style.display = 'none'; return; }
-        matches.forEach(function(name) {
-            var div = document.createElement('div');
-            div.className = 'suggestion';
-            div.textContent = name;
-            div.addEventListener('mousedown', function(e) {
-                e.preventDefault();
-                input.value = name;
-                sugBox.style.display = 'none';
-                document.getElementById('search-form').submit();
-            });
-            sugBox.appendChild(div);
-        });
-        sugBox.style.display = 'block';
+    var box = document.getElementById('suggestions');
+    var form = document.getElementById('search-form');
+    if (!input || !box) return;
+    input.addEventListener('input', function () {
+      var q = this.value.trim().toLowerCase();
+      box.innerHTML = '';
+      if (!q) { box.style.display = 'none'; input.setAttribute('aria-expanded', 'false'); return; }
+      var matches = allArtists.filter(function (a) { return a.toLowerCase().indexOf(q) !== -1; }).slice(0, 6);
+      if (!matches.length) { box.style.display = 'none'; input.setAttribute('aria-expanded', 'false'); return; }
+      matches.forEach(function (name) {
+        var div = document.createElement('div');
+        div.className = 'dv-suggestion'; div.setAttribute('role', 'option'); div.textContent = name;
+        div.addEventListener('mousedown', function (e) { e.preventDefault(); input.value = name; box.style.display = 'none'; form.submit(); });
+        box.appendChild(div);
+      });
+      box.style.display = 'block'; input.setAttribute('aria-expanded', 'true');
     });
-
-    input.addEventListener('blur', function() {
-        setTimeout(function() { sugBox.style.display = 'none'; }, 150);
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!sugBox.contains(e.target) && e.target !== input) {
-            sugBox.style.display = 'none';
-        }
-    });
-    </script>
-
-</body>
-</html>
+    input.addEventListener('blur', function () { setTimeout(function () { box.style.display = 'none'; input.setAttribute('aria-expanded', 'false'); }, 150); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { box.style.display = 'none'; input.setAttribute('aria-expanded', 'false'); } });
+  })();
+</script>
+{% endblock %}

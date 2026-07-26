@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#151719">
+    <title>{% block title %}Waveline{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/waveline.css') }}">
+    {% block head_extra %}{% endblock %}
+    <script>
+      // Set theme before paint to avoid a flash.
+      (function () { try { if (localStorage.getItem('wv-theme') === 'dark') document.documentElement.classList.add('pre-dark'); } catch (e) {} })();
+    </script>
+    <style>html.pre-dark body { background:#0c0d0f; color:#edeef0; }</style>
+</head>
+<body>
+    <a class="wv-skip" href="#main">Skip to content</a>
+
+    {% set path = request.path %}
+    <header class="wv-header" id="wv-header">
+        <div class="wv-header-inner">
+            <a class="wv-brand" href="/"><span class="wv-dot" aria-hidden="true"></span>Waveline</a>
+
+            <nav class="wv-nav" aria-label="Primary">
+                <a href="/"        {% if path == '/' %}aria-current="page"{% endif %}>Discover</a>
+                <a href="/feed"    {% if path.startswith('/feed') %}aria-current="page"{% endif %}>Community</a>
+                <a href="/news"    {% if path.startswith('/news') %}aria-current="page"{% endif %}>News</a>
+                <a href="/compare" {% if path.startswith('/compare') %}aria-current="page"{% endif %}>Compare</a>
+                <a href="/profile" {% if path.startswith('/profile') %}aria-current="page"{% endif %}>Taste Profile</a>
+            </nav>
+
+            <div class="wv-header-actions">
+                {% if current_user.is_authenticated %}
+                <a class="wv-iconbtn wv-bell wv-desktop-only" href="/notifications" aria-label="Notifications{% if unread_notifications %} ({{ unread_notifications }} unread){% endif %}">🔔{% if unread_notifications %}<span class="wv-badge">{{ unread_notifications }}</span>{% endif %}</a>
+                <a class="wv-userchip wv-desktop-only" href="/me">@{{ current_user.username }}</a>
+                <a class="wv-iconbtn wv-desktop-only" href="/logout" aria-label="Log out">⏻</a>
+                {% else %}
+                <a class="wv-userchip wv-desktop-only" href="/login">Log in</a>
+                <a class="wv-btn wv-btn-primary wv-btn-sm wv-desktop-only" href="/register">Sign up</a>
+                {% endif %}
+                <button class="wv-iconbtn" id="wv-theme-btn" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">◑</button>
+                <button class="wv-iconbtn wv-navtoggle" id="wv-nav-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="wv-mobilenav">☰</button>
+            </div>
+        </div>
+
+        <nav class="wv-mobilenav" id="wv-mobilenav" aria-label="Primary mobile">
+            <a href="/"        {% if path == '/' %}aria-current="page"{% endif %}>Discover</a>
+            <a href="/feed"    {% if path.startswith('/feed') %}aria-current="page"{% endif %}>Community</a>
+            <a href="/news"    {% if path.startswith('/news') %}aria-current="page"{% endif %}>News</a>
+            <a href="/compare" {% if path.startswith('/compare') %}aria-current="page"{% endif %}>Compare</a>
+            <a href="/profile" {% if path.startswith('/profile') %}aria-current="page"{% endif %}>Taste Profile</a>
+            <hr>
+            {% if current_user.is_authenticated %}
+            <a href="/notifications">Notifications{% if unread_notifications %} ({{ unread_notifications }}){% endif %}</a>
+            <a href="/me">@{{ current_user.username }}</a>
+            <a href="/logout">Log out</a>
+            {% else %}
+            <a href="/login">Log in</a>
+            <a href="/register">Sign up</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main id="main">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="wv-footer">
+        <div class="wv-footer-inner">
+            <div>
+                <div class="wv-footer-brand">Waveline</div>
+                <p style="margin-top:8px;max-width:34ch;">A live music-discovery, artist-insight and community platform. Search any artist for listening data, AI-powered insights and similar artists worth exploring.</p>
+            </div>
+            <div>
+                <h3>Explore</h3>
+                <a href="/">Discover</a>
+                <a href="/feed">Community</a>
+                <a href="/news">News</a>
+                <a href="/compare">Compare</a>
+                <a href="/profile">Taste Profile</a>
+            </div>
+            <div>
+                <h3>About</h3>
+                <a href="https://github.com/dimopapa91/music-insight-pipeline" target="_blank" rel="noopener">GitHub</a>
+                <p style="margin-top:10px;">Data from Last.fm, Spotify &amp; Deezer. Insights via the Anthropic Claude API.</p>
+                <p style="margin-top:10px;">Built by Dimos Papageorgiou · Manchester · 2026</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+      // Theme toggle
+      (function () {
+        var btn = document.getElementById('wv-theme-btn');
+        function apply(dark) {
+          document.body.classList.toggle('dark', dark);
+          document.documentElement.classList.remove('pre-dark');
+          if (btn) btn.textContent = dark ? '☀' : '◑';
+        }
+        try { apply(localStorage.getItem('wv-theme') === 'dark'); } catch (e) {}
+        if (btn) btn.addEventListener('click', function () {
+          var dark = !document.body.classList.contains('dark');
+          try { localStorage.setItem('wv-theme', dark ? 'dark' : 'light'); } catch (e) {}
+          apply(dark);
+        });
+      })();
+      // Mobile nav
+      (function () {
+        var header = document.getElementById('wv-header');
+        var btn = document.getElementById('wv-nav-btn');
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+          var open = header.classList.toggle('wv-open');
+          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+      })();
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
