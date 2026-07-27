@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Sign up' if mode == 'register' else 'Log in' }} — Waveline{% endblock %}
+
+{% block head_extra %}
+<style>
+  .au-wrap { max-width: 420px; margin: 0 auto; padding: var(--wv-8) var(--wv-5); }
+  .au-card { padding: var(--wv-6); }
+  .au-card h1 { font-family: var(--wv-font-display); font-size: 1.4rem; margin-bottom: 6px; }
+  .au-card .sub { color: var(--wv-muted); font-size: .9rem; margin-bottom: var(--wv-5); }
+  .au-field { margin-bottom: var(--wv-4); }
+  .au-field label { display: block; font-family: var(--wv-font-display); font-size: .68rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); margin-bottom: 6px; }
+  .au-field input { width: 100%; height: 46px; padding: 0 14px; font-size: .95rem; font-family: var(--wv-font-body); border: 1.5px solid var(--wv-border-2); border-radius: var(--wv-radius); background: var(--wv-surface-2); color: var(--wv-ink); }
+  .au-field input:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); box-shadow: 0 0 0 3px var(--wv-accent-soft); }
+  .au-hint { font-size: .78rem; color: var(--wv-muted); margin-top: 6px; }
+  .au-remember { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--wv-ink-2); margin-bottom: var(--wv-4); }
+  .au-remember input { width: 18px; height: 18px; }
+  .au-errors { background: var(--wv-danger-soft); border: 1px solid color-mix(in srgb, var(--wv-danger) 30%, transparent); border-radius: var(--wv-radius); padding: 12px 14px; margin-bottom: var(--wv-4); }
+  .au-errors li { list-style: none; color: var(--wv-danger); font-size: .85rem; margin: 3px 0; }
+  .au-submit { width: 100%; }
+  .au-swap { text-align: center; font-size: .85rem; color: var(--wv-muted); margin-top: var(--wv-5); }
+  .au-swap a { color: var(--wv-accent-ink); text-decoration: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="au-wrap">
+  <div class="wv-card au-card">
+    {% if mode == 'register' %}
+      <h1>Create your account</h1>
+      <p class="sub">Build a taste profile from what you explore and join the community.</p>
+    {% else %}
+      <h1>Welcome back</h1>
+      <p class="sub">Log in to your Waveline account.</p>
+    {% endif %}
+
+    {% if errors %}
+    <ul class="au-errors" role="alert" aria-live="assertive">
+      {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if mode == 'register' %}
+    <form method="POST" action="/register" novalidate onsubmit="wvSubmitting(this)">
+      <div class="au-field">
+        <label for="username">Username</label>
+        <input id="username" type="text" name="username" value="{{ username or '' }}" maxlength="30"
+               autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus
+               aria-describedby="username-hint">
+        <p class="au-hint" id="username-hint">3–30 letters, numbers or underscores.</p>
+      </div>
+      <div class="au-field">
+        <label for="email">Email</label>
+        <input id="email" type="email" name="email" value="{{ email or '' }}" autocomplete="email" spellcheck="false" required>
+      </div>
+      <div class="au-field">
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" minlength="8" autocomplete="new-password" required aria-describedby="pw-hint">
+        <p class="au-hint" id="pw-hint">At least 8 characters.</p>
+      </div>
+      <button type="submit" class="wv-btn wv-btn-primary au-submit" data-label="Sign up">Sign up</button>
+    </form>
+    <p class="au-swap">Already have an account? <a href="/login">Log in</a></p>
+
+    {% else %}
+    <form method="POST" action="/login" novalidate onsubmit="wvSubmitting(this)">
+      <div class="au-field">
+        <label for="identifier">Username or email</label>
+        <input id="identifier" type="text" name="identifier" value="{{ identifier or '' }}"
+               autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus>
+      </div>
+      <div class="au-field">
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" autocomplete="current-password" required>
+      </div>
+      <label class="au-remember"><input type="checkbox" name="remember"> Keep me logged in</label>
+      <button type="submit" class="wv-btn wv-btn-primary au-submit" data-label="Log in">Log in</button>
+    </form>
+    <p class="au-swap">New here? <a href="/register">Create an account</a></p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function wvSubmitting(form) {
+    var b = form.querySelector('button[type=submit]');
+    if (b) { b.disabled = true; b.textContent = (b.dataset.label || 'Please wait') + '…'; }
+  }
+</script>
+{% endblock %}

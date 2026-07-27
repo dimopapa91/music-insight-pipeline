@@ -44,22 +44,31 @@ a.back{color:#1da0c3;font-size:0.8em;text-decoration:none;}
 
 @taste_bp.route("/profile")
 def taste_profile():
+    from flask_login import current_user
+
+    # Logged-out: explain the feature; no personal data, no AI call.
+    if not current_user.is_authenticated:
+        return render_template("taste_profile.html", state="logged_out",
+                               artists=[], artist_count=0, taste_analysis=None)
+
     import anthropic as _anthropic
     try:
         with db_cursor() as cur:
             cur.execute("""
                 SELECT DISTINCT ON (artist_name) artist_name, top_tracks
-                FROM searches ORDER BY artist_name, searched_at DESC
-            """)
+                FROM searches WHERE user_id = %s
+                ORDER BY artist_name, searched_at DESC
+            """, (current_user.id,))
             rows = cur.fetchall()
     except Exception:
         return render_template_string(_TASTE_ERROR), 500
 
     artists = [r[0] for r in rows]
     if not artists:
-        return render_template("taste_profile.html", taste_analysis="No artists in your pipeline yet — search some first!", artists=[], artist_count=0, urlencode=quote)
+        return render_template("taste_profile.html", state="empty",
+                               artists=[], artist_count=0, taste_analysis=None)
 
-    cache_key = ",".join(sorted(artists))
+    cache_key = f"{current_user.id}:" + ",".join(sorted(artists))
     if cache_key in _taste_cache:
         analysis = _taste_cache[cache_key]
     else:
@@ -73,16 +82,19 @@ def taste_profile():
 
 {artist_block}
 
-Based on this, write a 2-3 paragraph taste profile in plain prose. Cover: what genres and sounds connect these artists, what this reveals about the listener's personality and taste, and what they might enjoy discovering next. No markdown, no bullet points, no headers — just clean conversational paragraphs."""
+Based on this, write a 2-3 paragraph taste profile in plain prose. Cover: what genres and sounds connect these artists, what this reveals about the listener's personality and taste, and what they might enjoy discovering next. No markdown, no bullet points, no headers — just clean conversational paragraphs. Do not infer sensitive personal characteristics."""
         try:
             _client = _anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
             msg = _client.messages.create(model="claude-haiku-4-5-20251001", max_tokens=600, messages=[{"role": "user", "content": prompt}])
             analysis = msg.content[0].text
             _taste_cache[cache_key] = analysis
-        except Exception as e:
-            analysis = f"Could not generate taste profile: {e}"
+        except Exception:
+            # Never leak provider/exception detail to the user.
+            analysis = None
 
-    return render_template("taste_profile.html", taste_analysis=analysis, artists=artists, artist_count=len(artists), urlencode=quote)
+    return render_template("taste_profile.html", state="ready",
+                           taste_analysis=analysis, artists=artists,
+                           artist_count=len(artists), urlencode=quote)
 
 
 @taste_bp.route("/profile/refresh", methods=["POST"])

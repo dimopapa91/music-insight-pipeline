@@ -1,124 +1,126 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Feed — Waveline</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Space Mono', monospace; background: #e2e2df; color: #111; }
-        .topbar { background: #111; color: #fff; padding: 0 24px; height: 44px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-        .topbar-brand { font-weight: 700; font-size: 0.95em; letter-spacing: 2px; color: #1da0c3; text-decoration: none; }
-        .topbar-right { display: flex; gap: 16px; align-items: center; }
-        .topbar-link { color: #1da0c3; font-size: 0.78em; text-decoration: none; }
-        .topbar-link:hover { color: #fff; }
-        .wrap { max-width: 620px; margin: 0 auto; padding: 30px 20px 60px; }
-        h1 { font-size: 1.4em; margin-bottom: 4px; }
-        .sub { font-size: 0.75em; color: #777; margin-bottom: 22px; }
-        .compose { background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; padding: 18px 20px; margin-bottom: 20px; }
-        .compose textarea { width: 100%; min-height: 74px; font-family: inherit; font-size: 0.9em; border: 1px solid #ddd; border-radius: 5px; padding: 12px; background: #fafafa; resize: vertical; }
-        .compose textarea:focus { outline: none; border-color: #1da0c3; background: #fff; }
-        .compose-row { display: flex; gap: 10px; margin-top: 10px; }
-        .compose-row input { flex: 1; font-family: inherit; font-size: 0.82em; border: 1px solid #ddd; border-radius: 5px; padding: 9px 12px; background: #fafafa; }
-        .compose-row input:focus { outline: none; border-color: #1da0c3; background: #fff; }
-        .compose-row button, .comment-form button { font-family: inherit; font-size: 0.78em; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #fff; background: #111; border: none; border-radius: 5px; padding: 9px 22px; cursor: pointer; }
-        .compose-row button:hover, .comment-form button:hover { background: #1da0c3; }
-        .signin-prompt { background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; font-size: 0.82em; color: #555; }
-        .signin-prompt a { color: #1da0c3; text-decoration: none; }
-        .tabs { display: flex; gap: 6px; margin-bottom: 16px; }
-        .tab { font-size: 0.74em; letter-spacing: 1px; text-transform: uppercase; color: #777; text-decoration: none; padding: 7px 16px; border: 1px solid #ddd; border-radius: 20px; background: #fff; }
-        .tab.active { background: #1da0c3; color: #fff; border-color: #1da0c3; }
-        .post { background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; padding: 18px 20px; margin-bottom: 14px; }
-        .post-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
-        .post-author { font-weight: 700; font-size: 0.9em; color: #111; text-decoration: none; }
-        .post-author:hover { color: #1da0c3; }
-        .post-artist { font-size: 0.72em; color: #1da0c3; text-decoration: none; border: 1px solid #1da0c3; border-radius: 3px; padding: 2px 8px; }
-        .post-time { font-size: 0.68em; color: #999; margin-left: auto; }
-        .post-body { font-size: 0.9em; line-height: 1.6; color: #222; white-space: pre-wrap; word-wrap: break-word; }
-        .post-actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
-        .inline { display: inline; }
-        .act-btn { font-family: inherit; font-size: 0.74em; color: #666; background: none; border: 1px solid #e2e2e2; border-radius: 5px; padding: 4px 10px; cursor: pointer; }
-        button.act-btn:hover { border-color: #1da0c3; color: #1da0c3; }
-        .like-btn.liked { color: #e0245e; border-color: #e0245e; }
-        .del-btn { color: #b00; }
-        button.del-btn:hover { border-color: #b00; color: #b00; }
-        .comments { margin-top: 12px; border-top: 1px solid #f0f0f0; padding-top: 10px; }
-        .comment { font-size: 0.82em; color: #333; padding: 5px 0; line-height: 1.5; }
-        .c-author { font-weight: 700; color: #111; text-decoration: none; }
-        .c-author:hover { color: #1da0c3; }
-        .comment-form { display: flex; gap: 8px; margin-top: 10px; }
-        .comment-form input { flex: 1; font-family: inherit; font-size: 0.82em; border: 1px solid #ddd; border-radius: 5px; padding: 8px 12px; background: #fafafa; }
-        .comment-form input:focus { outline: none; border-color: #1da0c3; background: #fff; }
-        .empty { background: #fff; border: 1px dashed #ccc; border-radius: 8px; padding: 30px 24px; text-align: center; font-size: 0.85em; color: #999; }
-        .empty a { color: #1da0c3; text-decoration: none; }
-        .nbadge { background: #e0245e; color: #fff; border-radius: 10px; font-size: 0.85em; padding: 0 6px; }
-        .c-time { color: #aaa; font-size: 0.9em; }
-        .pager { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
-        .page-link { font-size: 0.76em; color: #1da0c3; text-decoration: none; border: 1px solid #1da0c3; border-radius: 20px; padding: 7px 16px; }
-        .page-link:hover { background: #1da0c3; color: #fff; }
-        .page-num { font-size: 0.72em; color: #999; }
-    </style>
-</head>
-<body>
-    <div class="topbar">
-        <a href="/" class="topbar-brand">WAVELINE</a>
-        <div class="topbar-right">
-            <a href="/" class="topbar-link">Dashboard</a>
-            <a href="/feed" class="topbar-link">Feed</a>
-            {% if current_user.is_authenticated %}
-                <a href="/notifications" class="topbar-link">🔔{% if unread_notifications %} <span class="nbadge">{{ unread_notifications }}</span>{% endif %}</a>
-                <a href="/me" class="topbar-link">@{{ current_user.username }}</a>
-                <a href="/logout" class="topbar-link">Log out</a>
-            {% else %}
-                <a href="/login" class="topbar-link">Log in</a>
-                <a href="/register" class="topbar-link">Sign up</a>
-            {% endif %}
-        </div>
+{% extends "base.html" %}
+{% block title %}Community — Waveline{% endblock %}
+
+{% block head_extra %}
+<style>
+  .cm-wrap { max-width: 640px; margin: 0 auto; padding: var(--wv-6) var(--wv-5) var(--wv-8); }
+  .cm-head h1 { font-family: var(--wv-font-display); font-size: 1.5rem; }
+  .cm-head p { color: var(--wv-muted); font-size: .9rem; margin: 4px 0 var(--wv-5); }
+
+  .cm-intro { padding: var(--wv-5); margin-bottom: var(--wv-5); }
+  .cm-intro h2 { font-family: var(--wv-font-display); font-size: 1.05rem; margin-bottom: var(--wv-2); }
+  .cm-intro ul { list-style: none; margin: var(--wv-3) 0; display: grid; gap: 6px; }
+  .cm-intro li { font-size: .9rem; color: var(--wv-ink-2); padding-left: 20px; position: relative; }
+  .cm-intro li::before { content: "♪"; position: absolute; left: 0; color: var(--wv-accent); }
+  .cm-intro .row { display: flex; gap: var(--wv-3); margin-top: var(--wv-4); flex-wrap: wrap; }
+
+  .cm-compose { padding: var(--wv-4); margin-bottom: var(--wv-5); }
+  .cm-compose textarea { width: 100%; min-height: 72px; font-family: var(--wv-font-body); font-size: .95rem; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 12px; background: var(--wv-surface-2); color: var(--wv-ink); resize: vertical; }
+  .cm-compose textarea:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); }
+  .cm-compose .row { display: flex; gap: var(--wv-2); margin-top: var(--wv-3); }
+  .cm-compose input { flex: 1; min-width: 0; font-family: var(--wv-font-body); font-size: .88rem; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 0 12px; height: 44px; background: var(--wv-surface-2); color: var(--wv-ink); }
+  .cm-compose input:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); }
+
+  .cm-tabs { display: flex; gap: 6px; margin-bottom: var(--wv-4); }
+  .cm-tab { font-family: var(--wv-font-display); font-size: .72rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); text-decoration: none; padding: 8px 16px; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill); background: var(--wv-surface); min-height: 40px; display: inline-flex; align-items: center; }
+  .cm-tab[aria-current="page"] { background: var(--wv-accent); color: #fff; border-color: var(--wv-accent); }
+
+  /* Post card (shared with profile via _post_card.html) */
+  .post { padding: var(--wv-4) var(--wv-5); margin-bottom: var(--wv-3); background: var(--wv-surface); border: 1px solid var(--wv-border); border-radius: var(--wv-radius-lg); }
+  .post-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .post-author { font-family: var(--wv-font-display); font-weight: 700; font-size: .92rem; color: var(--wv-ink); text-decoration: none; }
+  .post-author:hover { color: var(--wv-accent-ink); }
+  .post-artist { font-size: .72rem; color: var(--wv-accent-ink); text-decoration: none; border: 1px solid var(--wv-accent); border-radius: var(--wv-radius-pill); padding: 2px 10px; }
+  .post-time { font-size: .72rem; color: var(--wv-muted); margin-left: auto; }
+  .post-body { font-size: .95rem; line-height: 1.6; color: var(--wv-ink-2); white-space: pre-wrap; word-wrap: break-word; }
+  .post-actions { display: flex; align-items: center; gap: 8px; margin-top: var(--wv-3); }
+  .inline { display: inline; }
+  .act-btn { font-family: var(--wv-font-body); font-size: .78rem; color: var(--wv-muted); background: none; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 5px 11px; cursor: pointer; min-height: 34px; }
+  button.act-btn:hover { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
+  .like-btn.liked { color: #e0245e; border-color: #e0245e; }
+  button.del-btn { color: var(--wv-danger); }
+  button.del-btn:hover { border-color: var(--wv-danger); color: var(--wv-danger); }
+  .comments { margin-top: var(--wv-3); border-top: 1px solid var(--wv-border); padding-top: 10px; }
+  .comment { font-size: .86rem; color: var(--wv-ink-2); padding: 5px 0; line-height: 1.5; }
+  .c-author { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); text-decoration: none; }
+  .c-author:hover { color: var(--wv-accent-ink); }
+  .c-time { color: var(--wv-muted); font-size: .9em; }
+  .comment-form { display: flex; gap: 8px; margin-top: 10px; }
+  .comment-form input { flex: 1; min-width: 0; font-family: var(--wv-font-body); font-size: .86rem; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 0 12px; height: 40px; background: var(--wv-surface-2); color: var(--wv-ink); }
+  .comment-form input:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); }
+  .comment-form button { font-family: var(--wv-font-display); font-size: .68rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #fff; background: var(--wv-accent); border: none; border-radius: var(--wv-radius); padding: 0 16px; min-height: 40px; cursor: pointer; }
+  .comment-form button:hover { background: var(--wv-accent-ink); }
+
+  .cm-pager { display: flex; align-items: center; justify-content: space-between; margin-top: var(--wv-5); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cm-wrap">
+  <div class="cm-head">
+    <h1>Community</h1>
+    <p>Share what you're listening to and see what others are discovering.</p>
+  </div>
+
+  {% if current_user.is_authenticated %}
+  <form method="POST" action="/post" class="wv-card cm-compose">
+    <label class="wv-sr-only" for="cm-body">Write a post</label>
+    <textarea id="cm-body" name="body" placeholder="Share a thought or a new discovery…" maxlength="1000" required></textarea>
+    <div class="row">
+      <label class="wv-sr-only" for="cm-artist">Tag an artist (optional)</label>
+      <input id="cm-artist" type="text" name="artist" placeholder="Tag an artist (optional)" maxlength="255">
+      <button type="submit" class="wv-btn wv-btn-primary">Post</button>
     </div>
-
-    <div class="wrap">
-        <h1>Community Feed</h1>
-        <div class="sub">Share what you're listening to and discover what others are into.</div>
-
-        {% if current_user.is_authenticated %}
-        <form method="POST" action="/post" class="compose">
-            <textarea name="body" placeholder="Share a thought or a new discovery…" maxlength="1000" required></textarea>
-            <div class="compose-row">
-                <input type="text" name="artist" placeholder="Tag an artist (optional)" maxlength="255">
-                <button type="submit">Post</button>
-            </div>
-        </form>
-        {% else %}
-        <div class="signin-prompt"><a href="/login">Log in</a> or <a href="/register">sign up</a> to post, like and join the conversation.</div>
-        {% endif %}
-
-        <div class="tabs">
-            <a href="/feed?tab=following" class="tab{{ ' active' if tab == 'following' }}">Following</a>
-            <a href="/feed?tab=discover" class="tab{{ ' active' if tab == 'discover' }}">Discover</a>
-        </div>
-
-        {% set next = '/feed?tab=' ~ tab ~ '&page=' ~ page %}
-        {% if posts %}
-            {% for post in posts %}{% include "_post_card.html" %}{% endfor %}
-            {% if page > 1 or has_next %}
-            <div class="pager">
-                {% if page > 1 %}<a class="page-link" href="/feed?tab={{ tab }}&page={{ page - 1 }}">← Newer</a>{% else %}<span></span>{% endif %}
-                <span class="page-num">Page {{ page }}</span>
-                {% if has_next %}<a class="page-link" href="/feed?tab={{ tab }}&page={{ page + 1 }}">Older →</a>{% else %}<span></span>{% endif %}
-            </div>
-            {% endif %}
-        {% else %}
-            <div class="empty">
-            {% if tab == 'following' %}
-                Nothing here yet — follow some people (open a profile and hit Follow), or check <a href="/feed?tab=discover">Discover</a>.
-            {% elif page > 1 %}
-                No more posts. <a href="/feed?tab={{ tab }}">Back to the top</a>.
-            {% else %}
-                No posts yet. {% if current_user.is_authenticated %}Be the first to share something!{% else %}<a href="/register">Sign up</a> to start the conversation.{% endif %}
-            {% endif %}
-            </div>
-        {% endif %}
+  </form>
+  {% else %}
+  <section class="wv-card cm-intro">
+    <h2>Join the conversation</h2>
+    <p style="color:var(--wv-muted);font-size:.9rem;">The Waveline community is where listeners share discoveries and follow each other's taste.</p>
+    <ul>
+      <li>Post thoughts and new finds, and tag the artist</li>
+      <li>Follow people whose taste you like</li>
+      <li>Like and comment on posts</li>
+    </ul>
+    <p style="font-size:.88rem;color:var(--wv-ink-2);">You can browse the public <strong>Discover</strong> feed below without an account.</p>
+    <div class="row">
+      <a class="wv-btn wv-btn-primary" href="/register">Create account</a>
+      <a class="wv-btn wv-btn-ghost" href="/login">Log in</a>
     </div>
-</body>
-</html>
+  </section>
+  {% endif %}
+
+  <div class="cm-tabs" role="tablist" aria-label="Feed">
+    <a class="cm-tab" href="/feed?tab=following" {% if tab == 'following' %}aria-current="page"{% endif %}>Following</a>
+    <a class="cm-tab" href="/feed?tab=discover" {% if tab == 'discover' %}aria-current="page"{% endif %}>Discover</a>
+  </div>
+
+  {% set next = '/feed?tab=' ~ tab ~ '&page=' ~ page %}
+  {% if posts %}
+    {% for post in posts %}{% include "_post_card.html" %}{% endfor %}
+    {% if page > 1 or has_next %}
+    <nav class="cm-pager" aria-label="Feed pages">
+      {% if page > 1 %}<a class="wv-btn wv-btn-ghost wv-btn-sm" href="/feed?tab={{ tab }}&page={{ page - 1 }}">← Newer</a>{% else %}<span></span>{% endif %}
+      <span style="font-size:.72rem;color:var(--wv-muted);">Page {{ page }}</span>
+      {% if has_next %}<a class="wv-btn wv-btn-ghost wv-btn-sm" href="/feed?tab={{ tab }}&page={{ page + 1 }}">Older →</a>{% else %}<span></span>{% endif %}
+    </nav>
+    {% endif %}
+  {% else %}
+    <div class="wv-empty">
+    {% if tab == 'following' %}
+      <h3>Your Following feed is quiet</h3>
+      <p>Follow people to see their posts here. Open a profile from the <a href="/feed?tab=discover">Discover</a> feed and hit Follow, or <a href="/">explore an artist</a> to find like-minded listeners.</p>
+    {% elif page > 1 %}
+      <h3>No more posts</h3>
+      <p><a href="/feed?tab={{ tab }}">Back to the top →</a></p>
+    {% else %}
+      <h3>No posts yet</h3>
+      {% if current_user.is_authenticated %}
+      <p>Be the first to share something. Tag an artist you've been listening to, or <a href="/">analyse an artist</a> and post what you find.</p>
+      {% else %}
+      <p><a href="/register">Create an account</a> to start the conversation, or <a href="/">explore an artist</a> first.</p>
+      {% endif %}
+    {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -27,8 +27,9 @@ def test_dashboard_page_renders(monkeypatch):
     client = dashboard.app.test_client()
     resp = client.get("/")
     assert resp.status_code == 200
-    assert b"WAVELINE" in resp.data
+    assert b"Discover what makes an artist stand out" in resp.data  # search-first hero
     assert b"Radiohead" in resp.data
+    assert b"Read full insight" in resp.data  # progressive disclosure, not full article
 
 
 def test_news_page_renders(monkeypatch):
