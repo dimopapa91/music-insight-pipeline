@@ -10,7 +10,13 @@ news_bp = Blueprint("news", __name__)
 @news_bp.route("/news")
 def news():
     data = get_news_data()
-    return render_template("news.html", articles=data["articles"], releases=data["releases"])
+    return render_template(
+        "news.html",
+        articles=data["articles"],
+        releases=data["releases"],
+        releases_status=data.get("releases_status", "unavailable"),
+        sources=data.get("sources", []),
+    )
 
 
 @news_bp.route("/news/refresh", methods=["POST"])

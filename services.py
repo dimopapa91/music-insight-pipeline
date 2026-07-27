@@ -303,11 +303,16 @@ def fetch_rss(feed):
 def get_spotify_new_releases(limit=12):
     token = get_spotify_token()
     if not token:
+        logger.warning("Spotify new releases skipped: no access token")
         return []
     try:
         resp = http_requests.get("https://api.spotify.com/v1/browse/new-releases",
             headers={"Authorization": f"Bearer {token}"},
             params={"limit": limit, "country": "GB"}, timeout=5)
+        if resp.status_code != 200:
+            # Log for developers; never surface raw provider errors to users.
+            logger.warning("Spotify new releases HTTP %s: %s", resp.status_code, resp.text[:200])
+            return []
         albums = resp.json().get("albums", {}).get("items", [])
         results = []
         for a in albums:
@@ -320,20 +325,46 @@ def get_spotify_new_releases(limit=12):
                 "date":    a.get("release_date", ""),
             })
         return results
-    except Exception:
+    except Exception as e:
+        logger.warning("Spotify new releases failed: %s", e)
         return []
 
 
+# Last successful releases, so a transient Spotify failure doesn't blank the section.
+_last_releases = []
+
+
 def get_news_data():
+    """Returns articles + releases + a releases_status ('live' | 'cached' | 'unavailable')
+    and the list of sources. Successfully loaded sections stay visible even if one
+    provider fails; the whole result is cached for an hour (cleared by refresh)."""
+    global _last_releases
     if _news_cache["data"] and time.time() - _news_cache["fetched_at"] < 3600:
         return _news_cache["data"]
+
     articles = []
     for feed in RSS_FEEDS:
         articles.extend(fetch_rss(feed))
+
     releases = get_spotify_new_releases()
-    _news_cache["data"] = {"articles": articles, "releases": releases}
+    if releases:
+        _last_releases = releases
+        releases_status = "live"
+    elif _last_releases:
+        releases = _last_releases      # fall back to last good data
+        releases_status = "cached"
+    else:
+        releases_status = "unavailable"
+
+    data = {
+        "articles": articles,
+        "releases": releases,
+        "releases_status": releases_status,
+        "sources": [f["name"] for f in RSS_FEEDS] + ["Spotify"],
+    }
+    _news_cache["data"] = data
     _news_cache["fetched_at"] = time.time()
-    return _news_cache["data"]
+    return data
 
 
 def clear_news_cache():
