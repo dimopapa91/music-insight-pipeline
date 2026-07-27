@@ -187,6 +187,6 @@ Write a 2-paragraph comparison in plain prose. Cover: how their sounds and appea
             _client = _anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
             msg = _client.messages.create(model="claude-haiku-4-5-20251001", max_tokens=500, messages=[{"role": "user", "content": prompt}])
             verdict = msg.content[0].text
-        except Exception as e:
-            verdict = f"Could not generate comparison: {e}"
+        except Exception:
+            verdict = None  # calm fallback in template; no provider detail leaked
     return render_template("compare.html", a=a, b=b, a_data=a_data, b_data=b_data, verdict=verdict)
