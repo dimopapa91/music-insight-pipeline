@@ -26,6 +26,12 @@ from datetime import datetime, timezone
 
 import psycopg2
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # pick up DATABASE_URL from a local .env if present
+except ImportError:
+    pass
+
 DASH_RE = re.compile(r"\s*[—–]\s*")  # em (—) or en (–) dash
 
 
