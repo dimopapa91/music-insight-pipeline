@@ -176,13 +176,13 @@ def compare():
     if a_data and b_data:
         prompt = f"""Compare these two artists:
 
-{a_data['name']}: top tracks — {', '.join(a_data['tracks'])}
+{a_data['name']} top tracks: {', '.join(a_data['tracks'])}
 Insight: {a_data['insight'][:400]}
 
-{b_data['name']}: top tracks — {', '.join(b_data['tracks'])}
+{b_data['name']} top tracks: {', '.join(b_data['tracks'])}
 Insight: {b_data['insight'][:400]}
 
-Write a 2-paragraph comparison in plain prose. Cover: how their sounds and appeal differ, what they share, and which type of listener would prefer each. No markdown, no bullet points."""
+Write a 2-paragraph comparison in plain prose. Cover: how their sounds and appeal differ, what they share, and which type of listener would prefer each. No markdown, no bullet points. Do not use em dashes (the "—" character); use commas, colons or separate sentences instead."""
         try:
             _client = _anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
             msg = _client.messages.create(model="claude-haiku-4-5-20251001", max_tokens=500, messages=[{"role": "user", "content": prompt}])
