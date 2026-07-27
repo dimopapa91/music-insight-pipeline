@@ -76,7 +76,7 @@ def test_navbar_shows_unread_badge(monkeypatch):
     client = dashboard.app.test_client()
     _login(client, monkeypatch)
     resp = client.get("/feed")
-    assert b'class="nbadge">4' in resp.data
+    assert b'class="wv-badge">4' in resp.data
 
 
 def test_notifications_requires_login():
