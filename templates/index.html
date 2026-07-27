@@ -182,7 +182,7 @@
         {% if row.top_tracks %}
         <div class="dv-tracks">
           {% for t in row.top_tracks[:4] %}
-          <button type="button" class="dv-track" onclick="wvPlay('{{ row.artist|e }}', {{ t|tojson }}, this)">▶ {{ t }}</button>
+          <button type="button" class="dv-track" onclick='wvPlay({{ row.artist|tojson }}, {{ t|tojson }}, this)'>▶ {{ t }}</button>
           {% endfor %}
         </div>
         {% endif %}

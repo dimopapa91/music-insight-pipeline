@@ -133,6 +133,18 @@ def get_spotify_artist(artist_name):
 
 # ── Last.fm / Deezer discovery ──────────────────────────────────────
 
+# Deezer returns a placeholder URL (the MD5 of an empty string) when an artist
+# has no photo, so a non-empty URL is not a reliable signal that an image exists.
+DEEZER_BLANK_IMAGE_HASH = "d41d8cd98f00b204e9800998ecf8427e"
+
+
+def clean_deezer_image(url):
+    """Return "" for Deezer's no-photo placeholder so callers can fall back."""
+    if not url or DEEZER_BLANK_IMAGE_HASH in url:
+        return ""
+    return url
+
+
 def get_similar_artists(artist_name):
     try:
         resp = http_requests.get(LASTFM_BASE, params={
@@ -175,7 +187,7 @@ def get_discovery_artists(searched_artists):
                 d = data["data"][0]
                 discovery.append({
                     "name": d.get("name", artist),
-                    "image": d.get("picture_medium", ""),
+                    "image": clean_deezer_image(d.get("picture_medium", "")),
                     "nb_fan": d.get("nb_fan", 0)
                 })
             else:

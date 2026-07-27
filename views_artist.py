@@ -12,7 +12,7 @@ from db import db_cursor
 from pipeline import run_pipeline
 from services import (
     get_similar_artists, get_spotify_artist, get_artist_db,
-    LASTFM_BASE, LASTFM_API_KEY,
+    clean_deezer_image, LASTFM_BASE, LASTFM_API_KEY,
 )
 
 artist_bp = Blueprint("artist", __name__)
@@ -75,7 +75,7 @@ def artist_profile(artist_name):
                 params={"q": name, "limit": 1}, timeout=4)
             d = resp.json()
             if d.get("total", 0) > 0:
-                deezer_image = d["data"][0].get("picture_medium", "")
+                deezer_image = clean_deezer_image(d["data"][0].get("picture_medium", ""))
                 deezer_fans = d["data"][0].get("nb_fan", 0)
         except Exception:
             pass
