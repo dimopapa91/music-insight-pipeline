@@ -58,7 +58,7 @@ def analyse_with_claude(artist_name, tracks):
     """Send track data to Claude for analysis"""
     try:
         track_list = "\n".join([
-            f"{i+1}. {t['name']} — {t['playcount']} plays"
+            f"{i+1}. {t['name']}: {t['playcount']} plays"
             for i, t in enumerate(tracks)
         ])
 
@@ -71,7 +71,7 @@ Please give me:
 2. What production or songwriting patterns might explain their popularity
 3. One recommendation for a similar artist someone might enjoy
 
-Write in plain prose only. No markdown, no headers, no bullet points, no bold or italic formatting. Just clean paragraphs."""
+Write in plain prose only. No markdown, no headers, no bullet points, no bold or italic formatting. Just clean paragraphs. Do not use em dashes (the "—" character); use commas, colons or separate sentences instead."""
 
         message = client.messages.create(
             model="claude-haiku-4-5-20251001",

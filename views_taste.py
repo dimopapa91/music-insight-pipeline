@@ -36,7 +36,7 @@ a.back{color:#1da0c3;font-size:0.8em;text-decoration:none;}
 </div>
 <div class="box">
 <h2>Something went wrong</h2>
-<p>Could not load your taste profile. This might be a temporary database issue — try refreshing.</p>
+<p>Could not load your taste profile. This might be a temporary database issue. Try refreshing.</p>
 <a href="/" class="back">← Back to dashboard</a>
 </div></body></html>
 """
@@ -82,7 +82,7 @@ def taste_profile():
 
 {artist_block}
 
-Based on this, write a 2-3 paragraph taste profile in plain prose. Cover: what genres and sounds connect these artists, what this reveals about the listener's personality and taste, and what they might enjoy discovering next. No markdown, no bullet points, no headers — just clean conversational paragraphs. Do not infer sensitive personal characteristics."""
+Based on this, write a 2-3 paragraph taste profile in plain prose. Cover: what genres and sounds connect these artists, what this reveals about the listener's personality and taste, and what they might enjoy discovering next. No markdown, no bullet points, no headers, just clean conversational paragraphs. Do not use em dashes (the "—" character); use commas, colons or separate sentences instead. Do not infer sensitive personal characteristics."""
         try:
             _client = _anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
             msg = _client.messages.create(model="claude-haiku-4-5-20251001", max_tokens=600, messages=[{"role": "user", "content": prompt}])

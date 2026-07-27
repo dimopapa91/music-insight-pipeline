@@ -93,7 +93,7 @@
       <div class="cp-catrow">
         <div class="h">Top tracks</div>
         {% for t in d.tracks %}
-        <div class="cp-track"><span>{{ t }}</span><button type="button" onclick="wvPlay({{ d.name|tojson }}, {{ t|tojson }})">▶</button></div>
+        <div class="cp-track"><span>{{ t }}</span><button type="button" onclick='wvPlay({{ d.name|tojson }}, {{ t|tojson }})'>▶</button></div>
         {% endfor %}
       </div>
       {% endif %}

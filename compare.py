@@ -53,7 +53,7 @@ def format_number(n):
 def compare_with_claude(artist1, artist2, tracks1, tracks2, info1, info2):
     """Ask Claude to compare two artists head to head"""
     def track_list(tracks):
-        return "\n".join([f"{i+1}. {t['name']} — {int(t['playcount']):,} plays"
+        return "\n".join([f"{i+1}. {t['name']}: {int(t['playcount']):,} plays"
                          for i, t in enumerate(tracks)])
 
     prompt = f"""You are a music analyst comparing two artists head to head.
@@ -71,13 +71,13 @@ Top tracks:
 {track_list(tracks2)}
 
 Please provide:
-1. **Similarities** — what do these artists share in terms of sound, appeal or audience?
-2. **Key differences** — what sets them apart musically and commercially?
-3. **Audience crossover** — would fans of one enjoy the other? Why?
-4. **Production comparison** — how do their production styles differ?
-5. **Verdict** — which artist has broader commercial appeal and why?
+1. **Similarities**: what do these artists share in terms of sound, appeal or audience?
+2. **Key differences**: what sets them apart musically and commercially?
+3. **Audience crossover**: would fans of one enjoy the other? Why?
+4. **Production comparison**: how do their production styles differ?
+5. **Verdict**: which artist has broader commercial appeal and why?
 
-Be specific, insightful and concise."""
+Be specific, insightful and concise. Do not use em dashes (the "—" character); use commas, colons or separate sentences instead."""
 
     message = client.messages.create(
         model="claude-haiku-4-5-20251001",

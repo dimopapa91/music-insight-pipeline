@@ -82,7 +82,7 @@
         <h2>Top tracks</h2>
         {% for track in tracks %}
         <div class="ar-track">
-          <span class="nm" onclick="wvPlay({{ artist_name|tojson }}, {{ track.name|tojson }})">▶ {{ track.name }}</span>
+          <span class="nm" onclick='wvPlay({{ artist_name|tojson }}, {{ track.name|tojson }})'>▶ {{ track.name }}</span>
           <span class="pl">{{ "{:,}".format(track.plays) }}</span>
         </div>
         {% endfor %}
