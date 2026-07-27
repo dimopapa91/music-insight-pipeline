@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Settings — Waveline{% endblock %}
+
+{% block head_extra %}
+<style>
+  .st-wrap { max-width: 560px; margin: 0 auto; padding: var(--wv-7) var(--wv-5) var(--wv-8); }
+  .st-card { padding: var(--wv-6); }
+  .st-card h1 { font-family: var(--wv-font-display); font-size: 1.4rem; margin-bottom: var(--wv-4); }
+  .st-field { margin-bottom: var(--wv-4); }
+  .st-field label { display: block; font-family: var(--wv-font-display); font-size: .68rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); margin-bottom: 6px; }
+  .st-field input, .st-field textarea { width: 100%; font-family: var(--wv-font-body); font-size: .95rem; border: 1.5px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 12px 14px; background: var(--wv-surface-2); color: var(--wv-ink); }
+  .st-field textarea { min-height: 110px; resize: vertical; }
+  .st-field input:focus, .st-field textarea:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); box-shadow: 0 0 0 3px var(--wv-accent-soft); }
+  .st-hint { font-size: .78rem; color: var(--wv-muted); margin-top: 6px; }
+  .st-saved { color: var(--wv-success); font-size: .88rem; margin-bottom: var(--wv-4); }
+  .st-link { font-size: .82rem; color: var(--wv-muted); margin-top: var(--wv-5); }
+  .st-link a { color: var(--wv-accent-ink); text-decoration: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="st-wrap">
+  <div class="wv-card st-card">
+    <h1>Edit profile</h1>
+    {% if saved %}<p class="st-saved" role="status">✓ Saved.</p>{% endif %}
+    <form method="POST" action="/settings">
+      <div class="st-field">
+        <label for="bio">Bio</label>
+        <textarea id="bio" name="bio" maxlength="500" placeholder="Tell people what you're into…">{{ user.bio }}</textarea>
+      </div>
+      <div class="st-field">
+        <label for="location">Location</label>
+        <input id="location" type="text" name="location" maxlength="120" value="{{ user.location }}" placeholder="e.g. Manchester, UK" autocomplete="off">
+      </div>
+      <div class="st-field">
+        <label for="website">Website or social link</label>
+        <input id="website" type="text" name="website" maxlength="255" value="{{ user.website }}" placeholder="https://…" autocomplete="url" inputmode="url">
+      </div>
+      <div class="st-field">
+        <label for="genres">Favourite genres</label>
+        <input id="genres" type="text" name="genres" maxlength="255" value="{{ user.genres }}" placeholder="jazz, hip-hop, ambient" aria-describedby="genres-hint">
+        <p class="st-hint" id="genres-hint">Comma-separated. Shown as tags on your profile.</p>
+      </div>
+      <button type="submit" class="wv-btn wv-btn-primary">Save</button>
+    </form>
+    <p class="st-link">Your public profile: <a href="/u/{{ user.username }}">/u/{{ user.username }}</a></p>
+  </div>
+</div>
+{% endblock %}

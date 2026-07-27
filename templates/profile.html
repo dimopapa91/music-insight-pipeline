@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}@{{ user.username }} — Waveline{% endblock %}
+
+{% block head_extra %}
+<style>
+  .pf-wrap { max-width: 720px; margin: 0 auto; padding: var(--wv-6) var(--wv-5) var(--wv-8); }
+  .pf-head { display: flex; align-items: center; gap: var(--wv-5); padding: var(--wv-5); }
+  @media (max-width: 520px) { .pf-head { flex-direction: column; text-align: center; } }
+  .pf-avatar { width: 84px; height: 84px; border-radius: 50%; background: var(--wv-accent); color: #fff; display: flex; align-items: center; justify-content: center; font-family: var(--wv-font-display); font-weight: 700; font-size: 2.2rem; flex-shrink: 0; }
+  .pf-name { font-family: var(--wv-font-display); font-weight: 700; font-size: 1.4rem; }
+  .pf-meta { font-size: .78rem; color: var(--wv-muted); margin-top: 4px; }
+  .pf-meta a { color: var(--wv-accent-ink); text-decoration: none; }
+  .pf-bio { font-size: .92rem; color: var(--wv-ink-2); margin-top: 10px; line-height: 1.6; }
+  .pf-genres { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .pf-counts { display: flex; gap: var(--wv-5); margin-top: var(--wv-3); }
+  .pf-count b { font-family: var(--wv-font-display); }
+  .pf-count span { font-size: .72rem; color: var(--wv-muted); }
+  .pf-section { padding: var(--wv-5); margin-top: var(--wv-4); }
+  .pf-section h2 { font-family: var(--wv-font-display); font-size: .72rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--wv-accent-ink); border-bottom: 1px solid var(--wv-border); padding-bottom: 10px; margin-bottom: var(--wv-4); }
+  .pf-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pf-empty { font-size: .88rem; color: var(--wv-muted); }
+
+  /* shared post card */
+  .post { padding: var(--wv-4) var(--wv-5); margin-bottom: var(--wv-3); background: var(--wv-surface); border: 1px solid var(--wv-border); border-radius: var(--wv-radius-lg); }
+  .post-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .post-author { font-family: var(--wv-font-display); font-weight: 700; font-size: .92rem; color: var(--wv-ink); text-decoration: none; }
+  .post-author:hover { color: var(--wv-accent-ink); }
+  .post-artist { font-size: .72rem; color: var(--wv-accent-ink); text-decoration: none; border: 1px solid var(--wv-accent); border-radius: var(--wv-radius-pill); padding: 2px 10px; }
+  .post-time { font-size: .72rem; color: var(--wv-muted); margin-left: auto; }
+  .post-body { font-size: .95rem; line-height: 1.6; color: var(--wv-ink-2); white-space: pre-wrap; word-wrap: break-word; }
+  .post-actions { display: flex; align-items: center; gap: 8px; margin-top: var(--wv-3); }
+  .inline { display: inline; }
+  .act-btn { font-family: var(--wv-font-body); font-size: .78rem; color: var(--wv-muted); background: none; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 5px 11px; cursor: pointer; min-height: 34px; }
+  button.act-btn:hover { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
+  .like-btn.liked { color: #e0245e; border-color: #e0245e; }
+  button.del-btn { color: var(--wv-danger); }
+  .comments { margin-top: var(--wv-3); border-top: 1px solid var(--wv-border); padding-top: 10px; }
+  .comment { font-size: .86rem; color: var(--wv-ink-2); padding: 5px 0; line-height: 1.5; }
+  .c-author { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); text-decoration: none; }
+  .c-time { color: var(--wv-muted); font-size: .9em; }
+  .comment-form { display: flex; gap: 8px; margin-top: 10px; }
+  .comment-form input { flex: 1; min-width: 0; font-family: var(--wv-font-body); font-size: .86rem; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 0 12px; height: 40px; background: var(--wv-surface-2); color: var(--wv-ink); }
+  .comment-form button { font-family: var(--wv-font-display); font-size: .68rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #fff; background: var(--wv-accent); border: none; border-radius: var(--wv-radius); padding: 0 16px; min-height: 40px; cursor: pointer; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pf-wrap">
+  <div class="wv-card pf-head">
+    <div class="pf-avatar" aria-hidden="true">{{ user.username[0] | upper }}</div>
+    <div style="flex:1;">
+      <div class="pf-name">@{{ user.username }}</div>
+      <div class="pf-meta">
+        {% if user.location %}📍 {{ user.location }} · {% endif %}{% if user.created_at %}Joined {{ user.created_at.strftime('%B %Y') }}{% endif %}{% if user.website %} · <a href="{{ user.website }}" target="_blank" rel="noopener nofollow">{{ user.website | replace('https://','') | replace('http://','') }}</a>{% endif %}
+      </div>
+      {% if user.bio %}<div class="pf-bio">{{ user.bio }}</div>{% endif %}
+      {% if user.genre_list %}<div class="pf-genres">{% for g in user.genre_list %}<span class="wv-chip wv-btn-sm" style="cursor:default;">{{ g }}</span>{% endfor %}</div>{% endif %}
+      <div class="pf-counts">
+        <div class="pf-count"><b>{{ artists|length }}</b> <span>artists</span></div>
+        <div class="pf-count"><b>{{ followers }}</b> <span>followers</span></div>
+        <div class="pf-count"><b>{{ following }}</b> <span>following</span></div>
+      </div>
+    </div>
+    {% if is_own %}
+    <a class="wv-btn wv-btn-ghost wv-btn-sm" href="/settings">Edit profile</a>
+    {% elif current_user.is_authenticated %}
+    <form method="POST" action="/u/{{ user.username }}/follow" class="inline">
+      <button type="submit" class="wv-btn {{ 'wv-btn-ghost' if following_this else 'wv-btn-primary' }} wv-btn-sm">{{ 'Following' if following_this else 'Follow' }}</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <section class="wv-card pf-section">
+    <h2>Artists {{ user.username }} has explored</h2>
+    {% if artists %}
+    <div class="pf-chips">{% for a in artists %}<a class="wv-chip" href="/artist/{{ a | urlencode }}">{{ a | titlecase }}</a>{% endfor %}</div>
+    {% else %}
+    <p class="pf-empty">No artists yet{% if is_own %} — search one on <a href="/">Discover</a> to start building your profile.{% endif %}</p>
+    {% endif %}
+  </section>
+
+  <section class="wv-card pf-section">
+    <h2>Posts</h2>
+    {% if posts %}
+      {% set next = '/u/' ~ user.username %}
+      {% for post in posts %}{% include "_post_card.html" %}{% endfor %}
+    {% else %}
+    <p class="pf-empty">No posts yet{% if is_own %} — share something on the <a href="/feed">community feed</a>.{% endif %}</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
