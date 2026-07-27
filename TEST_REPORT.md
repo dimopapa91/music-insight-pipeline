@@ -30,6 +30,8 @@ branch running against a real instance (see "Not tested" below).
 | `/login`, `/register` | correct labels, `autocomplete` values, password hint, shared nav. |
 | `/notifications` | list item + empty state, shared nav. |
 | `/artist/<name>` | via the real route with mocked DB/APIs: name, full insight, stats, top tracks, similar, shared nav (HTTP 200). |
+| `/u/<username>` | via the real route with mocked User/social funcs: `@username`, location, bio, artist chips, posts/empty state, shared nav (HTTP 200). |
+| `/settings` | via the real route with a logged-in mock user: prefilled bio/location/website/genres fields, saved notice, link to public profile, shared nav (HTTP 200). |
 | `/static/css/waveline.css` | served (200, `text/css`). |
 
 ## 3. State-specific behaviour verified
