@@ -31,11 +31,11 @@
   <section class="wv-card tp-card">
     <h2>What is a taste profile?</h2>
     <div class="tp-text" style="font-size:.95rem;">
-      <p>A taste profile is an AI-written summary of the music you gravitate towards — the genres, sounds and moods that connect the artists you explore, plus ideas for what to discover next.</p>
+      <p>A taste profile is an AI-written summary of the music you gravitate towards: the genres, sounds and moods that connect the artists you explore, plus ideas for what to discover next.</p>
     </div>
     <div class="tp-steps">
       <div class="tp-step"><span class="n">1</span><p>Create an account and search a few artists you love.</p></div>
-      <div class="tp-step"><span class="n">2</span><p>Waveline links your searches to your profile (only the artists and their top tracks — nothing sensitive).</p></div>
+      <div class="tp-step"><span class="n">2</span><p>Waveline links your searches to your profile (only the artists and their top tracks, nothing sensitive).</p></div>
       <div class="tp-step"><span class="n">3</span><p>We generate a short, plain-language read on your taste, refreshed as you explore more.</p></div>
     </div>
     <p style="font-size:.88rem;color:var(--wv-muted);">An account keeps your profile personal to you, so it reflects your listening rather than everyone's.</p>
@@ -59,7 +59,7 @@
     {% if taste_analysis %}
     <div class="tp-text">{{ taste_analysis | markdown }}</div>
     {% else %}
-    <div class="wv-notice wv-notice-info">We couldn't generate your written profile just now. Your explored artists are below — try refreshing in a moment.</div>
+    <div class="wv-notice wv-notice-info">We couldn't generate your written profile just now. Your explored artists are below. Try refreshing in a moment.</div>
     {% endif %}
     <form method="POST" action="/profile/refresh" style="margin-top:var(--wv-4);">
       <button type="submit" class="wv-btn wv-btn-ghost wv-btn-sm">↻ Refresh analysis</button>

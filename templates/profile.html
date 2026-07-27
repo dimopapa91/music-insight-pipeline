@@ -75,7 +75,7 @@
     {% if artists %}
     <div class="pf-chips">{% for a in artists %}<a class="wv-chip" href="/artist/{{ a | urlencode }}">{{ a | titlecase }}</a>{% endfor %}</div>
     {% else %}
-    <p class="pf-empty">No artists yet{% if is_own %} — search one on <a href="/">Discover</a> to start building your profile.{% endif %}</p>
+    <p class="pf-empty">No artists yet{% if is_own %}. Search one on <a href="/">Discover</a> to start building your profile.{% endif %}</p>
     {% endif %}
   </section>
 
@@ -85,7 +85,7 @@
       {% set next = '/u/' ~ user.username %}
       {% for post in posts %}{% include "_post_card.html" %}{% endfor %}
     {% else %}
-    <p class="pf-empty">No posts yet{% if is_own %} — share something on the <a href="/feed">community feed</a>.{% endif %}</p>
+    <p class="pf-empty">No posts yet{% if is_own %}. Share something on the <a href="/feed">community feed</a>.{% endif %}</p>
     {% endif %}
   </section>
 </div>
