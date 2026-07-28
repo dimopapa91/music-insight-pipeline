@@ -27,9 +27,9 @@ def test_dashboard_page_renders(monkeypatch):
     client = dashboard.app.test_client()
     resp = client.get("/")
     assert resp.status_code == 200
-    assert b"Discover what makes an artist stand out" in resp.data  # search-first hero
+    assert b"Find the signal" in resp.data  # search-first signal-system hero
     assert b"Radiohead" in resp.data
-    assert b"Read full insight" in resp.data  # progressive disclosure, not full article
+    assert b"Explore full analysis" in resp.data  # one featured analysis, not equal cards
 
 
 def test_news_page_renders(monkeypatch):
@@ -47,5 +47,5 @@ def test_news_page_renders(monkeypatch):
 def test_all_expected_routes_registered():
     rules = {str(r) for r in dashboard.app.url_map.iter_rules()}
     for path in ["/", "/search", "/artist/<path:artist_name>", "/compare",
-                 "/profile", "/news", "/register", "/login", "/u/<username>"]:
+                 "/profile", "/news", "/register", "/login", "/u/<username>", "/about"]:
         assert path in rules, f"missing route {path}"

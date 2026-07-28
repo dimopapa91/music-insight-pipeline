@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}How Waveline works — Waveline{% endblock %}
+{% block description %}How Waveline is built: data sources, the Python pipeline, storage, AI insights, and deployment.{% endblock %}
+
+{% block head_extra %}
+<style>
+  .ab-wrap { max-width: 760px; margin: 0 auto; padding: var(--wv-7) var(--wv-5) var(--wv-8); }
+  .ab-head h1 { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.7rem, 4vw, 2.3rem); letter-spacing: -.4px; }
+  .ab-head p { color: var(--wv-muted); margin-top: var(--wv-2); max-width: 62ch; }
+  .ab-stage { display: flex; gap: var(--wv-4); padding: var(--wv-4) 0; border-top: 1px solid var(--wv-border); }
+  .ab-stage:first-of-type { border-top: none; }
+  .ab-stage .n { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; background: var(--wv-accent-soft); color: var(--wv-accent-ink); font-family: var(--wv-font-display); font-weight: 700; font-size: .85rem; display: flex; align-items: center; justify-content: center; }
+  .ab-stage h3 { font-family: var(--wv-font-display); font-size: .95rem; margin-bottom: 4px; }
+  .ab-stage p { font-size: .9rem; color: var(--wv-ink-2); line-height: 1.6; }
+  .ab-stack { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--wv-5); }
+  .ab-cta { margin-top: var(--wv-7); padding: var(--wv-6); text-align: center; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ab-wrap">
+  <div class="ab-head">
+    <p class="wv-eyebrow">How Waveline works</p>
+    <h1>A live signal, from source to screen</h1>
+    <p>Waveline is a small production system, not a demo. Here's what actually runs behind every search.</p>
+  </div>
+
+  <section class="wv-card wv-card-pad" style="margin-top:var(--wv-5);">
+    <div class="ab-stage">
+      <div class="n" aria-hidden="true">1</div>
+      <div><h3>Data sources</h3><p>Last.fm supplies listener counts, scrobbles, tags and similar-artist relationships. Spotify supplies genres, popularity and new releases via the Client Credentials flow. Deezer supplies artist artwork, fan counts and 30-second track previews — no API key required.</p></div>
+    </div>
+    <div class="ab-stage">
+      <div class="n" aria-hidden="true">2</div>
+      <div><h3>Automated Python pipeline</h3><p>A single pipeline module fetches, cleans and merges the three sources for a searched artist, then hands the result to Claude for analysis before writing it to the database.</p></div>
+    </div>
+    <div class="ab-stage">
+      <div class="n" aria-hidden="true">3</div>
+      <div><h3>PostgreSQL storage</h3><p>Searches, insights, users, posts, follows, likes, comments and notifications are stored in Postgres via raw parameterised SQL — no ORM — so every search builds a durable, queryable history.</p></div>
+    </div>
+    <div class="ab-stage">
+      <div class="n" aria-hidden="true">4</div>
+      <div><h3>Claude-generated insights</h3><p>Anthropic's Claude reads the merged listening data and writes the plain-language artist insight, comparison verdicts and taste profiles you see on Waveline — always labelled as AI-generated.</p></div>
+    </div>
+    <div class="ab-stage">
+      <div class="n" aria-hidden="true">5</div>
+      <div><h3>Flask application</h3><p>The product itself is a server-rendered Flask app: Jinja templates, a shared design system, and thin blueprints per feature (discovery, artist profiles, compare, news, taste, community).</p></div>
+    </div>
+    <div class="ab-stage">
+      <div class="n" aria-hidden="true">6</div>
+      <div><h3>Railway deployment</h3><p>Waveline runs on Railway behind Gunicorn, with the same Postgres instance backing both the web app and the data pipeline.</p></div>
+    </div>
+    <div class="ab-stage">
+      <div class="n" aria-hidden="true">7</div>
+      <div><h3>Community system</h3><p>Accounts, follows, posts, likes, comments and notifications are built on the same database and Flask-Login session model as the rest of the app — no separate service.</p></div>
+    </div>
+  </section>
+
+  <div class="ab-stack">
+    <span class="wv-chip" style="cursor:default;">Python</span>
+    <span class="wv-chip" style="cursor:default;">Flask</span>
+    <span class="wv-chip" style="cursor:default;">PostgreSQL</span>
+    <span class="wv-chip" style="cursor:default;">Anthropic Claude</span>
+    <span class="wv-chip" style="cursor:default;">Spotify API</span>
+    <span class="wv-chip" style="cursor:default;">Last.fm API</span>
+    <span class="wv-chip" style="cursor:default;">Deezer API</span>
+    <span class="wv-chip" style="cursor:default;">Railway</span>
+  </div>
+
+  <section class="wv-card ab-cta">
+    <h2 class="wv-h2" style="margin-bottom:8px;">Interested in the project?</h2>
+    <p style="color:var(--wv-muted);margin-bottom:var(--wv-4);">Waveline is built and maintained by Dimos Papageorgiou. Take a look at the code, or get in touch.</p>
+    <div style="display:flex;gap:var(--wv-3);justify-content:center;flex-wrap:wrap;">
+      <a class="wv-btn wv-btn-primary" href="https://dimospapageorgiou.com" target="_blank" rel="noopener">Build with Waveline →</a>
+      <a class="wv-btn wv-btn-ghost" href="https://github.com/dimopapa91/music-insight-pipeline" target="_blank" rel="noopener">View source on GitHub</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

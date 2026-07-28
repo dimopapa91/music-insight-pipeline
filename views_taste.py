@@ -4,42 +4,13 @@ import os
 import json
 from urllib.parse import quote
 
-from flask import Blueprint, render_template, render_template_string, redirect
+from flask import Blueprint, render_template, redirect
 
 from db import db_cursor
 
 taste_bp = Blueprint("taste", __name__)
 
 _taste_cache = {}
-
-_TASTE_ERROR = """<!DOCTYPE html><html><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Error — Waveline</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<style>*{box-sizing:border-box;}body{font-family:'Space Mono',monospace;background:#f5f5f3;margin:0;padding-top:60px;}
-.topbar{background:#000;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:fixed;top:0;left:0;right:0;z-index:100;}
-.topbar-brand{font-weight:700;font-size:0.85em;letter-spacing:2px;color:#fff;text-decoration:none;}
-.topbar-right{display:flex;gap:20px;align-items:center;}
-.topbar-link{font-size:0.62em;letter-spacing:2px;text-transform:uppercase;color:#1da0c3;text-decoration:none;}
-.box{background:#fff;border:1px solid #e8e8e8;padding:32px;max-width:520px;margin:60px auto;}
-h2{font-size:1em;color:#111;margin:0 0 12px;}
-p{font-size:0.8em;color:#666;line-height:1.7;}
-a.back{color:#1da0c3;font-size:0.8em;text-decoration:none;}
-</style></head><body>
-<div class="topbar">
-  <a href="/" class="topbar-brand">WAVELINE</a>
-  <div class="topbar-right">
-    <a href="/news" class="topbar-link">News</a>
-    <a href="/compare" class="topbar-link">Compare</a>
-    <a href="/profile" class="topbar-link">Taste Profile</a>
-  </div>
-</div>
-<div class="box">
-<h2>Something went wrong</h2>
-<p>Could not load your taste profile. This might be a temporary database issue. Try refreshing.</p>
-<a href="/" class="back">← Back to dashboard</a>
-</div></body></html>
-"""
 
 
 @taste_bp.route("/profile")
@@ -61,7 +32,9 @@ def taste_profile():
             """, (current_user.id,))
             rows = cur.fetchall()
     except Exception:
-        return render_template_string(_TASTE_ERROR), 500
+        return render_template("error.html",
+            heading="Something went wrong",
+            message="Could not load your taste profile. This might be a temporary database issue. Try refreshing."), 500
 
     artists = [r[0] for r in rows]
     if not artists:

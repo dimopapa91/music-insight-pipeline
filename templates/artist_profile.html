@@ -1,42 +1,63 @@
 {% extends "base.html" %}
 {% block title %}{{ artist_name | titlecase }} — Waveline{% endblock %}
+{% block description %}{{ artist_name | titlecase }} on Waveline: listener data, top tracks, an AI-written insight and similar artists worth exploring.{% endblock %}
 
 {% block head_extra %}
 <style>
-  .ar-wrap { max-width: 960px; margin: 0 auto; padding: var(--wv-6) var(--wv-5) var(--wv-8); }
+  .ar-wrap { max-width: 980px; margin: 0 auto; padding: var(--wv-5) var(--wv-5) var(--wv-8); }
   .ar-back { font-family: var(--wv-font-display); font-size: .72rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); text-decoration: none; }
-  .ar-back:hover { color: var(--wv-accent-ink); }
-  .ar-hero { display: flex; gap: var(--wv-5); align-items: center; padding: var(--wv-5); margin: var(--wv-4) 0 var(--wv-5); }
-  .ar-hero img, .ar-hero .ph { width: 120px; height: 120px; border-radius: var(--wv-radius); object-fit: cover; background: var(--wv-surface-2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--wv-font-display); font-weight: 700; font-size: 2.5rem; color: var(--wv-muted); }
+  .ar-back:hover { color: var(--wv-amb-ink); }
+
+  .ar-hero { position: relative; display: flex; gap: var(--wv-5); align-items: center; padding: var(--wv-6) var(--wv-5); margin: var(--wv-4) 0 var(--wv-3); overflow: hidden; }
+  .ar-hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 90% at 0% 0%, var(--wv-amb-soft), transparent 70%); pointer-events: none; }
+  .ar-hero > * { position: relative; }
+  .ar-hero img, .ar-hero .ph { width: 128px; height: 128px; border-radius: var(--wv-radius-lg); object-fit: cover; background: var(--wv-surface-2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--wv-font-display); font-weight: 700; font-size: 2.6rem; color: var(--wv-muted); border: 1px solid var(--wv-border); }
   @media (max-width: 560px) { .ar-hero { flex-direction: column; text-align: center; } }
-  .ar-name { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.5rem, 4vw, 2.2rem); line-height: 1.05; }
-  .ar-sources { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .ar-name { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.7rem, 4.4vw, 2.6rem); line-height: 1.03; letter-spacing: -.5px; }
+  .ar-sources { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
   .ar-src { font-family: var(--wv-font-display); font-size: .6rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 3px 9px; border-radius: var(--wv-radius-pill); color: #fff; }
   .ar-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .ar-meta { font-size: .78rem; color: var(--wv-muted); margin-top: 10px; }
-  .ar-spotify { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; font-size: .78rem; color: #1a7f4b; text-decoration: none; border: 1px solid #1a7f4b; padding: 6px 12px; border-radius: var(--wv-radius-pill); }
-  .ar-spotify:hover { background: #1a7f4b; color: #fff; }
+  .ar-meta { font-size: .78rem; color: var(--wv-muted); margin-top: 12px; }
+  .ar-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: var(--wv-3); }
+  @media (max-width: 560px) { .ar-actions { justify-content: center; } }
+  .ar-spotify { border-color: #1a7f4b !important; color: #3fcf7a !important; }
+  .ar-spotify:hover { background: #1a7f4b; color: #fff !important; }
 
-  .ar-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--wv-3); margin-bottom: var(--wv-5); }
-  @media (max-width: 760px) { .ar-stats { grid-template-columns: repeat(2, 1fr); } }
-  .ar-stat { padding: var(--wv-4); text-align: center; }
+  /* A single data readout, not five identical dashboard tiles: one bordered
+     strip with thin dividers between values — reads as one instrument, not
+     a stack of KPI cards. */
+  .ar-stats { display: flex; flex-wrap: wrap; border: 1px solid var(--wv-border); border-radius: var(--wv-radius-lg); background: var(--wv-surface); margin-bottom: var(--wv-6); }
+  .ar-stat { flex: 1 1 140px; padding: var(--wv-4) var(--wv-4); border-left: 1px solid var(--wv-border); }
+  .ar-stat:first-child { border-left: none; }
+  @media (max-width: 760px) { .ar-stat { flex: 1 1 45%; border-left: none; border-top: 1px solid var(--wv-border); } .ar-stat:nth-child(-n+2) { border-top: none; } }
   .ar-stat .l { font-family: var(--wv-font-display); font-size: .6rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); }
-  .ar-stat .v { font-family: var(--wv-font-display); font-weight: 700; font-size: 1.2rem; margin-top: 4px; }
+  .ar-stat .v { font-family: var(--wv-font-display); font-weight: 700; font-size: 1.3rem; margin-top: 4px; color: var(--wv-amb-ink); }
 
-  .ar-grid { display: grid; grid-template-columns: 1fr 320px; gap: var(--wv-4); align-items: start; }
-  @media (max-width: 820px) { .ar-grid { grid-template-columns: 1fr; } }
-  .ar-card { padding: var(--wv-5); }
-  .ar-card h2 { font-family: var(--wv-font-display); font-size: .72rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--wv-accent-ink); border-bottom: 1px solid var(--wv-border); padding-bottom: 10px; margin-bottom: var(--wv-4); }
-  .ar-insight { font-size: 1rem; line-height: 1.8; color: var(--wv-ink-2); }
-  .ar-insight p { margin-bottom: 14px; }
-  .ar-track { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--wv-border); font-size: .9rem; }
+  .ar-section { padding: var(--wv-7) 0; border-top: 1px solid var(--wv-border); }
+  .ar-section:first-of-type { border-top: none; }
+  .ar-section-head { display: flex; align-items: baseline; gap: var(--wv-3); margin-bottom: var(--wv-5); }
+  .ar-section-head h2 { font-family: var(--wv-font-display); font-size: .78rem; letter-spacing: 1.6px; text-transform: uppercase; color: var(--wv-amb-ink); }
+  .ar-section-head .n { font-family: var(--wv-font-display); font-size: .7rem; color: var(--wv-muted); }
+
+  .ar-insight-layout { display: grid; grid-template-columns: 1fr 300px; gap: var(--wv-5); align-items: start; }
+  @media (max-width: 820px) { .ar-insight-layout { grid-template-columns: 1fr; } }
+  .ar-insight { font-size: 1.05rem; line-height: 1.85; color: var(--wv-ink-2); max-width: 68ch; }
+  .ar-insight p { margin-bottom: 16px; }
+  .ar-insight p:first-of-type { font-size: 1.15rem; color: var(--wv-ink); }
+  .ar-ai-flag { display: inline-flex; align-items: center; gap: 6px; font-family: var(--wv-font-display); font-size: .62rem; letter-spacing: 1.4px; text-transform: uppercase; color: var(--wv-muted); border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill); padding: 5px 12px; margin-bottom: var(--wv-4); }
+  .ar-ai-flag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--wv-amb); }
+  .ar-track { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--wv-border); font-size: .92rem; }
   .ar-track:last-child { border-bottom: none; }
-  .ar-track .nm { cursor: pointer; }
-  .ar-track .nm:hover { color: var(--wv-accent-ink); }
-  .ar-track .pl { font-size: .75rem; color: var(--wv-muted); }
-  .ar-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .dv-player { display: none; position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 120; align-items: center; gap: var(--wv-4); background: var(--wv-surface); border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-lg); box-shadow: var(--wv-shadow-md); padding: var(--wv-3) var(--wv-4); }
-  .dv-player .pc { background: none; border: none; color: var(--wv-muted); font-size: 1rem; cursor: pointer; }
+  .ar-track .nm { cursor: pointer; background: none; border: none; color: var(--wv-ink); font: inherit; text-align: left; padding: 0; }
+  .ar-track .nm:hover { color: var(--wv-amb-ink); }
+  .ar-track .pl { font-size: .75rem; color: var(--wv-muted); flex-shrink: 0; }
+
+  .ar-similar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--wv-3); }
+  .ar-similar-card { padding: var(--wv-4); text-align: center; text-decoration: none; color: inherit; }
+  .ar-similar-card .ph2 { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto var(--wv-2); background: var(--wv-surface-2); border: 1px solid var(--wv-border); display: flex; align-items: center; justify-content: center; font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-muted); }
+  .ar-similar-card .nm { font-family: var(--wv-font-display); font-weight: 700; font-size: .86rem; }
+
+  .ar-compare-cta { padding: var(--wv-6); text-align: center; }
 </style>
 {% endblock %}
 
@@ -44,8 +65,8 @@
 <div class="ar-wrap">
   <a class="ar-back" href="/">← Discover</a>
 
-  <div class="wv-card ar-hero">
-    {% if deezer_image or spotify.image %}<img src="{{ deezer_image or spotify.image }}" alt="" width="120" height="120">{% else %}<div class="ph" aria-hidden="true">{{ artist_name[0] | upper }}</div>{% endif %}
+  <div class="wv-card ar-hero" id="overview" style="--wv-amb: {{ amb_accent | default('var(--wv-accent)') }}; --wv-amb-ink: {{ amb_accent_ink | default('var(--wv-accent-ink)') }}; --wv-amb-soft: {{ amb_soft | default('var(--wv-accent-soft)') }};" data-wv-artist-hero data-artist-image="{{ deezer_image or spotify.image or '' }}">
+    {% if deezer_image or spotify.image %}<img src="{{ deezer_image or spotify.image }}" alt="" width="128" height="128" crossorigin="anonymous">{% else %}<div class="ph" aria-hidden="true">{{ artist_name[0] | upper }}</div>{% endif %}
     <div>
       <h1 class="ar-name">{{ artist_name | titlecase }}</h1>
       <div class="ar-sources">
@@ -58,68 +79,125 @@
       <div class="ar-tags">{% for t in tags[:5] %}<span class="wv-chip wv-btn-sm" style="cursor:default;">{{ t }}</span>{% endfor %}</div>
       {% endif %}
       <div class="ar-meta">Analysed {{ search_count }} time{{ 's' if search_count != 1 }} · last on {{ last_searched }}</div>
-      {% if spotify.spotify_url %}<a class="ar-spotify" href="{{ spotify.spotify_url }}" target="_blank" rel="noopener">Open on Spotify →</a>{% endif %}
+      <div class="ar-actions">
+        {% if spotify.spotify_url %}<a class="wv-btn wv-btn-ghost wv-btn-sm ar-spotify" href="{{ spotify.spotify_url }}" target="_blank" rel="noopener">Open on Spotify →</a>{% endif %}
+        <a class="wv-btn wv-btn-ghost wv-btn-sm" href="/compare?a={{ artist_name | urlencode }}">Compare this artist</a>
+        <a class="wv-btn wv-btn-ghost wv-btn-sm" href="/feed?tab=discover">Talk about it in Community</a>
+      </div>
     </div>
   </div>
 
+  <nav class="wv-subnav" data-wv-scrollspy aria-label="Artist sections">
+    <div class="wv-subnav-inner">
+      <a href="#overview">Overview</a>
+      {% if tracks %}<a href="#tracks">Top Tracks</a>{% endif %}
+      <a href="#insight">AI Insight</a>
+      {% if similar_artists %}<a href="#similar">Similar Artists</a>{% endif %}
+      <a href="#compare">Compare</a>
+    </div>
+  </nav>
+
   <div class="ar-stats">
-    <div class="wv-card ar-stat"><div class="l">Listeners</div><div class="v">{{ "{:,}".format(lastfm_listeners) if lastfm_listeners else "—" }}</div></div>
-    <div class="wv-card ar-stat"><div class="l">Scrobbles</div><div class="v">{% if lastfm_scrobbles and lastfm_scrobbles > 1000000 %}{{ "%.1fM" | format(lastfm_scrobbles / 1000000) }}{% elif lastfm_scrobbles %}{{ "{:,}".format(lastfm_scrobbles) }}{% else %}—{% endif %}</div></div>
-    <div class="wv-card ar-stat"><div class="l">Deezer fans</div><div class="v">{% if deezer_fans and deezer_fans > 1000000 %}{{ "%.1fM" | format(deezer_fans / 1000000) }}{% elif deezer_fans %}{{ "{:,}".format(deezer_fans) }}{% else %}—{% endif %}</div></div>
-    <div class="wv-card ar-stat"><div class="l">Popularity</div><div class="v">{{ spotify.popularity ~ '/100' if spotify.popularity else "—" }}</div></div>
-    <div class="wv-card ar-stat"><div class="l">Top track plays</div><div class="v">{{ top_playcount }}</div></div>
+    <div class="ar-stat"><div class="l">Listeners</div><div class="v">{{ "{:,}".format(lastfm_listeners) if lastfm_listeners else "—" }}</div></div>
+    <div class="ar-stat"><div class="l">Scrobbles</div><div class="v">{% if lastfm_scrobbles and lastfm_scrobbles > 1000000 %}{{ "%.1fM" | format(lastfm_scrobbles / 1000000) }}{% elif lastfm_scrobbles %}{{ "{:,}".format(lastfm_scrobbles) }}{% else %}—{% endif %}</div></div>
+    <div class="ar-stat"><div class="l">Deezer fans</div><div class="v">{% if deezer_fans and deezer_fans > 1000000 %}{{ "%.1fM" | format(deezer_fans / 1000000) }}{% elif deezer_fans %}{{ "{:,}".format(deezer_fans) }}{% else %}—{% endif %}</div></div>
+    <div class="ar-stat"><div class="l">Popularity</div><div class="v">{{ spotify.popularity ~ '/100' if spotify.popularity else "—" }}</div></div>
+    <div class="ar-stat"><div class="l">Top track plays</div><div class="v">{{ top_playcount }}</div></div>
   </div>
 
-  <div class="ar-grid">
-    <article class="wv-card ar-card">
-      <h2>Artist insight</h2>
-      <div class="ar-insight">{{ insight | markdown }}</div>
-    </article>
+  {% if tracks %}
+  <section class="ar-section" id="tracks">
+    <div class="ar-section-head"><h2>Top tracks</h2><span class="n">{{ tracks | length }} tracks · Last.fm play counts</span></div>
+    <div class="wv-card wv-card-pad">
+      {% for track in tracks %}
+      <div class="ar-track">
+        <button type="button" class="nm" onclick='wvPlay({{ artist_name|tojson }}, {{ track.name|tojson }}, this)'>▶ {{ track.name }}</button>
+        <span class="pl">{{ "{:,}".format(track.plays) }} plays</span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
 
-    <aside style="display:grid;gap:var(--wv-4);">
-      {% if tracks %}
-      <section class="wv-card ar-card">
-        <h2>Top tracks</h2>
-        {% for track in tracks %}
-        <div class="ar-track">
-          <span class="nm" onclick='wvPlay({{ artist_name|tojson }}, {{ track.name|tojson }})'>▶ {{ track.name }}</span>
-          <span class="pl">{{ "{:,}".format(track.plays) }}</span>
-        </div>
-        {% endfor %}
-      </section>
-      {% endif %}
-      {% if similar_artists %}
-      <section class="wv-card ar-card">
-        <h2>Similar artists</h2>
-        <div class="ar-chips">{% for name in similar_artists %}<a href="/artist/{{ name | urlencode }}" class="wv-chip">{{ name | titlecase }}</a>{% endfor %}</div>
-      </section>
-      {% endif %}
-    </aside>
-  </div>
-</div>
+  <section class="ar-section" id="insight">
+    <div class="ar-section-head"><h2>AI insight</h2></div>
+    <div class="ar-insight-layout">
+      <article>
+        <span class="ar-ai-flag"><span class="dot" aria-hidden="true"></span>AI-generated by Claude</span>
+        <div class="ar-insight">{{ insight | markdown }}</div>
+      </article>
+      <aside class="wv-card wv-card-pad">
+        <p class="wv-coord" style="margin-bottom:10px;">Data sources</p>
+        <p style="font-size:.86rem;color:var(--wv-ink-2);line-height:1.7;">Listener stats and tags from Last.fm, genre and popularity from Spotify, artwork and fan count from Deezer. Combined and summarised by Claude.</p>
+      </aside>
+    </div>
+  </section>
 
-<div class="dv-player" id="mini-player" role="region" aria-label="Track preview">
-  <div><span id="player-title" style="font-weight:600;font-size:.85rem;">—</span><br><span id="player-artist" style="font-size:.75rem;color:var(--wv-muted);">30s preview via Deezer</span></div>
-  <audio id="audio-player" controls preload="none"><source id="audio-src" src="" type="audio/mpeg"></audio>
-  <button class="pc" onclick="wvClosePlayer()" aria-label="Close preview">✕</button>
+  {% if similar_artists %}
+  <section class="ar-section" id="similar">
+    <div class="ar-section-head"><h2>Similar artists</h2><span class="n">via Last.fm</span></div>
+    <div class="ar-similar-grid">
+      {% for name in similar_artists %}
+      <a href="/artist/{{ name | urlencode }}" class="wv-card ar-similar-card">
+        <div class="ph2" aria-hidden="true">{{ name[0] | upper }}</div>
+        <div class="nm">{{ name | titlecase }}</div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="ar-section" id="compare">
+    <div class="wv-card ar-compare-cta">
+      <h2 class="wv-h2" style="margin-bottom:8px;">See how {{ artist_name | titlecase }} stacks up</h2>
+      <p style="color:var(--wv-muted);margin-bottom:var(--wv-4);">Put them side by side against another artist for an AI-written comparison.</p>
+      <a class="wv-btn wv-btn-primary" href="/compare?a={{ artist_name | urlencode }}">Compare {{ artist_name | titlecase }} →</a>
+    </div>
+  </section>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  async function wvPlay(artist, track) {
-    try {
-      var resp = await fetch('/preview?artist=' + encodeURIComponent(artist) + '&track=' + encodeURIComponent(track));
-      var data = await resp.json();
-      if (data.preview_url) {
-        document.getElementById('player-title').textContent = data.title;
-        document.getElementById('player-artist').textContent = data.artist;
-        document.getElementById('audio-src').src = data.preview_url;
-        var au = document.getElementById('audio-player'); au.load(); au.play();
-        document.getElementById('mini-player').style.display = 'flex';
-      } else { window.open('https://open.spotify.com/search/' + encodeURIComponent(artist + ' ' + track), '_blank', 'noopener'); }
-    } catch (e) { window.open('https://open.spotify.com/search/' + encodeURIComponent(artist + ' ' + track), '_blank', 'noopener'); }
-  }
-  function wvClosePlayer() { document.getElementById('audio-player').pause(); document.getElementById('mini-player').style.display = 'none'; }
+  // Ambient accent: sample the artist image's dominant hue client-side, with a
+  // silent fallback to the default signal accent if the image can't be read
+  // (cross-origin canvas taint, load failure, etc).
+  (function () {
+    var hero = document.querySelector('[data-wv-artist-hero]');
+    if (!hero) return;
+    var src = hero.getAttribute('data-artist-image');
+    if (!src) return;
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function () {
+      try {
+        var c = document.createElement('canvas');
+        var size = 24;
+        c.width = size; c.height = size;
+        var ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0, size, size);
+        var data = ctx.getImageData(0, 0, size, size).data;
+        var r = 0, g = 0, b = 0, n = 0;
+        for (var i = 0; i < data.length; i += 4) {
+          if (data[i + 3] < 200) continue;
+          r += data[i]; g += data[i + 1]; b += data[i + 2]; n++;
+        }
+        if (!n) return;
+        r = Math.round(r / n); g = Math.round(g / n); b = Math.round(b / n);
+        // Boost saturation/lightness a touch so muted photos still read as a signal colour.
+        var max = Math.max(r, g, b), min = Math.min(r, g, b);
+        if (max - min < 18) return; // too grey to be a meaningful accent — keep default
+        var ink = (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#12100d' : '#fff8f2';
+        hero.style.setProperty('--wv-amb', 'rgb(' + r + ',' + g + ',' + b + ')');
+        hero.style.setProperty('--wv-amb-ink', 'rgb(' + Math.min(255, r + 40) + ',' + Math.min(255, g + 40) + ',' + Math.min(255, b + 40) + ')');
+        hero.style.setProperty('--wv-amb-soft', 'rgba(' + r + ',' + g + ',' + b + ',.16)');
+        document.documentElement.style.setProperty('--wv-amb', 'rgb(' + r + ',' + g + ',' + b + ')');
+        document.documentElement.style.setProperty('--wv-amb-ink', 'rgb(' + Math.min(255, r + 40) + ',' + Math.min(255, g + 40) + ',' + Math.min(255, b + 40) + ')');
+        document.documentElement.style.setProperty('--wv-amb-soft', 'rgba(' + r + ',' + g + ',' + b + ',.16)');
+      } catch (e) { /* tainted canvas or unsupported — default accent stands */ }
+    };
+    img.onerror = function () {};
+    img.src = src;
+  })();
 </script>
 {% endblock %}

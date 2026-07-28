@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Something went wrong — Waveline{% endblock %}
+
+{% block head_extra %}
+<style>
+  .er-wrap { max-width: 520px; margin: 0 auto; padding: var(--wv-8) var(--wv-5); text-align: center; }
+  .er-wrap .wv-card { padding: var(--wv-6); text-align: left; }
+  .er-wrap h1 { font-family: var(--wv-font-display); font-size: 1.2rem; margin-bottom: var(--wv-3); }
+  .er-wrap p { color: var(--wv-ink-2); font-size: .92rem; line-height: 1.7; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="er-wrap">
+  <div class="wv-card">
+    <h1>{{ heading | default("Something went wrong") }}</h1>
+    <p>{{ message | default("This might be a temporary issue with the data pipeline or database. Please try again in a moment.") }}</p>
+    <div style="margin-top:var(--wv-5);"><a class="wv-btn wv-btn-primary" href="/">← Back to Discover</a></div>
+  </div>
+</div>
+{% endblock %}
