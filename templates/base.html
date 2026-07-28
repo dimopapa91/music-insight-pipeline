@@ -3,64 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#151719">
+    <meta name="theme-color" content="#0a0b0d">
     <title>{% block title %}Waveline{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/waveline.css') }}">
+    <meta name="description" content="{% block description %}Waveline — search any artist for listening data, top tracks, AI-powered insights and the connections leading to your next discovery.{% endblock %}">
     {% block head_extra %}{% endblock %}
     <script>
-      // Set theme before paint to avoid a flash.
-      (function () { try { if (localStorage.getItem('wv-theme') === 'dark') document.documentElement.classList.add('pre-dark'); } catch (e) {} })();
+      // Theme before paint: default is the dark signal theme; 'wv-theme'='light' opts out.
+      (function () { try { if (localStorage.getItem('wv-theme') === 'light') document.documentElement.classList.add('pre-light'); } catch (e) {} })();
+      document.documentElement.classList.add('wv-js');
     </script>
-    <style>html.pre-dark body { background:#0c0d0f; color:#edeef0; }</style>
+    <style>html.pre-light body { background:#e9e7e1; color:#16181b; }</style>
 </head>
 <body>
     <a class="wv-skip" href="#main">Skip to content</a>
 
     {% set path = request.path %}
+
+    <!-- ═══ DESKTOP DOCK NAVIGATION ═══ -->
     <header class="wv-header" id="wv-header">
-        <div class="wv-header-inner">
-            <a class="wv-brand" href="/"><span class="wv-dot" aria-hidden="true"></span>Waveline</a>
+        <div class="wv-dock">
+            <a class="wv-brand" href="/"><span class="wv-dot wv-pulse" aria-hidden="true"></span>Waveline</a>
 
             <nav class="wv-nav" aria-label="Primary">
                 <a href="/"        {% if path == '/' %}aria-current="page"{% endif %}>Discover</a>
                 <a href="/feed"    {% if path.startswith('/feed') %}aria-current="page"{% endif %}>Community</a>
-                <a href="/news"    {% if path.startswith('/news') %}aria-current="page"{% endif %}>News</a>
                 <a href="/compare" {% if path.startswith('/compare') %}aria-current="page"{% endif %}>Compare</a>
-                <a href="/profile" {% if path.startswith('/profile') %}aria-current="page"{% endif %}>Taste Profile</a>
+                <a href="/news"    {% if path.startswith('/news') %}aria-current="page"{% endif %}>News</a>
+                <a href="/profile" {% if path.startswith('/profile') %}aria-current="page"{% endif %}>Taste</a>
             </nav>
 
             <div class="wv-header-actions">
+                <button class="wv-searchbtn wv-desktop-only" type="button" id="wv-search-trigger" aria-haspopup="dialog" aria-controls="wv-palette-overlay">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    <span>Search</span>
+                    <kbd>&#8984;K</kbd>
+                </button>
+                <button class="wv-iconbtn" id="wv-search-trigger-mobile" type="button" aria-haspopup="dialog" aria-controls="wv-palette-overlay" aria-label="Search" title="Search">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
                 {% if current_user.is_authenticated %}
                 <a class="wv-iconbtn wv-bell wv-desktop-only" href="/notifications" aria-label="Notifications{% if unread_notifications %} ({{ unread_notifications }} unread){% endif %}">🔔{% if unread_notifications %}<span class="wv-badge">{{ unread_notifications }}</span>{% endif %}</a>
-                <a class="wv-userchip wv-desktop-only" href="/me">@{{ current_user.username }}</a>
-                <a class="wv-iconbtn wv-desktop-only" href="/logout" aria-label="Log out">⏻</a>
+                <div class="wv-profilemenu wv-desktop-only">
+                    <button type="button" class="wv-profilemenu-trigger" id="wv-profile-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="wv-profile-menu">
+                        <span class="wv-profile-avatar" aria-hidden="true">{{ current_user.username[0] | upper }}</span>
+                        <span>@{{ current_user.username }}</span>
+                        <span class="wv-profilemenu-caret" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="wv-profilemenu-panel" id="wv-profile-menu" role="menu" aria-label="Profile menu" hidden>
+                        <a role="menuitem" href="/me">View profile</a>
+                        <a role="menuitem" href="/profile">Taste Profile</a>
+                        <a role="menuitem" href="{{ url_for('auth.logout') }}">Log out</a>
+                    </div>
+                </div>
                 {% else %}
                 <a class="wv-userchip wv-desktop-only" href="/login">Log in</a>
-                <a class="wv-btn wv-btn-primary wv-btn-sm wv-desktop-only" href="/register">Sign up</a>
+                <a class="wv-btn wv-btn-primary wv-btn-sm" href="/register">Sign up</a>
                 {% endif %}
-                <button class="wv-iconbtn" id="wv-theme-btn" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">◑</button>
-                <button class="wv-iconbtn wv-navtoggle" id="wv-nav-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="wv-mobilenav">☰</button>
+                <button class="wv-iconbtn wv-desktop-only" id="wv-theme-btn" type="button" aria-label="Toggle light theme" title="Toggle light theme">◑</button>
             </div>
         </div>
-
-        <nav class="wv-mobilenav" id="wv-mobilenav" aria-label="Primary mobile">
-            <a href="/"        {% if path == '/' %}aria-current="page"{% endif %}>Discover</a>
-            <a href="/feed"    {% if path.startswith('/feed') %}aria-current="page"{% endif %}>Community</a>
-            <a href="/news"    {% if path.startswith('/news') %}aria-current="page"{% endif %}>News</a>
-            <a href="/compare" {% if path.startswith('/compare') %}aria-current="page"{% endif %}>Compare</a>
-            <a href="/profile" {% if path.startswith('/profile') %}aria-current="page"{% endif %}>Taste Profile</a>
-            <hr>
-            {% if current_user.is_authenticated %}
-            <a href="/notifications">Notifications{% if unread_notifications %} ({{ unread_notifications }}){% endif %}</a>
-            <a href="/me">@{{ current_user.username }}</a>
-            <a href="/logout">Log out</a>
-            {% else %}
-            <a href="/login">Log in</a>
-            <a href="/register">Sign up</a>
-            {% endif %}
-        </nav>
     </header>
 
     <main id="main">
@@ -71,52 +75,113 @@
         <div class="wv-footer-inner">
             <div>
                 <div class="wv-footer-brand">Waveline</div>
-                <p style="margin-top:8px;max-width:34ch;">A live music-discovery, artist-insight and community platform. Search any artist for listening data, AI-powered insights and similar artists worth exploring.</p>
+                <p style="margin-top:8px;max-width:34ch;">A living music-data signal: listening data, AI-powered artist insights, and the connections leading to your next discovery.</p>
+                <a class="wv-link" href="/about" style="margin-top:14px;display:inline-block;">Interested in the project? →</a>
             </div>
             <div>
                 <h3>Explore</h3>
                 <a href="/">Discover</a>
                 <a href="/feed">Community</a>
-                <a href="/news">News</a>
                 <a href="/compare">Compare</a>
-                <a href="/profile">Taste Profile</a>
+                <a href="/news">News</a>
+                <a href="/profile">Taste profile</a>
             </div>
             <div>
                 <h3>About</h3>
+                <a href="/about">How Waveline works</a>
                 <a href="https://github.com/dimopapa91/music-insight-pipeline" target="_blank" rel="noopener">GitHub</a>
-                <p style="margin-top:10px;">Data from Last.fm, Spotify &amp; Deezer. Insights via the Anthropic Claude API.</p>
-                <p style="margin-top:10px;">Built by Dimos Papageorgiou · Manchester · 2026</p>
+                <a href="https://dimospapageorgiou.com" target="_blank" rel="noopener">Portfolio</a>
+            </div>
+            <div>
+                <h3>Data</h3>
+                <p>Sources: Last.fm, Spotify &amp; Deezer.</p>
+                <p style="margin-top:6px;">Insights: Anthropic Claude.</p>
+                <p style="margin-top:14px;">Built by Dimos Papageorgiou · Manchester · 2026</p>
             </div>
         </div>
     </footer>
 
+    <!-- ═══ MOBILE BOTTOM NAVIGATION ═══ -->
+    <nav class="wv-bottomnav" aria-label="Primary mobile">
+        <div class="wv-bottomnav-inner">
+            <a href="/" {% if path == '/' %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">◎</span><span class="lbl">Discover</span></a>
+            <a href="/feed" {% if path.startswith('/feed') %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">◈</span><span class="lbl">Community</span></a>
+            <a href="/compare" {% if path.startswith('/compare') %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">⇄</span><span class="lbl">Compare</span></a>
+            <a href="/profile" {% if path.startswith('/profile') %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">◑</span><span class="lbl">Taste</span></a>
+            <button type="button" class="wv-moretrigger" id="wv-more-btn" aria-haspopup="dialog" aria-controls="wv-morepanel" aria-expanded="false">
+                <span class="ic" aria-hidden="true">☰</span><span class="lbl">More</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ═══ MOBILE "MORE" PANEL ═══ -->
+    <div class="wv-morepanel" id="wv-morepanel" role="dialog" aria-modal="true" aria-label="More" hidden>
+        <div class="wv-scrim" id="wv-more-scrim"></div>
+        <div class="wv-morepanel-sheet">
+            <div class="wv-morepanel-handle" aria-hidden="true"></div>
+            <h2>Explore</h2>
+            <a href="/news" {% if path.startswith('/news') %}aria-current="page"{% endif %}>News <span class="muted">Headlines &amp; releases</span></a>
+            <a href="/about">About Waveline <span class="muted">How it works</span></a>
+            {% if current_user.is_authenticated %}
+            <h2>Account</h2>
+            <a href="/notifications">Notifications{% if unread_notifications %} <span class="wv-badge" style="position:static;">{{ unread_notifications }}</span>{% endif %}</a>
+            <a href="/me">@{{ current_user.username }}</a>
+            <a href="/settings">Settings</a>
+            <a href="{{ url_for('auth.logout') }}">Log out</a>
+            {% else %}
+            <h2>Account</h2>
+            <a href="/login">Log in</a>
+            <a href="/register">Sign up</a>
+            {% endif %}
+            <h2>Display</h2>
+            <div class="wv-more-row">
+                <span>Theme</span>
+                <button class="wv-btn wv-btn-ghost wv-btn-sm" type="button" id="wv-theme-btn-mobile">Toggle light theme</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ COMMAND PALETTE ═══ -->
+    <div class="wv-palette-overlay" id="wv-palette-overlay" hidden>
+        <div class="wv-palette" role="dialog" aria-modal="true" aria-label="Search Waveline" id="wv-palette">
+            <div class="wv-palette-inputrow">
+                <span class="ic" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </span>
+                <label class="wv-sr-only" for="wv-palette-input">Search Waveline</label>
+                <input type="text" id="wv-palette-input" placeholder="Search an artist or jump to a page…" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="wv-palette-list" aria-autocomplete="list">
+                <kbd>Esc</kbd>
+            </div>
+            <div class="wv-palette-list" id="wv-palette-list" role="listbox" aria-label="Results"></div>
+        </div>
+    </div>
+
+    <!-- ═══ PERSISTENT MINI-PLAYER (single shared instance) ═══ -->
+    <div class="wv-player" id="wv-player" role="region" aria-label="Track preview">
+        <div class="wv-player-art" id="wv-player-art" aria-hidden="true"></div>
+        <div class="wv-player-info">
+            <div class="wv-player-title" id="wv-player-title">—</div>
+            <div class="wv-player-artist" id="wv-player-artist">&nbsp;</div>
+        </div>
+        <button class="wv-player-btn" id="wv-player-toggle" type="button" aria-label="Pause">⏸</button>
+        <button class="wv-player-btn" id="wv-player-close" type="button" aria-label="Close preview">✕</button>
+        <audio id="wv-audio" preload="none"></audio>
+        <div class="wv-player-progress" aria-hidden="true"><div class="wv-player-progress-fill" id="wv-player-fill"></div></div>
+    </div>
+    <div class="wv-sr-only" role="status" aria-live="polite" id="wv-player-announce"></div>
+
+    <form id="wv-palette-search-form" method="POST" action="/search" hidden>
+        <input type="hidden" name="artist" id="wv-palette-search-artist">
+    </form>
     <script>
-      // Theme toggle
-      (function () {
-        var btn = document.getElementById('wv-theme-btn');
-        function apply(dark) {
-          document.body.classList.toggle('dark', dark);
-          document.documentElement.classList.remove('pre-dark');
-          if (btn) btn.textContent = dark ? '☀' : '◑';
-        }
-        try { apply(localStorage.getItem('wv-theme') === 'dark'); } catch (e) {}
-        if (btn) btn.addEventListener('click', function () {
-          var dark = !document.body.classList.contains('dark');
-          try { localStorage.setItem('wv-theme', dark ? 'dark' : 'light'); } catch (e) {}
-          apply(dark);
-        });
-      })();
-      // Mobile nav
-      (function () {
-        var header = document.getElementById('wv-header');
-        var btn = document.getElementById('wv-nav-btn');
-        if (!btn) return;
-        btn.addEventListener('click', function () {
-          var open = header.classList.toggle('wv-open');
-          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        });
-      })();
+      window.WV = {
+        authenticated: {{ 'true' if current_user.is_authenticated else 'false' }},
+        username: {{ (current_user.username if current_user.is_authenticated else '') | tojson }}
+      };
     </script>
+    <script src="{{ url_for('static', filename='js/nav.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/player.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/command-palette.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

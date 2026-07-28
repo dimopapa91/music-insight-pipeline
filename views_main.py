@@ -13,6 +13,7 @@ from services import (
     get_dashboard_data, artist_titlecase,
     SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET,
 )
+from social import get_feed
 
 main_bp = Blueprint("main", __name__)
 
@@ -22,6 +23,10 @@ def dashboard():
     message = request.args.get("message")
     error = request.args.get("error")
     total_searches, unique_artists, searches_today, artist_plays, latest_insights, discovery = get_dashboard_data()
+    try:
+        community_posts = get_feed(current_user.id if current_user.is_authenticated else None, scope="discover", page=1, per_page=3)
+    except Exception:
+        community_posts = []
     return render_template("index.html",
         total_searches=total_searches,
         unique_artists=unique_artists,
@@ -29,6 +34,7 @@ def dashboard():
         artist_plays=artist_plays,
         latest_insights=latest_insights,
         discovery=discovery,
+        community_posts=community_posts,
         message=message,
         error=error,
         urlencode=quote,
@@ -46,6 +52,11 @@ def search():
         return redirect(url_for("main.dashboard", message=f"✅ {artist_titlecase(artist)} analysed and saved successfully!"))
     except Exception as e:
         return redirect(url_for("main.dashboard", message=f"❌ Could not analyse {artist_titlecase(artist)}: {str(e)}", error=True))
+
+
+@main_bp.route("/about")
+def about():
+    return render_template("about.html")
 
 
 @main_bp.route("/api/artists")

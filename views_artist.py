@@ -6,35 +6,16 @@ import logging
 from urllib.parse import quote
 
 import requests as http_requests
-from flask import (Blueprint, render_template, render_template_string, request, redirect, url_for)
+from flask import (Blueprint, render_template, request, redirect, url_for)
 
 from db import db_cursor
 from pipeline import run_pipeline
 from services import (
-    get_similar_artists, get_spotify_artist, get_artist_db,
+    get_similar_artists, get_spotify_artist, get_artist_db, artist_titlecase,
     clean_deezer_image, LASTFM_BASE, LASTFM_API_KEY,
 )
 
 artist_bp = Blueprint("artist", __name__)
-
-_ARTIST_ERROR = """
-<!DOCTYPE html><html><head><meta charset="UTF-8">
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<style>body{font-family:'Space Mono',monospace;background:#f5f5f3;padding:60px 36px;font-size:17px;}
-.topbar{background:#111;color:#fff;padding:0 24px;height:44px;display:flex;align-items:center;position:fixed;top:0;left:0;right:0;}
-.topbar-brand{font-weight:700;font-size:0.95em;letter-spacing:2px;color:#1da0c3;}
-.box{background:#fff;border:1px solid #e8e8e8;border-radius:6px;padding:32px 36px;max-width:500px;margin:60px auto;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
-h2{font-size:1.05em;color:#111;margin-bottom:12px;line-height:1.2;}
-p{font-size:0.8em;color:#555;line-height:1.7;}
-a{color:#1da0c3;font-size:0.8em;}
-</style></head><body>
-<div class="topbar"><span class="topbar-brand">WAVELINE</span></div>
-<div class="box">
-<h2>Could not load {{ name | titlecase }}</h2>
-<p>{{ error }}</p>
-<a href="/">← Back to dashboard</a>
-</div></body></html>
-"""
 
 
 @artist_bp.route("/artist/<path:artist_name>")
@@ -56,8 +37,10 @@ def artist_profile(artist_name):
             try:
                 run_pipeline(artist_name)
                 return redirect(url_for("artist.artist_profile", artist_name=artist_name))
-            except Exception as e:
-                return render_template_string(_ARTIST_ERROR, name=artist_name, error=str(e)), 500
+            except Exception:
+                return render_template("error.html",
+                    heading=f"Could not load {artist_titlecase(artist_name)}",
+                    message="We couldn't fetch this artist from our data sources just now. Check the spelling, or try again in a moment."), 500
 
         name, insight, last_searched, top_tracks_raw = row
         tracks_list = top_tracks_raw if isinstance(top_tracks_raw, list) else json.loads(top_tracks_raw)
@@ -122,34 +105,9 @@ def artist_profile(artist_name):
             urlencode=quote,
         )
     except Exception:
-        return render_template_string("""<!DOCTYPE html><html><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Error — Waveline</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<style>*{box-sizing:border-box;}body{font-family:'Space Mono',monospace;background:#f5f5f3;margin:0;padding-top:60px;}
-.topbar{background:#000;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:fixed;top:0;left:0;right:0;z-index:100;}
-.topbar-brand{font-weight:700;font-size:0.85em;letter-spacing:2px;color:#fff;text-decoration:none;}
-.topbar-right{display:flex;gap:20px;align-items:center;}
-.topbar-link{font-size:0.62em;letter-spacing:2px;text-transform:uppercase;color:#1da0c3;text-decoration:none;}
-.box{background:#fff;border:1px solid #e8e8e8;padding:32px;max-width:520px;margin:60px auto;}
-h2{font-size:1em;color:#111;margin:0 0 12px;}
-p{font-size:0.8em;color:#666;line-height:1.7;}
-a.back{color:#1da0c3;font-size:0.8em;text-decoration:none;}
-</style></head><body>
-<div class="topbar">
-  <a href="/" class="topbar-brand">WAVELINE</a>
-  <div class="topbar-right">
-    <a href="/news" class="topbar-link">News</a>
-    <a href="/compare" class="topbar-link">Compare</a>
-    <a href="/profile" class="topbar-link">Taste Profile</a>
-  </div>
-</div>
-<div class="box">
-<h2>Something went wrong</h2>
-<p>Could not load the artist profile. This might be a temporary database issue.</p>
-<a href="/" class="back">← Back to dashboard</a>
-</div></body></html>
-"""), 500
+        return render_template("error.html",
+            heading="Something went wrong",
+            message="Could not load the artist profile. This might be a temporary database issue."), 500
 
 
 @artist_bp.route("/compare")

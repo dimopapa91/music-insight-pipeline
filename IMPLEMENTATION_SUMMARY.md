@@ -1,77 +1,122 @@
-# Waveline UX Redesign — Implementation Summary
+# Implementation summary — Waveline Signal System
 
-Branch: `ux-navigation-redesign` (not merged, not pushed, not deployed).
-Baseline before work: **38 tests passing**. After work: **38 tests passing**.
+Branch: `waveline-signal-system` (based on the tip of `cleanup-emdash-script`,
+which is `origin/main` plus two local unpushed commits — the most current
+state of the repo; local `main` was stale and missing two already-merged
+PRs, including the previous `ux-navigation-redesign` pass this one builds
+on top of). Not merged, not pushed, not deployed.
 
-## Files changed
+Baseline before this work: 32 passing / 6 pre-existing environment-only
+failures (see `TEST_REPORT.md`). After this work: 42 passing / the same 6
+pre-existing failures — 10 new tests added, zero regressions.
 
-| File | Change |
-|---|---|
-| `UX_AUDIT.md` | **New.** Competitor research + design decisions. |
-| `IMPLEMENTATION_SUMMARY.md`, `TEST_REPORT.md` | **New.** These reports. |
-| `static/css/waveline.css` | **New.** Design tokens + shared component system (light/dark). |
-| `templates/base.html` | **New.** Shared layout: one header/nav/footer, theme toggle, mobile nav, skip link. |
-| `templates/auth.html` | **New.** Login + register on the shared layout. |
-| `templates/index.html` | Rebuilt as the **Discover** homepage (search-first). |
-| `templates/news.html` | Rebuilt: Headlines / New releases / Sources, calm API-failure fallback. |
-| `templates/feed.html` | Rebuilt: Community feed, logged-out explainer, polished empty states. |
-| `templates/compare.html` | Rebuilt: pre-submit explainer + structured results + states. |
-| `templates/taste_profile.html` | Rebuilt: logged-out / empty / ready states. |
-| `templates/artist_profile.html` | Rebuilt on shared header; hosts the full AI insight. |
-| `templates/notifications.html` | Rebuilt on shared header. |
-| `auth.py` | Renders `auth.html`; removed inline template + `render_template_string`. |
-| `templates/profile.html`, `templates/settings.html` | **New.** Public user profile and settings, on the shared layout. |
-| `profiles.py` | Renders `profile.html` / `settings.html`; removed inline `_TOPBAR`/`_STYLE`/`PROFILE_TEMPLATE`/`SETTINGS_TEMPLATE` + `render_template_string`. |
-| `views_taste.py` | Taste profile now **per-user**; logged-out + empty states; no leaked errors. |
-| `views_news.py` | Passes `releases_status` + `sources`. |
-| `views_artist.py` | Compare AI failure no longer leaks provider detail. |
-| `services.py` | News: last-good releases cache, `releases_status`, server-side logging of Spotify failures. |
-| `tests/test_pages.py`, `tests/test_polish.py` | Updated 3 assertions for new markup. |
+## What changed
 
-## Routes affected (behaviour)
+### New files
+- `static/js/nav.js` — theme toggle (dark-first, `body.light` alt theme),
+  mobile "More" panel (open/close, focus trap, Escape, scroll lock),
+  scroll-reveal for homepage chapters, magnetic-button effect for
+  pointer-fine devices, generic scroll-spy helper for sticky in-page nav.
+- `static/js/command-palette.js` — global `Cmd/Ctrl+K` command palette wired
+  to the real `/api/artists` endpoint and the real `/search` POST flow.
+- `static/js/player.js` — the persistent mini-player, consolidating three
+  near-duplicate per-template implementations into one.
+- `static/js/signal-scene.js` — the hand-rolled WebGL hero scene (see
+  `SIGNAL_SYSTEM_DESIGN.md` for the full rationale and fallback chain).
+- `templates/about.html` + `main.about` route (`/about`) — the "How Waveline
+  works" page: data sources, pipeline, storage, AI, deployment, community,
+  plus a "Build with Waveline" link to the portfolio and GitHub.
+- `templates/error.html` — one shared error template extending `base.html`,
+  replacing three hand-rolled inline `<html>` documents that bypassed the
+  whole design system (and, in one case, leaked raw exception text to users).
+- `tests/test_signal_system.py` — 10 new tests for the redesigned shell.
+- `SIGNAL_SYSTEM_DESIGN.md`, this file, `TEST_REPORT.md`.
 
-- `/` (Discover) — search-first hero; long ranking + inline AI articles replaced by ≤6 deduped "recently analysed" and ≤3 insight **summaries** (full article on the artist page); usage counters demoted to a quiet line.
-- `/news` — sectioned; keeps loaded sections on partial failure; calm fallback + retry; last-good releases reused.
-- `/feed` (Community) — logged-out explainer + public Discover feed; distinct polished empty states.
-- `/compare` — pre-submit explainer/examples/categories; post-submit grouped by artist + AI summary; loading/no-result/AI-unavailable states.
-- `/profile` (Taste Profile) — **now personal**: filters `searches` by `user_id`; logged-out explainer (no AI call); empty state; AI failure degrades calmly.
-- `/login`, `/register` — shared identity, labels, autocomplete, password hints, `aria-live` errors, disabled/loading submit.
-- `/artist/<name>`, `/notifications` — on the shared header.
-- `/u/<username>` (public profile), `/settings` — now on the shared header; legacy inline header removed.
+### Rewritten
+- `static/css/waveline.css` — full token rewrite (dark-first near-black/
+  warm-off-white/signal-accent palette, contrast-checked; z-index scale;
+  breakpoint tokens; command palette, bottom nav, More panel, mini-player,
+  sticky subnav, numbered chapter and scroll-reveal component styles added).
+- `templates/base.html` — desktop dock nav, mobile bottom nav + More panel,
+  command palette markup, one persistent mini-player instance, updated
+  footer (How Waveline works, portfolio, "Interested in the project?").
+- `templates/index.html` — full-viewport hero with the signal canvas, real
+  search with suggestions/examples/recent-searches (client-side, real, not
+  fake), then four numbered editorial chapters (Search the signal / Understand
+  the artist / Follow the connections / Join the community) built from
+  existing `get_dashboard_data()` output plus a new small `community_posts`
+  preview.
+- `templates/artist_profile.html` — editorial hero with client-derived
+  ambient accent colour, sticky scroll-spy section nav (Overview / Top
+  Tracks / AI Insight / Similar Artists / Compare), an explicit "AI-generated
+  by Claude" flag on the insight, a "Compare this artist" quick action.
+- `templates/compare.html` — animated connector between the two artist
+  inputs, symmetric before/after layout, explicit "edit and compare again"
+  affordance; per-page player markup removed (now global).
 
-## Components / templates added
+### Backend (minimal, additive only)
+- `views_main.py` — added `/about` route; `dashboard()` now also passes a
+  small real `community_posts` preview (existing `social.get_feed`, wrapped
+  in try/except so a DB hiccup degrades to an empty list, never a 500).
+- `views_artist.py` — removed two inline HTML-string error pages in favour of
+  `render_template("error.html", ...)`; stopped leaking raw exception text
+  (`str(e)`) to users on pipeline failure, matching the "never leak provider
+  detail" convention already used in `compare()`.
+- `views_taste.py` — same inline-error-page removal.
+- `tests/test_pages.py` — two assertions updated to match the intentionally
+  changed hero copy/structure ("Find the signal…" / "Explore full analysis"),
+  plus `/about` added to the route-registration check.
 
-- Shared **design tokens** and component classes (`wv-*`): header, nav (active state), buttons, cards, chips, footer, empty/notice states, badges.
-- `base.html` (layout), `auth.html` (auth), `waveline.css` (system).
+No other backend module was touched. No database schema changes. No route
+removed. No existing route's URL or method changed.
 
-## Visual changes
+## Dependencies added
 
-- One consistent, responsive header/nav across Discover, Community, News, Compare, Taste Profile, auth, notifications and the artist page, with an active-page indicator and accessible mobile menu.
-- Contemporary music-editorial styling retaining Waveline's identity (Space Mono display + Inter body, cyan `#1da0c3` family), light **and** dark mode via tokens, restrained motion (`prefers-reduced-motion` honoured), a shared card system, and a real footer with data-source attribution.
+**None.** No new Python package, no new JS library, no CDN dependency beyond
+the Google Fonts link that was already there. The hero scene is hand-written
+WebGL; the command palette, nav and player are hand-written vanilla JS. This
+was a deliberate call — see the "hero scene" section of
+`SIGNAL_SYSTEM_DESIGN.md` for the reasoning.
 
-## Behavioural changes
+## Remaining limitations / what's intentionally not done
 
-- **Progressive disclosure:** homepage shows insight summaries; full AI article opens on `/artist/<name>`.
-- **Duplicate artists:** homepage "recently analysed" and "latest insights" use the existing `DISTINCT ON (artist_name)` newest-per-artist query, so an artist appears once.
-- **News resilience:** partial-failure tolerant; last-good releases cache; retry; technical errors logged server-side only.
-- **Compare/Taste errors** never surface provider/exception detail to users.
-- **Auth** submit shows a disabled/loading state; no change to auth logic or enumeration behaviour.
+- **Community, News, Taste Profile, and account pages (profile, settings,
+  notifications)** inherit the full new design system automatically (dock
+  nav, bottom nav, command palette, dark signal palette, tokens) since they
+  all extend `base.html`, but were not individually rebuilt into fully
+  bespoke editorial layouts. Homepage, navigation, and the artist and
+  compare pages — the pages the brief calls out explicitly ("shared
+  navigation, homepage and at least the main application pages") — received
+  the full treatment. Extending the same editorial depth to Community/News/
+  Taste is the natural next slice of work.
+- **Cross-page transition animation** for the hero scene isn't implemented;
+  documented in the design doc — Waveline is intentionally still a
+  server-rendered multi-page app, so there's no client router to hook into.
+- **Shareable taste-profile visual identity** (a distinct generated graphic)
+  wasn't added beyond the existing AI-written taste text and explored-artist
+  chips; would need new design work, not just reuse of existing data shapes.
+- **`hashlib.scrypt` is unavailable in this machine's Python 3.9** (built
+  against LibreSSL, not OpenSSL 1.1+), which pre-dates this branch and fails
+  6 auth tests locally regardless of these changes — see `TEST_REPORT.md`.
+  Does not affect Railway's production Python.
+- The pre-existing `requirements.txt` pins `gunicorn==26.0.0`, which doesn't
+  exist on PyPI (latest at time of testing is 23.0.0) — pre-existing, not
+  touched by this branch, noted here since it blocked a clean
+  `pip install -r requirements-dev.txt` during setup.
 
-## Database / query changes
+## Local commands
 
-- **No schema changes.** One query change: the Taste Profile now filters `searches` by `user_id` (column already existed). No API contract or auth behaviour changes.
+```bash
+source venv/bin/activate
+pytest -q                                   # run the test suite
 
-## Known limitations / not done this pass
+# macOS: port 5000 is usually taken by AirPlay Receiver — use another port
+PORT=8990 python3 dashboard.py              # run the app locally
+# then open http://127.0.0.1:8990
+```
 
-- **Before/after screenshots** need the branch running somewhere; nothing was deployed, so screenshots aren't included in-repo (see TEST_REPORT.md for how to capture).
-- The **Spotify new-releases** root cause isn't definitively confirmed (likely client-credentials endpoint restriction/rate-limit); it now degrades gracefully and logs the status for diagnosis.
-- Mobile nav is a simple accessible toggle; the logged-in profile "menu" is inline links rather than a focus-trapped dropdown.
-- Compare shows only categories backed by current data (top tracks, Spotify, AI summary); popularity/genre/audience-overlap categories are not shown to avoid fabricating data.
-
-## Recommended future improvements
-
-1. Add a focus-trapped profile dropdown (Escape to close, `aria-expanded`).
-3. Enrich Compare with real popularity/genres via `get_spotify_artist` for both artists.
-4. Add a "View all analyses" archive page (paginated) for recently-analysed.
-5. Add focused tests for the news releases fallback and per-user taste profile.
-6. Run a Lighthouse/perf pass against a running instance (image sizing, lazy-load already added to release/discovery imagery).
+Uses the existing local Postgres `music_insights` database and the existing
+`.env` (`DATABASE_URL` unset locally falls back to that DB; the real
+`SPOTIFY_CLIENT_ID`/`SPOTIFY_CLIENT_SECRET`/`LASTFM_API_KEY`/
+`ANTHROPIC_API_KEY` values already in `.env` were used for local QA, exactly
+as the app already expected).
