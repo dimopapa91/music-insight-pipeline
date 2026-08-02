@@ -79,6 +79,22 @@ SCHEMA = [
     )
     """,
     "CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, is_read)",
+    # Self-hosted analytics — one row per recorded HTML page view. No raw IP
+    # is ever stored (see analytics.py); visitor_hash is a daily-rotating hash.
+    """
+    CREATE TABLE IF NOT EXISTS analytics_events (
+        id           SERIAL PRIMARY KEY,
+        path         TEXT NOT NULL,
+        referrer     TEXT,
+        country      CHAR(2),
+        user_id      INTEGER REFERENCES users(id),
+        visitor_hash TEXT NOT NULL,
+        created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_analytics_created_at ON analytics_events (created_at)",
+    "CREATE INDEX IF NOT EXISTS idx_analytics_country ON analytics_events (country)",
+    "CREATE INDEX IF NOT EXISTS idx_analytics_path ON analytics_events (path)",
 ]
 
 

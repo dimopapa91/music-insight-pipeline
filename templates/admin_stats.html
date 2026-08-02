@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Admin · Stats — Waveline{% endblock %}
+{% block description %}Owner-only self-hosted analytics.{% endblock %}
+
+{% block head_extra %}
+<style>
+  .adm-wrap { max-width: 980px; margin: 0 auto; padding: var(--wv-6) var(--wv-5) var(--wv-8); }
+  .adm-head h1 { font-family: var(--wv-font-display); font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 700; letter-spacing: -.4px; }
+  .adm-note { font-size: .84rem; color: var(--wv-muted); margin-top: 8px; max-width: 70ch; }
+  .adm-section { margin-top: var(--wv-7); }
+  .adm-section h2 { font-family: var(--wv-font-display); font-size: .78rem; letter-spacing: 1.6px; text-transform: uppercase; color: var(--wv-accent-ink); border-bottom: 1px solid var(--wv-border); padding-bottom: 10px; margin-bottom: var(--wv-4); }
+  .adm-section h3 { font-family: var(--wv-font-display); font-size: .72rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); margin: var(--wv-5) 0 var(--wv-3); }
+
+  /* Unified data strip — one bordered instrument, not a stack of KPI cards */
+  .adm-stats { display: flex; flex-wrap: wrap; border: 1px solid var(--wv-border); border-radius: var(--wv-radius-lg); background: var(--wv-surface); }
+  .adm-stat { flex: 1 1 150px; padding: var(--wv-4); border-left: 1px solid var(--wv-border); }
+  .adm-stat:first-child { border-left: none; }
+  @media (max-width: 700px) { .adm-stat { flex: 1 1 45%; border-left: none; border-top: 1px solid var(--wv-border); } .adm-stat:nth-child(-n+2) { border-top: none; } }
+  .adm-stat .l { font-family: var(--wv-font-display); font-size: .6rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); }
+  .adm-stat .v { font-family: var(--wv-font-display); font-weight: 700; font-size: 1.3rem; margin-top: 4px; color: var(--wv-accent-ink); }
+
+  .adm-table-wrap { overflow-x: auto; }
+  .adm-table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+  .adm-table th, .adm-table td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--wv-border); white-space: nowrap; }
+  .adm-table td:first-child, .adm-table th:first-child { padding-left: var(--wv-4); }
+  .adm-table th { font-family: var(--wv-font-display); font-size: .62rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); }
+  .adm-table tr:last-child td { border-bottom: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-wrap">
+  <div class="adm-head">
+    <p class="wv-eyebrow">Admin</p>
+    <h1>Analytics</h1>
+    <p class="adm-note">Aggregate, self-hosted usage stats — no third-party tracker, no client-side script. No personal IP addresses are stored; each visitor is identified only by a hash that rotates every day.</p>
+  </div>
+
+  {% if not stats %}
+  <div class="wv-empty" style="margin-top:var(--wv-5);">
+    <h3>Stats unavailable</h3>
+    <p>Could not load analytics right now. Try refreshing.</p>
+  </div>
+  {% else %}
+
+  <section class="adm-section">
+    <h2>Pageviews</h2>
+    <div class="adm-stats">
+      <div class="adm-stat"><div class="l">Total pageviews</div><div class="v">{{ "{:,}".format(stats.total_pageviews) }}</div></div>
+      <div class="adm-stat"><div class="l">Unique · today</div><div class="v">{{ "{:,}".format(stats.unique_visitors_today) }}</div></div>
+      <div class="adm-stat"><div class="l">Unique · 7d</div><div class="v">{{ "{:,}".format(stats.unique_visitors_7d) }}</div></div>
+      <div class="adm-stat"><div class="l">Unique · 30d</div><div class="v">{{ "{:,}".format(stats.unique_visitors_30d) }}</div></div>
+    </div>
+  </section>
+
+  <section class="adm-section">
+    <h2>Profiles</h2>
+    <div class="adm-stats">
+      <div class="adm-stat"><div class="l">Total users</div><div class="v">{{ "{:,}".format(stats.total_users) }}</div></div>
+    </div>
+
+    <h3>Signups per day · 30d</h3>
+    {% if stats.signups_per_day %}
+    <div class="wv-card adm-table-wrap">
+      <table class="adm-table">
+        <thead><tr><th>Date</th><th>Signups</th></tr></thead>
+        <tbody>
+          {% for row in stats.signups_per_day %}
+          <tr><td>{{ row.day.strftime('%d %b %Y') if row.day else '—' }}</td><td>{{ row.count }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}<p class="adm-empty" style="color:var(--wv-muted);font-size:.86rem;">No signups in the last 30 days.</p>{% endif %}
+
+    <h3>Latest signups</h3>
+    {% if stats.latest_signups %}
+    <div class="wv-card adm-table-wrap">
+      <table class="adm-table">
+        <thead><tr><th>Username</th><th>Joined</th><th>Location</th><th>Website</th></tr></thead>
+        <tbody>
+          {% for u in stats.latest_signups %}
+          <tr>
+            <td>@{{ u.username }}</td>
+            <td>{{ u.created_at.strftime('%d %b %Y') if u.created_at else '—' }}</td>
+            <td>{{ u.location or '—' }}</td>
+            <td>{{ u.website or '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}<p style="color:var(--wv-muted);font-size:.86rem;">No signups yet.</p>{% endif %}
+  </section>
+
+  <section class="adm-section">
+    <h2>Geography &amp; traffic · 30d</h2>
+    <h3>Top countries</h3>
+    {% if stats.top_countries %}
+    <div class="wv-card adm-table-wrap">
+      <table class="adm-table">
+        <thead><tr><th>Country</th><th>Views</th></tr></thead>
+        <tbody>{% for c in stats.top_countries %}<tr><td>{{ c.country }}</td><td>{{ c.count }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+    {% else %}<p style="color:var(--wv-muted);font-size:.86rem;">No geo data yet — GeoIP may not be configured (GEOIP_DB_PATH).</p>{% endif %}
+
+    <h3>Top pages</h3>
+    {% if stats.top_paths %}
+    <div class="wv-card adm-table-wrap">
+      <table class="adm-table">
+        <thead><tr><th>Path</th><th>Views</th></tr></thead>
+        <tbody>{% for p in stats.top_paths %}<tr><td>{{ p.path }}</td><td>{{ p.count }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+    {% else %}<p style="color:var(--wv-muted);font-size:.86rem;">No pageviews yet.</p>{% endif %}
+
+    <h3>Top referrers</h3>
+    {% if stats.top_referrers %}
+    <div class="wv-card adm-table-wrap">
+      <table class="adm-table">
+        <thead><tr><th>Referrer</th><th>Views</th></tr></thead>
+        <tbody>{% for r in stats.top_referrers %}<tr><td>{{ r.referrer }}</td><td>{{ r.count }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+    {% else %}<p style="color:var(--wv-muted);font-size:.86rem;">No referrer data yet (most visits are likely direct).</p>{% endif %}
+  </section>
+
+  <section class="adm-section">
+    <h2>Searches</h2>
+    <div class="adm-stats">
+      <div class="adm-stat"><div class="l">Total searches</div><div class="v">{{ "{:,}".format(stats.total_searches) }}</div></div>
+      <div class="adm-stat"><div class="l">By members</div><div class="v">{{ "{:,}".format(stats.searches_by_membership.members) }}</div></div>
+      <div class="adm-stat"><div class="l">Anonymous</div><div class="v">{{ "{:,}".format(stats.searches_by_membership.anonymous) }}</div></div>
+    </div>
+  </section>
+
+  <section class="adm-section">
+    <h2>Community</h2>
+    <div class="adm-stats">
+      <div class="adm-stat"><div class="l">Posts</div><div class="v">{{ "{:,}".format(stats.community.posts) }}</div></div>
+      <div class="adm-stat"><div class="l">Follows</div><div class="v">{{ "{:,}".format(stats.community.follows) }}</div></div>
+      <div class="adm-stat"><div class="l">Likes</div><div class="v">{{ "{:,}".format(stats.community.likes) }}</div></div>
+      <div class="adm-stat"><div class="l">Comments</div><div class="v">{{ "{:,}".format(stats.community.comments) }}</div></div>
+    </div>
+  </section>
+
+  {% endif %}
+</div>
+{% endblock %}

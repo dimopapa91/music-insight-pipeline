@@ -53,6 +53,8 @@ waveline/
 ├── social.py         # Data layer for posts, likes, comments, follows, notifications
 ├── views_feed.py     # Blueprint — community feed, posting, likes, comments
 ├── views_notifications.py  # Blueprint — notifications page
+├── views_admin.py    # Blueprint — owner-only /admin/stats (404 for everyone else)
+├── analytics.py       # Self-hosted analytics: after_request recorder + GeoIP + stats queries
 ├── pipeline.py       # ETL: Last.fm fetch → Claude analysis → PostgreSQL
 ├── scheduler.py      # APScheduler daily jobs + weekly email digest
 ├── email_digest.py   # Weekly HTML email builder and sender
@@ -112,6 +114,10 @@ SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
 DIGEST_EMAIL_FROM=your@gmail.com
 DIGEST_EMAIL_TO=your@gmail.com
 GMAIL_APP_PASSWORD=your_gmail_app_password
+
+# Optional — self-hosted analytics (see "Analytics" section below)
+ADMIN_USERNAME=your_waveline_username
+# GEOIP_DB_PATH=/path/to/GeoLite2-Country.mmdb
 ```
 
 ## Usage
@@ -160,6 +166,40 @@ python3 email_digest.py
 | `/compare?a=X&b=Y` | Side-by-side artist comparison |
 | `/profile` | Your personal taste profile |
 | `/news` | Music news + Spotify new releases |
+| `/admin/stats` | Owner-only self-hosted analytics — 404 for everyone except `ADMIN_USERNAME` |
+
+## Analytics
+
+Waveline records a lightweight, **self-hosted** pageview log — no third-party
+analytics service and no client-side tracking script. A Flask
+`after_request` hook (`analytics.py`) inserts one row per real HTML page
+view into an `analytics_events` table; static assets, JSON APIs, the
+Deezer preview endpoint, the admin area itself, and non-GET requests are
+all skipped.
+
+**Privacy**: no raw IP address is ever stored. Each row's visitor identifier
+is `sha256(ip + date + user_agent + SECRET_KEY)`, truncated — a hash that
+**rotates every UTC day**, so it's never a durable cross-day identifier and
+the raw IP never touches the database.
+
+The aggregated stats — pageviews, unique visitors, top countries/pages/
+referrers, signups, searches, community activity — are visible at
+`/admin/stats`, which requires being logged in **and** having a username
+that matches the `ADMIN_USERNAME` environment variable. Anyone else gets a
+plain 404.
+
+### GeoIP setup (optional)
+
+Country breakdowns need a MaxMind **GeoLite2-Country** database:
+
+1. Create a free MaxMind account at [maxmind.com](https://www.maxmind.com/en/geolite2/signup) and download `GeoLite2-Country.mmdb`.
+2. Put the file somewhere on the server (not in the repo — it's `.gitignore`d as `*.mmdb`, and MaxMind's license doesn't allow redistributing it anyway).
+3. Set `GEOIP_DB_PATH` to its absolute path.
+4. On Railway: add a persistent [volume](https://docs.railway.app/reference/volumes), upload the `.mmdb` file into it, and set `GEOIP_DB_PATH` to the mounted path in the service's environment variables.
+
+If `GEOIP_DB_PATH` is unset, or the file can't be read, analytics still work
+exactly the same — `country` is just recorded as `NULL` and the "top
+countries" table is simply empty.
 
 ---
 

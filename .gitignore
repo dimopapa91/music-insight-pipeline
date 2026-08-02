@@ -5,6 +5,9 @@ __pycache__/
 *.log
 .cache
 
+# GeoLite2 database (MaxMind) — never commit, see README "GeoIP setup"
+*.mmdb
+
 # Personal files
 *.docx
 .DS_Store
