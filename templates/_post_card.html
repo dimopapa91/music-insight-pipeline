@@ -1,35 +1,45 @@
-<div class="post">
-    <div class="post-head">
-        <a class="post-author" href="/u/{{ post.username }}">@{{ post.username }}</a>
-        {% if post.artist %}<a class="post-artist" href="/artist/{{ post.artist | urlencode }}">♪ {{ post.artist }}</a>{% endif %}
-        <span class="post-time">{{ post.created_at | timeago }}</span>
+<article class="wv-post">
+    <div class="wv-post-head">
+        <span class="wv-avatar wv-avatar-xs" style="background:{{ post.username | avatar_color }};" aria-hidden="true">{{ post.username[0] | upper }}</span>
+        <a class="wv-post-author" href="/u/{{ post.username }}">@{{ post.username }}</a>
+        {% if post.artist %}<a class="wv-post-artist" href="/artist/{{ post.artist | urlencode }}">♪ {{ post.artist }}</a>{% endif %}
+        <time class="wv-post-time" datetime="{{ post.created_at.isoformat() if post.created_at else '' }}">{{ post.created_at | timeago }}</time>
     </div>
-    <div class="post-body">{{ post.body }}</div>
-    <div class="post-actions">
+    <div class="wv-post-body">{{ post.body }}</div>
+    <div class="wv-post-actions">
         <form method="POST" action="/post/{{ post.id }}/like" class="inline">
             <input type="hidden" name="next" value="{{ next }}">
-            <button type="submit" class="act-btn like-btn{{ ' liked' if post.liked }}"{% if not current_user.is_authenticated %} disabled title="Log in to like"{% endif %}>♥ {{ post.like_count }}</button>
+            <button type="submit" class="wv-act-btn wv-like-btn{{ ' is-liked' if post.liked }}"
+                    {% if not current_user.is_authenticated %}disabled title="Log in to like"{% endif %}
+                    aria-label="{{ post.like_count }} like{{ 's' if post.like_count != 1 }}{{ ', liked by you' if post.liked }}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s-7.1-4.4-9.5-9C.7 8.3 2 4.4 5.8 4c2-.2 3.7.8 4.7 2.4.3.5 1 .5 1.3 0C12.8 4.7 14.5 3.7 16.5 4c3.8.5 5.1 4.4 3.3 8-2.4 4.6-9.5 9-9.5 9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                {{ post.like_count }}
+            </button>
         </form>
-        <span class="act-btn">💬 {{ post.comment_count }}</span>
+        <span class="wv-act-btn" aria-label="{{ post.comment_count }} comment{{ 's' if post.comment_count != 1 }}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16v11H8l-4 4V5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            {{ post.comment_count }}
+        </span>
         {% if current_user.is_authenticated and current_user.id == post.user_id %}
         <form method="POST" action="/post/{{ post.id }}/delete" class="inline" onsubmit="return confirm('Delete this post?')">
             <input type="hidden" name="next" value="{{ next }}">
-            <button type="submit" class="act-btn del-btn">Delete</button>
+            <button type="submit" class="wv-act-btn wv-del-btn">Delete</button>
         </form>
         {% endif %}
     </div>
     {% if post.comments %}
-    <div class="comments">
+    <div class="wv-comments">
         {% for c in post.comments %}
-        <div class="comment"><a class="c-author" href="/u/{{ c.username }}">@{{ c.username }}</a> {{ c.body }} <span class="c-time">· {{ c.created_at | timeago }}</span></div>
+        <div class="wv-comment"><a class="wv-c-author" href="/u/{{ c.username }}">@{{ c.username }}</a> {{ c.body }} <span class="wv-c-time">· {{ c.created_at | timeago }}</span></div>
         {% endfor %}
     </div>
     {% endif %}
     {% if current_user.is_authenticated %}
-    <form method="POST" action="/post/{{ post.id }}/comment" class="comment-form">
+    <form method="POST" action="/post/{{ post.id }}/comment" class="wv-comment-form">
         <input type="hidden" name="next" value="{{ next }}">
-        <input type="text" name="body" placeholder="Add a comment…" maxlength="500" required>
+        <label class="wv-sr-only" for="comment-{{ post.id }}">Add a comment</label>
+        <input type="text" id="comment-{{ post.id }}" name="body" placeholder="Add a comment…" maxlength="500" required>
         <button type="submit">Reply</button>
     </form>
     {% endif %}
-</div>
+</article>

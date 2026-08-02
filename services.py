@@ -50,6 +50,19 @@ def markdown_preview(text, length=200):
     return plain[:length]
 
 
+def avatar_color(username):
+    """Deterministic, muted background colour for a monogram avatar tile,
+    derived from the username — stable across requests/restarts (no image
+    uploads exist). Saturation/lightness are fixed at values that guarantee
+    at least 4.5:1 contrast against the site's off-white ink at any hue."""
+    name = username or "?"
+    h = 0
+    for ch in name:
+        h = (h * 31 + ord(ch)) & 0xFFFFFFFF
+    hue = h % 360
+    return f"hsl({hue}, 30%, 30%)"
+
+
 def artist_titlecase(name):
     """Capitalise the first letter of each word without lowercasing the rest,
     preserving stylised capitalisation like 'BlakeNor' or 'MGMT'."""
