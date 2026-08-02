@@ -22,7 +22,9 @@ from views_taste import taste_bp
 from views_news import news_bp
 from views_feed import feed_bp
 from views_notifications import notifications_bp
+from views_admin import admin_bp
 from social import count_unread
+from analytics import record_pageview, init_geoip
 
 load_dotenv()
 
@@ -63,6 +65,11 @@ app.register_blueprint(taste_bp)
 app.register_blueprint(news_bp)
 app.register_blueprint(feed_bp)
 app.register_blueprint(notifications_bp)
+app.register_blueprint(admin_bp)
+
+# Self-hosted, privacy-respecting analytics: one row per real HTML page view.
+# Never raises into the request/response cycle (see analytics.py).
+app.after_request(record_pageview)
 
 
 @app.context_processor
@@ -77,6 +84,10 @@ def inject_unread_notifications():
 
 # Ensure all application tables exist (idempotent — safe on every boot/worker).
 init_db()
+
+# Load the optional GeoLite2 database once at startup (see analytics.py —
+# safe no-op if GEOIP_DB_PATH is unset or the file is missing).
+init_geoip()
 
 
 if __name__ == "__main__":
