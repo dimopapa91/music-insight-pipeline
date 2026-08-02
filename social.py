@@ -181,15 +181,16 @@ def _notify_post_owner(cur, post_id, actor_id, kind):
 def get_notifications(user_id, limit=30):
     with db_cursor() as cur:
         cur.execute("""
-            SELECT n.id, n.type, n.post_id, n.is_read, n.created_at, u.username
+            SELECT n.id, n.type, n.post_id, n.is_read, n.created_at, u.username, p.body
             FROM notifications n
             JOIN users u ON u.id = n.actor_id
+            LEFT JOIN posts p ON p.id = n.post_id
             WHERE n.user_id = %s
             ORDER BY n.created_at DESC
             LIMIT %s
         """, (user_id, limit))
         return [{"id": r[0], "type": r[1], "post_id": r[2], "is_read": r[3],
-                 "created_at": r[4], "actor": r[5]} for r in cur.fetchall()]
+                 "created_at": r[4], "actor": r[5], "post_body": r[6]} for r in cur.fetchall()]
 
 
 def count_unread(user_id):

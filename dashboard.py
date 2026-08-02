@@ -13,7 +13,7 @@ from flask_login import LoginManager, current_user
 from dotenv import load_dotenv
 
 from models import User, init_db
-from services import render_markdown, markdown_preview, artist_titlecase, timeago
+from services import render_markdown, markdown_preview, artist_titlecase, timeago, avatar_color
 from auth import auth_bp
 from profiles import profiles_bp
 from views_main import main_bp
@@ -55,6 +55,7 @@ app.jinja_env.filters["markdown"] = render_markdown
 app.jinja_env.filters["markdown_preview"] = markdown_preview
 app.jinja_env.filters["titlecase"] = artist_titlecase
 app.jinja_env.filters["timeago"] = timeago
+app.jinja_env.filters["avatar_color"] = avatar_color
 
 # ── Blueprints ──────────────────────────────────────────────────────
 app.register_blueprint(auth_bp)

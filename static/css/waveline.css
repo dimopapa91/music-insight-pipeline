@@ -466,3 +466,76 @@ img { max-width: 100%; display: block; }
 .wv-reveal { opacity: 1; transform: none; }
 .wv-js .wv-reveal { opacity: 0; transform: translateY(16px); transition: opacity var(--wv-motion-slow) var(--wv-ease), transform var(--wv-motion-slow) var(--wv-ease); }
 .wv-js .wv-reveal.is-visible { opacity: 1; transform: none; }
+
+/* ── Avatars — deterministic colour tile (see services.avatar_color) ──
+   Square-with-soft-corner monogram, used for user identity everywhere:
+   profile header, post/comment authors, notification actors. No image
+   uploads exist, so the letter + stable colour together stand in as the
+   identity mark. */
+.wv-avatar {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  border-radius: var(--wv-radius); color: #fdfaf6;
+  font-family: var(--wv-font-display); font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0;
+}
+.wv-avatar-lg { width: 88px; height: 88px; font-size: 2rem; border-radius: var(--wv-radius-lg); }
+.wv-avatar-sm { width: 32px; height: 32px; font-size: .8rem; }
+.wv-avatar-xs { width: 26px; height: 26px; font-size: .68rem; border-radius: 6px; }
+
+/* ── Post / comment cards — shared between the community feed and
+   public profiles (templates/_post_card.html). Editorial list treatment:
+   thin dividing rules between items rather than boxed cards, so it reads
+   the same whether wrapped in a .wv-card (profile) or laid directly on
+   the page (feed). ── */
+.wv-post-list { padding: var(--wv-2) var(--wv-5); }
+.wv-post { padding: var(--wv-4) 0; border-top: 1px solid var(--wv-border); }
+.wv-post:first-child { border-top: none; }
+.wv-post-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.wv-post-author { font-family: var(--wv-font-display); font-weight: 700; font-size: .85rem; color: var(--wv-ink); text-decoration: none; }
+.wv-post-author:hover { color: var(--wv-accent-ink); }
+.wv-post-artist {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--wv-font-display); font-size: .62rem; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--wv-accent-ink); text-decoration: none;
+  border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill); padding: 4px 10px;
+}
+.wv-post-artist:hover { border-color: var(--wv-accent); }
+.wv-post-time { margin-left: auto; font-family: var(--wv-font-display); font-size: .66rem; letter-spacing: .3px; color: var(--wv-muted); white-space: nowrap; }
+.wv-post-body { font-size: .96rem; line-height: 1.65; color: var(--wv-ink-2); white-space: pre-wrap; word-wrap: break-word; max-width: 62ch; }
+.wv-post-actions { display: flex; align-items: center; gap: 8px; margin-top: var(--wv-3); flex-wrap: wrap; }
+.wv-act-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--wv-font-body); font-size: .8rem; color: var(--wv-muted);
+  background: none; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill);
+  padding: 0 14px; min-height: 44px; cursor: pointer;
+  transition: border-color var(--wv-motion) var(--wv-ease), color var(--wv-motion) var(--wv-ease);
+}
+button.wv-act-btn:hover { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
+button.wv-act-btn:disabled { opacity: .5; cursor: not-allowed; }
+.wv-act-btn svg { flex-shrink: 0; }
+.wv-like-btn.is-liked { color: #e0245e; border-color: #e0245e; }
+.wv-like-btn.is-liked svg { fill: currentColor; }
+button.wv-del-btn:hover { border-color: var(--wv-danger); color: var(--wv-danger); }
+
+.wv-comments { margin: var(--wv-3) 0 0 15px; padding-left: 21px; border-left: 1px solid var(--wv-border); display: grid; gap: 10px; }
+.wv-comment { font-size: .86rem; color: var(--wv-ink-2); line-height: 1.55; }
+.wv-c-author { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); text-decoration: none; font-size: .82rem; }
+.wv-c-author:hover { color: var(--wv-accent-ink); }
+.wv-c-time { color: var(--wv-muted); font-size: .74rem; margin-left: 6px; }
+.wv-comment-form { display: flex; gap: 8px; margin: var(--wv-3) 0 0 15px; padding-left: 21px; }
+.wv-comment-form input {
+  flex: 1; min-width: 0; font-family: var(--wv-font-body); font-size: .86rem;
+  border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill);
+  padding: 0 14px; height: 44px; background: var(--wv-surface-2); color: var(--wv-ink);
+}
+.wv-comment-form input:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); }
+.wv-comment-form button {
+  font-family: var(--wv-font-display); font-size: .64rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--wv-on-accent); background: var(--wv-accent); border: none; border-radius: var(--wv-radius-pill);
+  padding: 0 18px; min-height: 44px; cursor: pointer;
+}
+.wv-comment-form button:hover { background: var(--wv-accent-ink); }
+@media (max-width: 480px) {
+  .wv-post-list { padding: var(--wv-2) var(--wv-4); }
+  .wv-comments, .wv-comment-form { margin-left: 6px; padding-left: 10px; }
+}

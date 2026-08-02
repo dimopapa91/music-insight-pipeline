@@ -3,13 +3,31 @@
 
 {% block head_extra %}
 <style>
-  .nt-wrap { max-width: 620px; margin: 0 auto; padding: var(--wv-7) var(--wv-5) var(--wv-8); }
-  .nt-wrap h1 { font-family: var(--wv-font-display); font-size: 1.5rem; margin-bottom: var(--wv-5); }
-  .nt-item { display: flex; align-items: center; gap: 10px; padding: var(--wv-4); margin-bottom: 10px; text-decoration: none; color: var(--wv-ink-2); font-size: .92rem; transition: border-color var(--wv-motion) var(--wv-ease); }
-  .nt-item:hover { border-color: var(--wv-accent); }
-  .nt-item.unread { border-left: 3px solid var(--wv-accent); background: var(--wv-accent-soft); }
+  .nt-wrap { max-width: 640px; margin: 0 auto; padding: var(--wv-6) var(--wv-5) var(--wv-8); }
+  .nt-wrap h1 { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.4rem, 3.6vw, 1.8rem); margin-top: var(--wv-2); }
+
+  .nt-list { overflow: hidden; }
+  .nt-item {
+    display: flex; align-items: flex-start; gap: 12px; padding: var(--wv-4);
+    text-decoration: none; color: inherit; border-top: 1px solid var(--wv-border);
+    transition: background var(--wv-motion) var(--wv-ease);
+  }
+  .nt-item:first-child { border-top: none; }
+  .nt-item:hover { background: var(--wv-surface-2); }
+  .nt-item.is-unread { background: var(--wv-accent-soft); }
+  .nt-item.is-unread:hover { background: color-mix(in srgb, var(--wv-accent-soft) 65%, var(--wv-surface-2)); }
+  .nt-icon {
+    flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; margin-top: 2px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--wv-surface-2); color: var(--wv-muted);
+  }
+  .nt-item.is-unread .nt-icon { background: var(--wv-surface); color: var(--wv-accent-ink); }
+  .nt-body { flex: 1; min-width: 0; }
+  .nt-line { font-size: .92rem; color: var(--wv-ink-2); line-height: 1.5; }
   .nt-actor { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); }
-  .nt-time { margin-left: auto; font-size: .8rem; color: var(--wv-muted); white-space: nowrap; }
+  .nt-snippet { color: var(--wv-muted); }
+  .nt-time { display: block; margin-top: 3px; font-family: var(--wv-font-display); font-size: .66rem; letter-spacing: .6px; text-transform: uppercase; color: var(--wv-muted); }
+  .nt-dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--wv-accent); margin-top: 8px; }
 </style>
 {% endblock %}
 
@@ -17,23 +35,37 @@
 <div class="nt-wrap">
   <p class="wv-eyebrow">Account</p>
   <h1>Notifications</h1>
+
   {% if items %}
+  <div class="wv-card nt-list" style="margin-top:var(--wv-5);">
     {% for n in items %}
-    <a class="wv-card nt-item{{ ' unread' if not n.is_read }}" href="{{ '/u/' ~ n.actor if n.type == 'follow' else '/feed' }}">
-      <span class="nt-actor">@{{ n.actor }}</span>
-      <span>
-      {% if n.type == 'like' %}liked your post
-      {% elif n.type == 'comment' %}commented on your post
-      {% else %}started following you{% endif %}
+    <a class="nt-item{{ ' is-unread' if not n.is_read }}" href="{{ '/u/' ~ n.actor if n.type == 'follow' else '/feed' }}">
+      <span class="nt-icon" aria-hidden="true">
+        {% if n.type == 'like' %}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7.1-4.4-9.5-9C.7 8.3 2 4.4 5.8 4c2-.2 3.7.8 4.7 2.4.3.5 1 .5 1.3 0C12.8 4.7 14.5 3.7 16.5 4c3.8.5 5.1 4.4 3.3 8-2.4 4.6-9.5 9-9.5 9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        {% elif n.type == 'comment' %}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H8l-4 4V5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        {% else %}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 8v6M15 11h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        {% endif %}
       </span>
-      <span class="nt-time">{{ n.created_at | timeago }}</span>
+      <span class="nt-body">
+        <span class="nt-line">
+          <span class="nt-actor">@{{ n.actor }}</span>
+          {% if n.type == 'like' %}liked your post{% elif n.type == 'comment' %}commented on your post{% else %}started following you{% endif -%}
+          {%- if n.post_body %} <span class="nt-snippet">"{{ n.post_body[:60] }}{{ '…' if n.post_body | length > 60 }}"</span>{% endif %}
+        </span>
+        <time class="nt-time">{{ n.created_at | timeago }}</time>
+      </span>
+      {% if not n.is_read %}<span class="nt-dot" aria-label="Unread"></span>{% endif %}
     </a>
     {% endfor %}
+  </div>
   {% else %}
-    <div class="wv-empty">
-      <h3>No notifications yet</h3>
-      <p>Likes, comments and follows will show up here. Share a post on the <a href="/feed">community feed</a> to get started.</p>
-    </div>
+  <div class="wv-empty" style="margin-top:var(--wv-5);">
+    <h3>No notifications yet</h3>
+    <p>Likes, comments and follows will show up here. Share a post on the <a href="/feed">community feed</a> to get started.</p>
+  </div>
   {% endif %}
 </div>
 {% endblock %}
