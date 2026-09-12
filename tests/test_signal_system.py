@@ -31,8 +31,35 @@ def test_desktop_nav_has_labelled_links(monkeypatch):
     resp = client.get("/")
     html = resp.data.decode()
     assert '<nav class="wv-nav"' in html
-    for label in ["Discover", "Community", "Compare", "News", "Taste"]:
+    for label in ["Home", "Feed", "Taste"]:
         assert f">{label}<" in html
+
+
+def test_desktop_nav_no_longer_shows_old_labels(monkeypatch):
+    client = _dashboard_client(monkeypatch)
+    html = client.get("/").data.decode()
+    nav_start = html.index('<nav class="wv-nav"')
+    nav_end = html.index("</nav>", nav_start)
+    primary_nav = html[nav_start:nav_end]
+    assert ">Discover<" not in primary_nav
+    assert ">Community<" not in primary_nav
+    # Compare/News moved out of the primary nav into the desktop More menu
+    assert ">Compare<" not in primary_nav
+    assert ">News<" not in primary_nav
+
+
+def test_desktop_more_menu_contains_compare_and_news(monkeypatch):
+    client = _dashboard_client(monkeypatch)
+    html = client.get("/").data.decode()
+    assert 'id="wv-navmenu-trigger"' in html
+    assert 'aria-haspopup="menu"' in html
+    panel_start = html.index('id="wv-navmenu-panel"')
+    panel_end = html.index("</div>", panel_start)
+    panel = html[panel_start:panel_end]
+    assert 'href="/compare"' in panel
+    assert 'href="/news"' in panel
+    assert ">Compare<" in panel
+    assert ">News<" in panel
 
 
 # ── Mobile bottom navigation ──
@@ -41,8 +68,13 @@ def test_mobile_bottom_nav_present(monkeypatch):
     client = _dashboard_client(monkeypatch)
     html = client.get("/").data.decode()
     assert 'class="wv-bottomnav"' in html
-    for label in ["Discover", "Community", "Compare", "Taste", "More"]:
-        assert f">{label}<" in html
+    bottomnav_start = html.index('class="wv-bottomnav"')
+    bottomnav_end = html.index("</nav>", bottomnav_start)
+    bottomnav = html[bottomnav_start:bottomnav_end]
+    for label in ["Home", "Feed", "Compare", "Taste", "More"]:
+        assert f">{label}<" in bottomnav
+    assert ">Discover<" not in bottomnav
+    assert ">Community<" not in bottomnav
     # persistent artist-search shortcut reachable from the mobile shell
     assert 'id="wv-search-trigger-mobile"' in html
 

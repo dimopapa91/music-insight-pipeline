@@ -76,13 +76,18 @@
     });
   }
 
-  /* ── Desktop profile menu (logged-in state): accessible disclosure ──
-     Enter/Space open it natively (it's a <button>); Escape and click-outside
-     close it; Tab is trapped inside while open; focus returns to the
-     trigger on close. Never hover-only. */
-  function initProfileMenu() {
-    var trigger = document.getElementById("wv-profile-trigger");
-    var panel = document.getElementById("wv-profile-menu");
+  /* ── Small navbar dropdowns (profile menu, desktop More menu) ──
+     Shared accessible-disclosure behaviour: Enter/Space open it natively
+     (it's a <button>), Escape and click-outside close it, Tab is trapped
+     inside while open, and focus returns to the trigger on close. Opening
+     one of these dropdowns also closes any other one that's currently
+     open, so only a single navbar dropdown is ever visible at once. Never
+     hover-only. */
+  var openNavDropdownClose = null;
+
+  function initNavDropdown(triggerId, panelId) {
+    var trigger = document.getElementById(triggerId);
+    var panel = document.getElementById(panelId);
     if (!trigger || !panel) return;
     var lastFocus = null;
 
@@ -91,15 +96,18 @@
     }
     function isOpen() { return !panel.hidden; }
     function open() {
+      if (openNavDropdownClose && openNavDropdownClose !== close) openNavDropdownClose(false);
       lastFocus = document.activeElement;
       panel.hidden = false;
       trigger.setAttribute("aria-expanded", "true");
+      openNavDropdownClose = close;
       var items = focusable();
       if (items.length) items[0].focus();
     }
     function close(returnFocus) {
       panel.hidden = true;
       trigger.setAttribute("aria-expanded", "false");
+      if (openNavDropdownClose === close) openNavDropdownClose = null;
       if (returnFocus !== false && lastFocus) lastFocus.focus();
     }
 
@@ -190,7 +198,8 @@
   document.addEventListener("DOMContentLoaded", function () {
     initTheme();
     initMorePanel();
-    initProfileMenu();
+    initNavDropdown("wv-profile-trigger", "wv-profile-menu");
+    initNavDropdown("wv-navmenu-trigger", "wv-navmenu-panel");
     initReveal();
     initMagnetic();
     initScrollSpy();

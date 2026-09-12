@@ -86,7 +86,7 @@ def test_desktop_dock_logged_in_has_logout_via_profile_menu(monkeypatch):
     client = _dashboard_client(monkeypatch)
     _login(client, monkeypatch)
     dock = _dock(client.get("/").data.decode())
-    assert "Log out" in dock
+    assert "Sign out" in dock
     assert 'id="wv-profile-trigger"' in dock
     assert 'aria-haspopup="menu"' in dock
     assert 'aria-expanded="false"' in dock
@@ -94,6 +94,30 @@ def test_desktop_dock_logged_in_has_logout_via_profile_menu(monkeypatch):
     assert 'role="menu"' in dock
     # the old bug: username used to be a plain link, not a menu trigger
     assert '<a class="wv-userchip wv-desktop-only" href="/me">' not in dock
+
+
+def test_avatar_menu_contains_all_five_account_destinations(monkeypatch):
+    client = _dashboard_client(monkeypatch)
+    _login(client, monkeypatch)
+    html = client.get("/").data.decode()
+    panel = _section(html, 'id="wv-profile-menu"', "</div>")
+
+    expected = [
+        ("/me", "Profile"),
+        ("/profile", "Taste Profile"),
+        ("/feed", "Feed"),
+        ("/settings", "Settings"),
+        ("/logout", "Sign out"),
+    ]
+    for href, label in expected:
+        assert f'href="{href}"' in panel, f"missing link to {href}"
+        assert f">{label}<" in panel, f"missing label {label!r}"
+
+    # exactly these five menu items, no more, no fewer
+    assert panel.count("role=\"menuitem\"") == 5
+    # superseded labels from before this correction must be gone
+    assert "View profile" not in panel
+    assert ">Log out<" not in panel
 
 
 def test_mobile_more_panel_logged_in_has_logout_and_no_login_signup(monkeypatch):

@@ -247,6 +247,32 @@ img { max-width: 100%; display: block; }
 }
 .wv-profilemenu-panel a:hover, .wv-profilemenu-panel a:focus-visible { background: var(--wv-accent-soft); color: var(--wv-accent-ink); }
 
+/* More menu (desktop): overflow for secondary product pages — Compare, News */
+.wv-navmenu { position: relative; }
+.wv-navmenu-trigger {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--wv-font-display); font-size: .68rem; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--wv-muted); background: transparent; cursor: pointer; padding: 8px 12px;
+  border: 1px solid transparent; border-radius: var(--wv-radius-pill);
+  transition: border-color var(--wv-motion) var(--wv-ease), color var(--wv-motion) var(--wv-ease), background var(--wv-motion) var(--wv-ease);
+}
+.wv-navmenu-trigger:hover, .wv-navmenu-trigger[aria-expanded="true"] { color: var(--wv-ink); background: var(--wv-surface-2); }
+.wv-navmenu-trigger.is-active { color: var(--wv-on-accent); background: var(--wv-accent); }
+.wv-navmenu-caret { font-size: .6rem; transition: transform var(--wv-motion) var(--wv-ease); }
+.wv-navmenu-trigger[aria-expanded="true"] .wv-navmenu-caret { transform: rotate(180deg); }
+.wv-navmenu-panel {
+  position: absolute; right: 0; top: calc(100% + 8px); min-width: 160px; z-index: var(--wv-z-palette);
+  background: var(--wv-surface); border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-lg);
+  box-shadow: var(--wv-shadow-lg); padding: var(--wv-2); animation: wv-palette-in var(--wv-motion) var(--wv-ease);
+}
+.wv-navmenu-panel[hidden] { display: none; }
+.wv-navmenu-panel a {
+  display: block; padding: 10px 12px; border-radius: var(--wv-radius); font-size: .88rem;
+  color: var(--wv-ink); text-decoration: none;
+}
+.wv-navmenu-panel a:hover, .wv-navmenu-panel a:focus-visible { background: var(--wv-accent-soft); color: var(--wv-accent-ink); }
+.wv-navmenu-panel a[aria-current="page"] { color: var(--wv-accent-ink); font-weight: 700; }
+
 /* Search trigger inside the dock */
 .wv-searchbtn {
   display: inline-flex; align-items: center; gap: 10px;
