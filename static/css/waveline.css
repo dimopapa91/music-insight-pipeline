@@ -508,6 +508,19 @@ img { max-width: 100%; display: block; }
 .wv-avatar-sm { width: 32px; height: 32px; font-size: .8rem; }
 .wv-avatar-xs { width: 26px; height: 26px; font-size: .68rem; border-radius: 6px; }
 
+/* Large circular variant for the public-profile cover hero specifically —
+   everywhere else (post cards, notifications, the nav avatar chip) keeps
+   the square-with-soft-corner treatment above. The ring uses --wv-bg
+   (the page background, not a surface) so it reads as a clean cutout
+   against whatever sits behind it, in both themes. */
+.wv-avatar-hero {
+  width: 128px; height: 128px; border-radius: 50%; font-size: 2.6rem;
+  border: 4px solid var(--wv-bg); box-shadow: 0 0 0 1px var(--wv-border-2);
+}
+@media (max-width: 560px) {
+  .wv-avatar-hero { width: 96px; height: 96px; font-size: 2rem; border-width: 3px; }
+}
+
 /* ── Post / comment cards — shared between the community feed and
    public profiles (templates/_post_card.html). Editorial list treatment:
    thin dividing rules between items rather than boxed cards, so it reads

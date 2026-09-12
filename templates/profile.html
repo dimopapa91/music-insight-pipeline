@@ -4,26 +4,55 @@
 
 {% block head_extra %}
 <style>
-  .pf-wrap { max-width: 860px; margin: 0 auto; padding: var(--wv-6) var(--wv-5) var(--wv-8); }
+  .pf-wrap { max-width: var(--wv-maxw); margin: 0 auto; padding: var(--wv-5) var(--wv-5) var(--wv-8); }
 
-  .pf-identity { display: flex; gap: var(--wv-5); align-items: flex-start; padding-bottom: var(--wv-6); border-bottom: 1px solid var(--wv-border); }
-  @media (max-width: 560px) { .pf-identity { flex-direction: column; align-items: center; text-align: center; } }
-  .pf-main { flex: 1; min-width: 0; }
-  .pf-name { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.4rem, 3.6vw, 1.9rem); letter-spacing: -.3px; line-height: 1.15; }
-  .pf-meta { font-size: .82rem; color: var(--wv-muted); margin-top: 6px; }
+  /* ── Cover hero: 100% CSS, no external image. Built from existing tokens
+     plus the user's own deterministic avatar hue as a personalised accent.
+     Phase 3 note: once a real cover image exists, swap this block's
+     background for `style="background-image:url(cover_image_url)"` and
+     keep this gradient as the fallback when that field is empty. ── */
+  .pf-hero {
+    position: relative; height: 200px; border-radius: var(--wv-radius-lg); overflow: hidden;
+    background:
+      radial-gradient(120% 160% at 8% 100%, color-mix(in srgb, var(--pf-glow) 34%, transparent), transparent 62%),
+      linear-gradient(155deg, var(--wv-surface-2), var(--wv-bg) 72%);
+    border: 1px solid var(--wv-border);
+  }
+  .pf-hero::after {
+    content: ""; position: absolute; inset: 0; opacity: .05; pointer-events: none;
+    background-image: repeating-linear-gradient(115deg, var(--wv-ink) 0 1px, transparent 1px 34px);
+  }
+  @media (max-width: 700px) { .pf-hero { height: 150px; } }
+  @media (max-width: 480px) { .pf-hero { height: 118px; border-radius: var(--wv-radius); } }
+
+  .pf-identity { display: flex; gap: var(--wv-5); padding-bottom: var(--wv-6); border-bottom: 1px solid var(--wv-border); }
+  .pf-avatar { margin-top: -64px; flex-shrink: 0; position: relative; z-index: 1; }
+  .pf-identity-body { flex: 1; min-width: 0; padding-top: 10px; }
+  .pf-identity-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--wv-3); flex-wrap: wrap; }
+  .pf-name { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.5rem, 3.8vw, 2.1rem); letter-spacing: -.4px; line-height: 1.15; }
+  .pf-action { flex-shrink: 0; }
+  .pf-meta { font-size: .84rem; color: var(--wv-muted); margin-top: 8px; }
   .pf-meta a { color: var(--wv-accent-ink); text-decoration: none; }
   .pf-meta a:hover { text-decoration: underline; }
-  .pf-bio { font-size: .95rem; color: var(--wv-ink-2); margin-top: var(--wv-3); line-height: 1.65; max-width: 56ch; }
+  .pf-bio { font-size: .95rem; color: var(--wv-ink-2); margin-top: var(--wv-3); line-height: 1.65; max-width: 60ch; }
   .pf-genres { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--wv-3); }
-  .pf-stats { display: flex; gap: var(--wv-6); margin-top: var(--wv-4); }
-  @media (max-width: 560px) { .pf-stats { justify-content: center; } }
+  .pf-stats { display: flex; gap: var(--wv-6); margin-top: var(--wv-5); }
   .pf-stat { display: block; }
-  .pf-stat b { display: block; font-family: var(--wv-font-display); font-weight: 700; font-size: 1.2rem; color: var(--wv-ink); }
+  .pf-stat b { display: block; font-family: var(--wv-font-display); font-weight: 700; font-size: 1.25rem; color: var(--wv-ink); }
   .pf-stat span { font-family: var(--wv-font-display); font-size: .62rem; letter-spacing: 1.4px; text-transform: uppercase; color: var(--wv-muted); }
-  .pf-action { flex-shrink: 0; }
-  @media (max-width: 560px) { .pf-action { margin-top: var(--wv-1); } }
 
-  .pf-section { margin-top: var(--wv-7); }
+  @media (max-width: 560px) {
+    .pf-identity { flex-direction: column; align-items: center; text-align: center; }
+    .pf-avatar { margin-top: -48px; }
+    .pf-identity-top { flex-direction: column; align-items: center; }
+    .pf-stats { justify-content: center; }
+  }
+
+  /* Sub-navigation reuses the site's existing sticky in-page nav pattern
+     (.wv-subnav / data-wv-scrollspy) — same component as the artist page. */
+  .pf-subnav-wrap { margin-top: var(--wv-4); }
+
+  .pf-section { margin-top: var(--wv-8); scroll-margin-top: calc(var(--wv-dock-h) + var(--wv-8)); }
   .pf-section-head { display: flex; align-items: baseline; gap: var(--wv-3); margin-bottom: var(--wv-4); flex-wrap: wrap; }
   .pf-section-head h2 { font-family: var(--wv-font-display); font-weight: 700; font-size: 1.15rem; letter-spacing: -.2px; }
   .pf-section-count { font-family: var(--wv-font-display); font-size: .66rem; letter-spacing: 1.4px; text-transform: uppercase; color: var(--wv-muted); }
@@ -41,6 +70,8 @@
   .pf-artist-tile .go { color: var(--wv-muted); font-size: .85rem; flex-shrink: 0; }
   .pf-artist-tile:hover .go { color: var(--wv-accent-ink); }
 
+  .pf-activity-inner { max-width: 720px; }
+
   .pf-cta { margin-top: var(--wv-8); padding-top: var(--wv-6); border-top: 1px solid var(--wv-border); text-align: center; }
   .pf-cta p { color: var(--wv-muted); font-size: .92rem; margin: 0 auto var(--wv-4); max-width: 46ch; }
 </style>
@@ -49,10 +80,23 @@
 {% block content %}
 <div class="pf-wrap">
 
-  <header class="pf-identity">
-    <span class="wv-avatar wv-avatar-lg" style="background:{{ user.username | avatar_color }};" aria-hidden="true">{{ user.username[0] | upper }}</span>
-    <div class="pf-main">
-      <h1 class="pf-name">@{{ user.username }}</h1>
+  <div class="pf-hero" style="--pf-glow: {{ user.username | avatar_color }};" aria-hidden="true"></div>
+
+  <header class="pf-identity" id="overview">
+    <span class="wv-avatar wv-avatar-hero pf-avatar" style="background:{{ user.username | avatar_color }};" aria-hidden="true">{{ user.username[0] | upper }}</span>
+    <div class="pf-identity-body">
+      <div class="pf-identity-top">
+        <h1 class="pf-name">@{{ user.username }}</h1>
+        <div class="pf-action">
+          {% if is_own %}
+          <a class="wv-btn wv-btn-ghost" href="/settings">Edit profile</a>
+          {% elif current_user.is_authenticated %}
+          <form method="POST" action="/u/{{ user.username }}/follow" class="inline">
+            <button type="submit" class="wv-btn {{ 'wv-btn-ghost' if following_this else 'wv-btn-primary' }}">{{ 'Following' if following_this else 'Follow' }}</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
       <p class="pf-meta">
         {% if user.location %}{{ user.location }} · {% endif -%}
         {%- if user.created_at %}Joined {{ user.created_at.strftime('%B %Y') }}{% endif -%}
@@ -66,18 +110,20 @@
         <span class="pf-stat"><b>{{ following }}</b><span>Following</span></span>
       </div>
     </div>
-    <div class="pf-action">
-      {% if is_own %}
-      <a class="wv-btn wv-btn-ghost wv-btn-sm" href="/settings">Edit profile</a>
-      {% elif current_user.is_authenticated %}
-      <form method="POST" action="/u/{{ user.username }}/follow" class="inline">
-        <button type="submit" class="wv-btn {{ 'wv-btn-ghost' if following_this else 'wv-btn-primary' }}">{{ 'Following' if following_this else 'Follow' }}</button>
-      </form>
-      {% endif %}
-    </div>
   </header>
 
-  <section class="pf-section" aria-labelledby="pf-artists-h">
+  <div class="pf-subnav-wrap">
+    <nav class="wv-subnav" data-wv-scrollspy aria-label="Profile sections">
+      <div class="wv-subnav-inner">
+        <a href="#overview">Overview</a>
+        <a href="#artists">Artists</a>
+        <a href="#activity">Activity</a>
+        <a href="/profile">Taste Profile</a>
+      </div>
+    </nav>
+  </div>
+
+  <section class="pf-section" id="artists" aria-labelledby="pf-artists-h">
     <p class="wv-eyebrow">Collection</p>
     <div class="pf-section-head">
       <h2 id="pf-artists-h">Artists explored</h2>
@@ -101,24 +147,26 @@
     {% endif %}
   </section>
 
-  <section class="pf-section" aria-labelledby="pf-posts-h">
-    <p class="wv-eyebrow">Activity</p>
-    <div class="pf-section-head">
-      <h2 id="pf-posts-h">Posts</h2>
-      {% if posts %}<span class="pf-section-count">{{ posts|length }}</span>{% endif %}
+  <section class="pf-section" id="activity" aria-labelledby="pf-posts-h">
+    <div class="pf-activity-inner">
+      <p class="wv-eyebrow">Activity</p>
+      <div class="pf-section-head">
+        <h2 id="pf-posts-h">Posts</h2>
+        {% if posts %}<span class="pf-section-count">{{ posts|length }}</span>{% endif %}
+      </div>
+      {% if posts %}
+      <div class="wv-card wv-post-list">
+        {% set next = '/u/' ~ user.username %}
+        {% for post in posts %}{% include "_post_card.html" %}{% endfor %}
+      </div>
+      {% else %}
+      <div class="wv-empty">
+        <h3>No posts yet</h3>
+        {% if is_own %}<p>Share a discovery with the community.</p><a class="wv-btn wv-btn-primary" style="margin-top:var(--wv-4);" href="/feed">Share a discovery</a>
+        {% else %}<p>@{{ user.username }} hasn't posted anything yet.</p>{% endif %}
+      </div>
+      {% endif %}
     </div>
-    {% if posts %}
-    <div class="wv-card wv-post-list">
-      {% set next = '/u/' ~ user.username %}
-      {% for post in posts %}{% include "_post_card.html" %}{% endfor %}
-    </div>
-    {% else %}
-    <div class="wv-empty">
-      <h3>No posts yet</h3>
-      {% if is_own %}<p>Share a discovery with the community.</p><a class="wv-btn wv-btn-primary" style="margin-top:var(--wv-4);" href="/feed">Share a discovery</a>
-      {% else %}<p>@{{ user.username }} hasn't posted anything yet.</p>{% endif %}
-    </div>
-    {% endif %}
   </section>
 
   {% if not current_user.is_authenticated %}
