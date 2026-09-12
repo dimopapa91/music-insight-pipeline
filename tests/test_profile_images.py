@@ -42,7 +42,8 @@ def test_profile_without_images_still_shows_monogram_and_css_cover(monkeypatch):
     _mock_profile_route(monkeypatch, user)
     client = dashboard.app.test_client()
     html = client.get("/u/dimos").data.decode()
-    assert 'class="wv-avatar wv-avatar-hero pf-avatar"' in html
+    assert 'class="pf-avatar"' in html
+    assert 'class="wv-avatar wv-avatar-hero"' in html
     assert "<img" not in html.split('id="overview"')[1].split("</header>")[0]
     assert '<div class="pf-hero"' in html
 
@@ -54,7 +55,35 @@ def test_profile_with_profile_image_renders_real_img(monkeypatch):
     client = dashboard.app.test_client()
     html = client.get("/u/dimos").data.decode()
     assert 'src="https://res.cloudinary.com/demo/image/upload/v1/waveline/users/1/profile.jpg"' in html
-    assert 'class="wv-avatar-hero pf-avatar"' in html
+    assert '<img class="wv-avatar-hero"' in html
+
+
+def test_profile_avatar_has_exactly_one_wrapper_and_hidden_fallback(monkeypatch):
+    # Regression: .pf-avatar used to be applied to the <img> AND the
+    # fallback <span> as two separate flex items of the (display:flex)
+    # .pf-identity row, and the fallback relied on the `hidden` attribute —
+    # which the .wv-avatar class's own `display: inline-flex` rule silently
+    # overrides (an author-stylesheet class rule beats the UA default
+    # `[hidden] { display: none }` at equal specificity). Net effect: both
+    # the real photo and the monogram rendered side by side. Now there must
+    # be exactly one .pf-avatar wrapper, and the fallback must be hidden via
+    # a real inline `display:none` (which no class rule can silently beat).
+    user = User(id=1, username="dimos", email="d@e.com", password_hash="x",
+                profile_image_url="https://res.cloudinary.com/demo/image/upload/v1/waveline/users/1/profile.jpg")
+    _mock_profile_route(monkeypatch, user)
+    client = dashboard.app.test_client()
+    html = client.get("/u/dimos").data.decode()
+
+    assert html.count('class="pf-avatar"') == 1
+    avatar_start = html.index('class="pf-avatar"')
+    avatar_end = html.index("</div>", avatar_start)
+    avatar_block = html[avatar_start:avatar_end]
+
+    assert "<img" in avatar_block
+    assert 'id="pf-avatar-fallback"' in avatar_block
+    assert "display:none" in avatar_block or "display: none" in avatar_block
+    # the fallback must not rely solely on the `hidden` attribute
+    assert " hidden" not in avatar_block.split('id="pf-avatar-fallback"')[1].split(">")[0]
 
 
 def test_profile_with_cover_image_renders_real_img(monkeypatch):
