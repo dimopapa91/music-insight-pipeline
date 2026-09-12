@@ -87,16 +87,18 @@
   </div>
 
   <header class="pf-identity" id="overview">
-    {% if user.profile_image_url %}
-    <img class="wv-avatar-hero pf-avatar" src="{{ user.profile_image_url }}" alt=""
-         onerror="this.hidden=true; document.getElementById('pf-avatar-fallback').hidden=false;">
-    <span id="pf-avatar-fallback" class="wv-avatar wv-avatar-hero pf-avatar" style="background:{{ user.username | avatar_color }};" aria-hidden="true" hidden>{{ user.username[0] | upper }}</span>
-    {% else %}
-    <span class="wv-avatar wv-avatar-hero pf-avatar" style="background:{{ user.username | avatar_color }};" aria-hidden="true">{{ user.username[0] | upper }}</span>
-    {% endif %}
+    <div class="pf-avatar">
+      {% if user.profile_image_url %}
+      <img class="wv-avatar-hero" src="{{ user.profile_image_url }}" alt=""
+           onerror="this.style.display='none'; document.getElementById('pf-avatar-fallback').style.display='inline-flex';">
+      <span id="pf-avatar-fallback" class="wv-avatar wv-avatar-hero" style="background:{{ user.username | avatar_color }}; display:none;" aria-hidden="true">{{ user.username[0] | upper }}</span>
+      {% else %}
+      <span class="wv-avatar wv-avatar-hero" style="background:{{ user.username | avatar_color }};" aria-hidden="true">{{ user.username[0] | upper }}</span>
+      {% endif %}
+    </div>
     <div class="pf-identity-body">
       <div class="pf-identity-top">
-        <h1 class="pf-name">@{{ user.username }}</h1>
+        <h1 class="pf-name">{{ user.username }}</h1>
         <div class="pf-action">
           {% if is_own %}
           <a class="wv-btn wv-btn-ghost" href="/settings">Edit profile</a>
