@@ -233,6 +233,8 @@ img { max-width: 100%; display: block; }
   width: 22px; height: 22px; border-radius: 50%; background: var(--wv-accent); color: var(--wv-on-accent);
   display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: .7rem; flex-shrink: 0;
 }
+/* Phase 3: same slot, real uploaded photo instead of the monogram */
+img.wv-profile-avatar { object-fit: cover; display: block; }
 .wv-profilemenu-caret { font-size: .6rem; color: var(--wv-muted); transition: transform var(--wv-motion) var(--wv-ease); }
 .wv-profilemenu-trigger[aria-expanded="true"] .wv-profilemenu-caret { transform: rotate(180deg); }
 .wv-profilemenu-panel {
@@ -520,6 +522,12 @@ img { max-width: 100%; display: block; }
 @media (max-width: 560px) {
   .wv-avatar-hero { width: 96px; height: 96px; font-size: 2rem; border-width: 3px; }
 }
+/* Phase 3: a real uploaded photo reuses the same size/ring, applied to an <img> */
+img.wv-avatar-hero { object-fit: cover; display: block; }
+
+/* Phase 3: real cover photo layered over the existing CSS gradient fallback
+   (which stays underneath — see templates/profile.html .pf-hero). */
+.pf-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
 /* ── Post / comment cards — shared between the community feed and
    public profiles (templates/_post_card.html). Editorial list treatment:

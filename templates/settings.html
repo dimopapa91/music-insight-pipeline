@@ -3,9 +3,12 @@
 
 {% block head_extra %}
 <style>
-  .st-wrap { max-width: 560px; margin: 0 auto; padding: var(--wv-7) var(--wv-5) var(--wv-8); }
+  .st-wrap { max-width: 640px; margin: 0 auto; padding: var(--wv-7) var(--wv-5) var(--wv-8); }
   .st-card { padding: var(--wv-6); }
+  .st-card + .st-card { margin-top: var(--wv-5); }
   .st-card h1 { font-family: var(--wv-font-display); font-size: 1.4rem; margin-bottom: var(--wv-4); }
+  .st-card h2 { font-family: var(--wv-font-display); font-size: 1.05rem; margin-bottom: 6px; }
+  .st-card .st-sub { font-size: .84rem; color: var(--wv-muted); margin-bottom: var(--wv-5); }
   .st-field { margin-bottom: var(--wv-4); }
   .st-field label { display: block; font-family: var(--wv-font-display); font-size: .68rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); margin-bottom: 6px; }
   .st-field input, .st-field textarea { width: 100%; font-family: var(--wv-font-body); font-size: .95rem; border: 1.5px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 12px 14px; background: var(--wv-surface-2); color: var(--wv-ink); }
@@ -13,8 +16,28 @@
   .st-field input:focus, .st-field textarea:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); box-shadow: 0 0 0 3px var(--wv-accent-soft); }
   .st-hint { font-size: .78rem; color: var(--wv-muted); margin-top: 6px; }
   .st-saved { color: var(--wv-success); font-size: .88rem; margin-bottom: var(--wv-4); }
+  .st-error { color: var(--wv-danger); font-size: .88rem; margin-bottom: var(--wv-4); }
   .st-link { font-size: .82rem; color: var(--wv-muted); margin-top: var(--wv-5); }
   .st-link a { color: var(--wv-accent-ink); text-decoration: none; }
+
+  .st-images-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--wv-5); }
+  @media (max-width: 560px) { .st-images-grid { grid-template-columns: 1fr; } }
+  .st-image-field { display: flex; flex-direction: column; gap: var(--wv-3); }
+  .st-image-label { font-family: var(--wv-font-display); font-size: .68rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); }
+  .st-avatar-preview {
+    width: 96px; height: 96px; border-radius: 50%; overflow: hidden;
+    background: var(--wv-surface-2); border: 1px solid var(--wv-border-2);
+  }
+  .st-avatar-preview img, .st-avatar-preview .wv-avatar { width: 100%; height: 100%; border-radius: 50%; font-size: 2rem; }
+  .st-cover-preview {
+    position: relative; height: 110px; border-radius: var(--wv-radius); overflow: hidden; border: 1px solid var(--wv-border-2);
+    background:
+      radial-gradient(120% 160% at 8% 100%, color-mix(in srgb, var(--pf-glow) 34%, transparent), transparent 62%),
+      linear-gradient(155deg, var(--wv-surface-2), var(--wv-bg) 72%);
+  }
+  .st-cover-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .st-upload-form input[type=file] { font-size: .8rem; color: var(--wv-ink-2); max-width: 100%; }
+  .st-upload-form { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
 </style>
 {% endblock %}
 
@@ -45,5 +68,82 @@
     </form>
     <p class="st-link">Your public profile: <a href="/u/{{ user.username }}">/u/{{ user.username }}</a></p>
   </div>
+
+  <div class="wv-card st-card">
+    <h2>Profile images</h2>
+    <p class="st-sub">Shown on your public profile and around Waveline.</p>
+
+    {% if request.args.get('uploaded') == 'avatar' %}<p class="st-saved" role="status">✓ Profile photo updated.</p>{% endif %}
+    {% if request.args.get('uploaded') == 'cover' %}<p class="st-saved" role="status">✓ Cover image updated.</p>{% endif %}
+    {% if request.args.get('upload_error') %}<p class="st-error" role="alert">{{ request.args.get('upload_error') }}</p>{% endif %}
+    {% if not image_storage_configured %}
+    <div class="wv-notice wv-notice-info" style="margin-bottom:var(--wv-4);">Image uploads aren't configured on this server yet.</div>
+    {% endif %}
+
+    <div class="st-images-grid">
+      <div class="st-image-field">
+        <p class="st-image-label">Profile photo</p>
+        <div class="st-avatar-preview">
+          {% if user.profile_image_url %}
+          <img src="{{ user.profile_image_url }}" alt="" id="st-avatar-preview-img">
+          {% else %}
+          <span class="wv-avatar" style="background:{{ user.username | avatar_color }};" id="st-avatar-preview-fallback" aria-hidden="true">{{ user.username[0] | upper }}</span>
+          <img src="" alt="" id="st-avatar-preview-img" hidden>
+          {% endif %}
+        </div>
+        <form method="POST" action="/settings/avatar" enctype="multipart/form-data" class="st-upload-form">
+          <label class="wv-sr-only" for="avatar-file">Choose a profile photo</label>
+          <input type="file" id="avatar-file" name="image" accept="image/png,image/jpeg,image/webp">
+          <p class="st-hint">JPG, PNG or WebP. Up to 5&nbsp;MB.</p>
+          <button type="submit" class="wv-btn wv-btn-ghost wv-btn-sm">Upload photo</button>
+        </form>
+      </div>
+
+      <div class="st-image-field">
+        <p class="st-image-label">Cover image</p>
+        <div class="st-cover-preview" style="--pf-glow:{{ user.username | avatar_color }};">
+          {% if user.cover_image_url %}
+          <img src="{{ user.cover_image_url }}" alt="" id="st-cover-preview-img">
+          {% else %}
+          <img src="" alt="" id="st-cover-preview-img" hidden>
+          {% endif %}
+        </div>
+        <form method="POST" action="/settings/cover" enctype="multipart/form-data" class="st-upload-form">
+          <label class="wv-sr-only" for="cover-file">Choose a cover image</label>
+          <input type="file" id="cover-file" name="image" accept="image/png,image/jpeg,image/webp">
+          <p class="st-hint">JPG, PNG or WebP. Up to 10&nbsp;MB.</p>
+          <button type="submit" class="wv-btn wv-btn-ghost wv-btn-sm">Upload cover</button>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Client-side preview only (URL.createObjectURL) — nothing is uploaded
+  // until the form is actually submitted. Server-side validation in
+  // image_storage.py is the real gate.
+  (function () {
+    function wireImagePreview(inputId, imgId, fallbackId) {
+      var input = document.getElementById(inputId);
+      var img = document.getElementById(imgId);
+      if (!input || !img) return;
+      var currentUrl = null;
+      input.addEventListener('change', function () {
+        if (currentUrl) { URL.revokeObjectURL(currentUrl); currentUrl = null; }
+        var file = input.files && input.files[0];
+        if (!file) return;
+        currentUrl = URL.createObjectURL(file);
+        img.src = currentUrl;
+        img.hidden = false;
+        var fallback = fallbackId && document.getElementById(fallbackId);
+        if (fallback) fallback.hidden = true;
+      });
+    }
+    wireImagePreview('avatar-file', 'st-avatar-preview-img', 'st-avatar-preview-fallback');
+    wireImagePreview('cover-file', 'st-cover-preview-img', null);
+  })();
+</script>
 {% endblock %}

@@ -11,6 +11,10 @@ from flask_login import login_required, current_user
 from db import db_cursor
 from models import User
 from social import get_user_posts, get_follow_counts, toggle_follow, is_following
+from image_storage import (
+    is_image_storage_configured, upload_profile_image, upload_cover_image,
+    ImageValidationError, ImageStorageError,
+)
 
 profiles_bp = Blueprint("profiles", __name__)
 
@@ -69,4 +73,36 @@ def settings():
         genres = request.form.get("genres", "").strip()[:255]
         current_user.update_profile(bio, location, website, genres)
         saved = True
-    return render_template("settings.html", user=current_user, saved=saved)
+    return render_template(
+        "settings.html", user=current_user, saved=saved,
+        image_storage_configured=is_image_storage_configured(),
+    )
+
+
+@profiles_bp.route("/settings/avatar", methods=["POST"])
+@login_required
+def upload_avatar():
+    """Deliberately a separate route/form from /settings: a rejected or
+    failed image upload must never touch the bio/location/website/genres
+    fields, and a bad text-profile submission must never touch images."""
+    file = request.files.get("image")
+    try:
+        url = upload_profile_image(current_user.id, file)
+        current_user.update_profile_image(url)
+        return redirect(url_for("profiles.settings", uploaded="avatar"))
+    except (ImageValidationError, ImageStorageError) as e:
+        # The existing profile_image_url is untouched — a failed upload
+        # never erases a working image.
+        return redirect(url_for("profiles.settings", upload_error=str(e)))
+
+
+@profiles_bp.route("/settings/cover", methods=["POST"])
+@login_required
+def upload_cover():
+    file = request.files.get("image")
+    try:
+        url = upload_cover_image(current_user.id, file)
+        current_user.update_cover_image(url)
+        return redirect(url_for("profiles.settings", uploaded="cover"))
+    except (ImageValidationError, ImageStorageError) as e:
+        return redirect(url_for("profiles.settings", upload_error=str(e)))

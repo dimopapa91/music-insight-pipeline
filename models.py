@@ -32,6 +32,12 @@ SCHEMA = [
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS location VARCHAR(120) DEFAULT ''",
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS website  VARCHAR(255) DEFAULT ''",
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS genres   VARCHAR(255) DEFAULT ''",
+    # Phase 3: Cloudinary-hosted image URLs only — no binary image data is
+    # ever stored in Postgres. TEXT (not VARCHAR) since a Cloudinary
+    # secure_url can run long. Existing users default to '' (falsy), so
+    # they keep seeing the generated monogram / CSS cover fallback.
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_image_url TEXT DEFAULT ''",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS cover_image_url   TEXT DEFAULT ''",
     # Phase 2 (feed) tables — created now so the feed needs no further migration
     """
     CREATE TABLE IF NOT EXISTS posts (
@@ -111,7 +117,8 @@ def init_db():
 
 class User(UserMixin):
     def __init__(self, id, username, email, password_hash, bio="",
-                 location="", website="", genres="", created_at=None):
+                 location="", website="", genres="", created_at=None,
+                 profile_image_url="", cover_image_url=""):
         self.id = id
         self.username = username
         self.email = email
@@ -121,6 +128,8 @@ class User(UserMixin):
         self.website = website or ""
         self.genres = genres or ""
         self.created_at = created_at
+        self.profile_image_url = profile_image_url or ""
+        self.cover_image_url = cover_image_url or ""
 
     @property
     def genre_list(self):
@@ -141,7 +150,20 @@ class User(UserMixin):
     def update_bio(self, bio):
         self.update_profile(bio, self.location, self.website, self.genres)
 
-    _COLUMNS = "id, username, email, password_hash, bio, location, website, genres, created_at"
+    def update_profile_image(self, url):
+        """Kept separate from update_profile() so a failed/rejected image
+        upload can never touch the text-profile fields, and vice versa."""
+        with db_cursor(commit=True) as cur:
+            cur.execute("UPDATE users SET profile_image_url = %s WHERE id = %s", (url, self.id))
+        self.profile_image_url = url
+
+    def update_cover_image(self, url):
+        with db_cursor(commit=True) as cur:
+            cur.execute("UPDATE users SET cover_image_url = %s WHERE id = %s", (url, self.id))
+        self.cover_image_url = url
+
+    _COLUMNS = ("id, username, email, password_hash, bio, location, website, genres, "
+                "created_at, profile_image_url, cover_image_url")
 
     @classmethod
     def _from_row(cls, row):
@@ -149,7 +171,7 @@ class User(UserMixin):
             return None
         return cls(id=row[0], username=row[1], email=row[2], password_hash=row[3],
                    bio=row[4], location=row[5], website=row[6], genres=row[7],
-                   created_at=row[8])
+                   created_at=row[8], profile_image_url=row[9], cover_image_url=row[10])
 
     @classmethod
     def get(cls, user_id):
