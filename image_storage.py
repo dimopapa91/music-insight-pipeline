@@ -52,10 +52,24 @@ def is_image_storage_configured():
 
 
 def _configure():
-    url = os.getenv("CLOUDINARY_URL")
-    if not url:
+    if not os.getenv("CLOUDINARY_URL"):
         raise ImageStorageError("Image uploads aren't configured on this server yet.")
-    cloudinary.config(cloudinary_url=url, secure=True)
+
+    # cloudinary.config(cloudinary_url=...) does NOT parse the URL into
+    # cloud_name/api_key/api_secret — it only sets `cloudinary_url` as an
+    # inert extra attribute on the existing Config object (see
+    # cloudinary.BaseConfig.update(), which just does
+    # self.__dict__[k] = v for each keyword). URL parsing only happens
+    # inside Config.__init__() -> _load_config_from_env(), which reads
+    # CLOUDINARY_URL from the environment. reset_config() is the supported,
+    # public way to force that re-parse against whatever CLOUDINARY_URL is
+    # present *right now* — necessary here because dashboard.py imports
+    # every blueprint (pulling in this module, and so `import cloudinary`,
+    # which creates the module-level Config() once) before load_dotenv()
+    # runs, so the very first Config() can easily be built before .env has
+    # populated os.environ.
+    cloudinary.reset_config()
+    cloudinary.config(secure=True)
 
 
 def _extension_of(filename):

@@ -37,6 +37,29 @@ def test_configured_when_env_var_present(monkeypatch):
     assert img_storage.is_image_storage_configured() is True
 
 
+# ── _configure(): CLOUDINARY_URL must actually be parsed into real SDK
+# credentials, not just stashed as an inert extra attribute. Regression for
+# a bug where `cloudinary.config(cloudinary_url=url)` silently failed to
+# populate cloud_name/api_key/api_secret — every mocked upload test still
+# passed (they never look at the SDK's parsed credentials at all), but a
+# real authenticated request against Cloudinary would have failed. ──
+
+def test_configure_parses_cloudinary_url_into_real_credentials(monkeypatch):
+    monkeypatch.setenv("CLOUDINARY_URL", "cloudinary://123456:fake_secret@test_cloud")
+    try:
+        img_storage._configure()
+        cfg = img_storage.cloudinary.config()
+        assert cfg.cloud_name == "test_cloud"
+        assert cfg.api_key == "123456"
+        assert cfg.api_secret == "fake_secret"
+    finally:
+        # Restore the environment and force the SDK's global config
+        # singleton back to a clean state so this test can never leak a
+        # fake credential into any test that runs after it.
+        monkeypatch.delenv("CLOUDINARY_URL", raising=False)
+        img_storage.cloudinary.reset_config()
+
+
 # ── validate_image: accepted formats ──
 
 def test_validate_accepts_real_jpeg():
