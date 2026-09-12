@@ -199,7 +199,7 @@ def test_upload_cover_image_uses_distinct_public_id(monkeypatch):
     assert calls["public_id"] == "waveline/users/1/cover"
 
 
-def test_upload_failure_raises_safe_error_without_leaking_details(monkeypatch):
+def test_upload_failure_raises_safe_error_without_leaking_details(monkeypatch, caplog):
     monkeypatch.setenv("CLOUDINARY_URL", "cloudinary://key:secret@demo")
 
     def boom(file_storage, **kwargs):
@@ -207,11 +207,25 @@ def test_upload_failure_raises_safe_error_without_leaking_details(monkeypatch):
 
     monkeypatch.setattr(img_storage.cloudinary.uploader, "upload", boom)
     f = _make_image_file()
-    with pytest.raises(img_storage.ImageStorageError) as exc_info:
-        img_storage.upload_profile_image(1, f)
-    # The safe, generic message only — never the raw exception/credentials.
+    with caplog.at_level("WARNING", logger="image_storage"):
+        with pytest.raises(img_storage.ImageStorageError) as exc_info:
+            img_storage.upload_profile_image(1, f)
+
+    # The safe, generic message only — never the raw exception/credentials —
+    # reaches the user...
     assert "realkey" not in str(exc_info.value)
     assert "realsecret" not in str(exc_info.value)
+    assert "cloudinary://" not in str(exc_info.value)
+
+    # ...and none of it reaches the logs either. Only str(exc_info.value)
+    # would ever be visible to a user; caplog.text is what would actually
+    # land in Railway's logs, which is the surface this test is really
+    # guarding — a prior version logged the raw exception (`%s", e`) here,
+    # which could have echoed the CLOUDINARY_URL/api_key/api_secret back
+    # into production logs.
+    assert "realkey" not in caplog.text
+    assert "realsecret" not in caplog.text
+    assert "cloudinary://" not in caplog.text
 
 
 def test_upload_missing_secure_url_raises_safe_error(monkeypatch):

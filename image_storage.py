@@ -134,9 +134,12 @@ def _upload(file_storage, public_id, transformation):
         )
     except ImageStorageError:
         raise
-    except Exception as e:
-        # Never surface Cloudinary internals/credentials to the user.
-        logger.warning("Cloudinary upload failed for %s: %s", public_id, e)
+    except Exception:
+        # Never log str(e)/repr(e) here: Cloudinary's own exception messages
+        # can echo back the request that failed, which may include the
+        # CLOUDINARY_URL, api_key or api_secret. Log only the public_id —
+        # never surface exception internals to the user either.
+        logger.warning("Cloudinary upload failed for %s", public_id)
         raise ImageStorageError("We couldn't upload your image right now. Please try again.")
 
     secure_url = result.get("secure_url") if isinstance(result, dict) else None
