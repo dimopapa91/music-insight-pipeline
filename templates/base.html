@@ -28,10 +28,8 @@
             <a class="wv-brand" href="/"><span class="wv-dot wv-pulse" aria-hidden="true"></span>Waveline</a>
 
             <nav class="wv-nav" aria-label="Primary">
-                <a href="/"        {% if path == '/' %}aria-current="page"{% endif %}>Discover</a>
-                <a href="/feed"    {% if path.startswith('/feed') %}aria-current="page"{% endif %}>Community</a>
-                <a href="/compare" {% if path.startswith('/compare') %}aria-current="page"{% endif %}>Compare</a>
-                <a href="/news"    {% if path.startswith('/news') %}aria-current="page"{% endif %}>News</a>
+                <a href="/"        {% if path == '/' %}aria-current="page"{% endif %}>Home</a>
+                <a href="/feed"    {% if path.startswith('/feed') %}aria-current="page"{% endif %}>Feed</a>
                 <a href="/profile" {% if path.startswith('/profile') %}aria-current="page"{% endif %}>Taste</a>
             </nav>
 
@@ -53,15 +51,27 @@
                         <span class="wv-profilemenu-caret" aria-hidden="true">▾</span>
                     </button>
                     <div class="wv-profilemenu-panel" id="wv-profile-menu" role="menu" aria-label="Profile menu" hidden>
-                        <a role="menuitem" href="/me">View profile</a>
+                        <a role="menuitem" href="/me">Profile</a>
                         <a role="menuitem" href="/profile">Taste Profile</a>
-                        <a role="menuitem" href="{{ url_for('auth.logout') }}">Log out</a>
+                        <a role="menuitem" href="/feed">Feed</a>
+                        <a role="menuitem" href="/settings">Settings</a>
+                        <a role="menuitem" href="{{ url_for('auth.logout') }}">Sign out</a>
                     </div>
                 </div>
                 {% else %}
                 <a class="wv-userchip wv-desktop-only" href="/login">Log in</a>
                 <a class="wv-btn wv-btn-primary wv-btn-sm" href="/register">Sign up</a>
                 {% endif %}
+                <div class="wv-navmenu wv-desktop-only">
+                    <button type="button" class="wv-navmenu-trigger{{ ' is-active' if path.startswith('/compare') or path.startswith('/news') }}" id="wv-navmenu-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="wv-navmenu-panel">
+                        <span>More</span>
+                        <span class="wv-navmenu-caret" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="wv-navmenu-panel" id="wv-navmenu-panel" role="menu" aria-label="More" hidden>
+                        <a role="menuitem" href="/compare" {% if path.startswith('/compare') %}aria-current="page"{% endif %}>Compare</a>
+                        <a role="menuitem" href="/news" {% if path.startswith('/news') %}aria-current="page"{% endif %}>News</a>
+                    </div>
+                </div>
                 <button class="wv-iconbtn wv-desktop-only" id="wv-theme-btn" type="button" aria-label="Toggle light theme" title="Toggle light theme">◑</button>
             </div>
         </div>
@@ -80,8 +90,8 @@
             </div>
             <div>
                 <h3>Explore</h3>
-                <a href="/">Discover</a>
-                <a href="/feed">Community</a>
+                <a href="/">Home</a>
+                <a href="/feed">Feed</a>
                 <a href="/compare">Compare</a>
                 <a href="/news">News</a>
                 <a href="/profile">Taste profile</a>
@@ -104,8 +114,8 @@
     <!-- ═══ MOBILE BOTTOM NAVIGATION ═══ -->
     <nav class="wv-bottomnav" aria-label="Primary mobile">
         <div class="wv-bottomnav-inner">
-            <a href="/" {% if path == '/' %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">◎</span><span class="lbl">Discover</span></a>
-            <a href="/feed" {% if path.startswith('/feed') %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">◈</span><span class="lbl">Community</span></a>
+            <a href="/" {% if path == '/' %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">◎</span><span class="lbl">Home</span></a>
+            <a href="/feed" {% if path.startswith('/feed') %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">◈</span><span class="lbl">Feed</span></a>
             <a href="/compare" {% if path.startswith('/compare') %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">⇄</span><span class="lbl">Compare</span></a>
             <a href="/profile" {% if path.startswith('/profile') %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">◑</span><span class="lbl">Taste</span></a>
             <button type="button" class="wv-moretrigger" id="wv-more-btn" aria-haspopup="dialog" aria-controls="wv-morepanel" aria-expanded="false">

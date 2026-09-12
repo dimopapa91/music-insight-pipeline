@@ -10,8 +10,8 @@
   var activeIndex = -1;
 
   var DESTINATIONS = [
-    { label: "Discover", href: "/", hint: "Home" },
-    { label: "Community", href: "/feed", hint: "Page" },
+    { label: "Home", href: "/", hint: "Page" },
+    { label: "Feed", href: "/feed", hint: "Page" },
     { label: "Compare artists", href: "/compare", hint: "Page" },
     { label: "News", href: "/news", hint: "Page" },
     { label: "Taste Profile", href: "/profile", hint: "Page" },
