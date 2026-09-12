@@ -80,10 +80,20 @@
 {% block content %}
 <div class="pf-wrap">
 
-  <div class="pf-hero" style="--pf-glow: {{ user.username | avatar_color }};" aria-hidden="true"></div>
+  <div class="pf-hero" style="--pf-glow: {{ user.username | avatar_color }};" aria-hidden="true">
+    {% if user.cover_image_url %}
+    <img class="pf-hero-img" src="{{ user.cover_image_url }}" alt="" loading="lazy" onerror="this.remove()">
+    {% endif %}
+  </div>
 
   <header class="pf-identity" id="overview">
+    {% if user.profile_image_url %}
+    <img class="wv-avatar-hero pf-avatar" src="{{ user.profile_image_url }}" alt=""
+         onerror="this.hidden=true; document.getElementById('pf-avatar-fallback').hidden=false;">
+    <span id="pf-avatar-fallback" class="wv-avatar wv-avatar-hero pf-avatar" style="background:{{ user.username | avatar_color }};" aria-hidden="true" hidden>{{ user.username[0] | upper }}</span>
+    {% else %}
     <span class="wv-avatar wv-avatar-hero pf-avatar" style="background:{{ user.username | avatar_color }};" aria-hidden="true">{{ user.username[0] | upper }}</span>
+    {% endif %}
     <div class="pf-identity-body">
       <div class="pf-identity-top">
         <h1 class="pf-name">@{{ user.username }}</h1>

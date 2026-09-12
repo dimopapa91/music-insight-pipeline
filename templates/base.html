@@ -46,7 +46,11 @@
                 <a class="wv-iconbtn wv-bell wv-desktop-only" href="/notifications" aria-label="Notifications{% if unread_notifications %} ({{ unread_notifications }} unread){% endif %}">🔔{% if unread_notifications %}<span class="wv-badge">{{ unread_notifications }}</span>{% endif %}</a>
                 <div class="wv-profilemenu wv-desktop-only">
                     <button type="button" class="wv-profilemenu-trigger" id="wv-profile-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="wv-profile-menu">
+                        {% if current_user.profile_image_url %}
+                        <img class="wv-profile-avatar" src="{{ current_user.profile_image_url }}" alt="" aria-hidden="true">
+                        {% else %}
                         <span class="wv-profile-avatar" aria-hidden="true">{{ current_user.username[0] | upper }}</span>
+                        {% endif %}
                         <span>@{{ current_user.username }}</span>
                         <span class="wv-profilemenu-caret" aria-hidden="true">▾</span>
                     </button>
