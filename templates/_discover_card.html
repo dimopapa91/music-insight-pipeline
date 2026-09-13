@@ -1,0 +1,39 @@
+<article class="dc-card">
+    <div class="dc-avatar">
+        {% if p.profile_image_url %}
+        <img class="wv-avatar-sm" src="{{ p.profile_image_url }}" alt=""
+             onerror="this.style.display='none'; document.getElementById('dc-fallback-{{ p.id }}').style.display='inline-flex';">
+        <span id="dc-fallback-{{ p.id }}" class="wv-avatar wv-avatar-sm" style="background:{{ p.username | avatar_color }}; display:none;" aria-hidden="true">{{ p.username[0] | upper }}</span>
+        {% else %}
+        <span class="wv-avatar wv-avatar-sm" style="background:{{ p.username | avatar_color }};" aria-hidden="true">{{ p.username[0] | upper }}</span>
+        {% endif %}
+    </div>
+    <div class="dc-body">
+        <a class="dc-name" href="/u/{{ p.username }}">{{ p.username }}</a>
+        {% if p.bio %}<p class="dc-bio">{{ p.bio | truncate(90) }}</p>{% endif %}
+        {% if p.genre_list %}
+        <div class="dc-chips">
+            {% for g in p.genre_list[:3] %}<span class="wv-chip dc-chip">{{ g }}</span>{% endfor %}
+        </div>
+        {% endif %}
+        {% if p.shared_artists %}
+        <p class="dc-reason">
+            <strong>{{ p.shared_count }}</strong> artist{{ 's' if p.shared_count != 1 }} in common
+            <span class="dc-reason-chips">{% for a in p.shared_artists %}<span class="wv-chip dc-chip">{{ a | titlecase }}</span>{% endfor %}</span>
+        </p>
+        {% elif p.follower_count %}
+        <p class="dc-reason dc-reason-muted">Active on Waveline</p>
+        {% endif %}
+    </div>
+    <div class="dc-foot">
+        <span class="dc-followers">{{ p.follower_count }} follower{{ 's' if p.follower_count != 1 }}</span>
+        {% if current_user.is_authenticated %}
+        <form method="POST" action="{{ url_for('discover.discover_follow', username=p.username) }}" class="inline">
+            <input type="hidden" name="q" value="{{ q }}">
+            <button type="submit" class="wv-btn wv-btn-sm {{ 'wv-btn-ghost' if p.following else 'wv-btn-primary' }}">{{ 'Following' if p.following else 'Follow' }}</button>
+        </form>
+        {% else %}
+        <a class="wv-btn wv-btn-ghost wv-btn-sm" href="/login">Log in to follow</a>
+        {% endif %}
+    </div>
+</article>

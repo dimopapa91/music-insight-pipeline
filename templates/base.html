@@ -28,9 +28,10 @@
             <a class="wv-brand" href="/"><span class="wv-dot wv-pulse" aria-hidden="true"></span>Waveline</a>
 
             <nav class="wv-nav" aria-label="Primary">
-                <a href="/"        {% if path == '/' %}aria-current="page"{% endif %}>Home</a>
-                <a href="/feed"    {% if path.startswith('/feed') %}aria-current="page"{% endif %}>Feed</a>
-                <a href="/profile" {% if path.startswith('/profile') %}aria-current="page"{% endif %}>Taste</a>
+                <a href="/"         {% if path == '/' %}aria-current="page"{% endif %}>Home</a>
+                <a href="/discover" {% if path.startswith('/discover') %}aria-current="page"{% endif %}>Discover</a>
+                <a href="/feed"     {% if path.startswith('/feed') %}aria-current="page"{% endif %}>Feed</a>
+                <a href="/profile"  {% if path.startswith('/profile') %}aria-current="page"{% endif %}>Taste</a>
             </nav>
 
             <div class="wv-header-actions">
@@ -105,6 +106,7 @@
             <div>
                 <h3>Explore</h3>
                 <a href="/">Home</a>
+                <a href="/discover">Discover</a>
                 <a href="/feed">Feed</a>
                 <a href="/compare">Compare</a>
                 <a href="/news">News</a>
@@ -129,8 +131,8 @@
     <nav class="wv-bottomnav" aria-label="Primary mobile">
         <div class="wv-bottomnav-inner">
             <a href="/" {% if path == '/' %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">◎</span><span class="lbl">Home</span></a>
+            <a href="/discover" {% if path.startswith('/discover') %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">✦</span><span class="lbl">Discover</span></a>
             <a href="/feed" {% if path.startswith('/feed') %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">◈</span><span class="lbl">Feed</span></a>
-            <a href="/compare" {% if path.startswith('/compare') %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">⇄</span><span class="lbl">Compare</span></a>
             <a href="/profile" {% if path.startswith('/profile') %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">◑</span><span class="lbl">Taste</span></a>
             <button type="button" class="wv-moretrigger" id="wv-more-btn" aria-haspopup="dialog" aria-controls="wv-morepanel" aria-expanded="false">
                 <span class="ic" aria-hidden="true">☰</span><span class="lbl">More</span>
@@ -144,6 +146,7 @@
         <div class="wv-morepanel-sheet">
             <div class="wv-morepanel-handle" aria-hidden="true"></div>
             <h2>Explore</h2>
+            <a href="/compare" {% if path.startswith('/compare') %}aria-current="page"{% endif %}>Compare <span class="muted">Side-by-side artists</span></a>
             <a href="/news" {% if path.startswith('/news') %}aria-current="page"{% endif %}>News <span class="muted">Headlines &amp; releases</span></a>
             <a href="/about">About Waveline <span class="muted">How it works</span></a>
             {% if current_user.is_authenticated %}

@@ -31,7 +31,7 @@ def test_desktop_nav_has_labelled_links(monkeypatch):
     resp = client.get("/")
     html = resp.data.decode()
     assert '<nav class="wv-nav"' in html
-    for label in ["Home", "Feed", "Taste"]:
+    for label in ["Home", "Discover", "Feed", "Taste"]:
         assert f">{label}<" in html
 
 
@@ -41,7 +41,7 @@ def test_desktop_nav_no_longer_shows_old_labels(monkeypatch):
     nav_start = html.index('<nav class="wv-nav"')
     nav_end = html.index("</nav>", nav_start)
     primary_nav = html[nav_start:nav_end]
-    assert ">Discover<" not in primary_nav
+    # Phase 5: Discover is now a real, intentional primary-nav destination.
     assert ">Community<" not in primary_nav
     # Compare/News moved out of the primary nav into the desktop More menu
     assert ">Compare<" not in primary_nav
@@ -71,9 +71,11 @@ def test_mobile_bottom_nav_present(monkeypatch):
     bottomnav_start = html.index('class="wv-bottomnav"')
     bottomnav_end = html.index("</nav>", bottomnav_start)
     bottomnav = html[bottomnav_start:bottomnav_end]
-    for label in ["Home", "Feed", "Compare", "Taste", "More"]:
+    for label in ["Home", "Discover", "Feed", "Taste", "More"]:
         assert f">{label}<" in bottomnav
-    assert ">Discover<" not in bottomnav
+    # Phase 5: Compare gave up its permanent bottom-nav slot to Discover —
+    # it now lives in the mobile More panel instead (see test below).
+    assert ">Compare<" not in bottomnav
     assert ">Community<" not in bottomnav
     # persistent artist-search shortcut reachable from the mobile shell
     assert 'id="wv-search-trigger-mobile"' in html
@@ -83,6 +85,7 @@ def test_mobile_more_panel_has_secondary_actions(monkeypatch):
     client = _dashboard_client(monkeypatch)
     html = client.get("/").data.decode()
     assert 'id="wv-morepanel"' in html
+    assert 'href="/compare"' in html
     assert 'href="/news"' in html
     assert 'href="/about"' in html
 

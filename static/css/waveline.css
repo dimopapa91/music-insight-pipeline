@@ -556,6 +556,8 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
 .wv-avatar-xs { width: 26px; height: 26px; font-size: .68rem; border-radius: 6px; }
 /* Phase 4: a real uploaded photo reuses the same slot for notification actors */
 img.wv-avatar-xs { object-fit: cover; display: block; }
+/* Phase 5: a real uploaded photo reuses the same slot on Discover cards */
+img.wv-avatar-sm { object-fit: cover; display: block; }
 
 /* Large circular variant for the public-profile cover hero specifically —
    everywhere else (post cards, notifications, the nav avatar chip) keeps
