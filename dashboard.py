@@ -23,8 +23,10 @@ from views_news import news_bp
 from views_feed import feed_bp
 from views_discover import discover_bp
 from views_notifications import notifications_bp
+from views_messages import messages_bp
 from views_admin import admin_bp
 from social import count_unread
+from messaging import count_unread_messages
 from analytics import record_pageview, init_geoip
 
 load_dotenv()
@@ -68,6 +70,7 @@ app.register_blueprint(news_bp)
 app.register_blueprint(feed_bp)
 app.register_blueprint(discover_bp)
 app.register_blueprint(notifications_bp)
+app.register_blueprint(messages_bp)
 app.register_blueprint(admin_bp)
 
 # Self-hosted, privacy-respecting analytics: one row per real HTML page view.
@@ -77,13 +80,20 @@ app.after_request(record_pageview)
 
 @app.context_processor
 def inject_unread_notifications():
-    """Make the unread-notifications badge count available to every template."""
+    """Make the unread-notifications/unread-messages badge counts available
+    to every template. Each count is fetched independently so a hiccup
+    fetching one (e.g. a transient DB issue) can't blank out the other."""
+    if not current_user.is_authenticated:
+        return {"unread_notifications": 0, "unread_messages": 0}
     try:
-        if current_user.is_authenticated:
-            return {"unread_notifications": count_unread(current_user.id)}
+        notifications = count_unread(current_user.id)
     except Exception:
-        pass
-    return {"unread_notifications": 0}
+        notifications = 0
+    try:
+        messages = count_unread_messages(current_user.id)
+    except Exception:
+        messages = 0
+    return {"unread_notifications": notifications, "unread_messages": messages}
 
 # Ensure all application tables exist (idempotent — safe on every boot/worker).
 init_db()

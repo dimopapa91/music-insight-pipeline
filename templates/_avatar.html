@@ -1,0 +1,16 @@
+{# Robust single-slot avatar, reused wherever a real profile photo needs a
+   genuine monogram fallback (Phase 3/5 pattern). Expects:
+     avatar_url        - user.profile_image_url or ''
+     avatar_username   - username, for the monogram letter + deterministic colour
+     avatar_size       - a wv-avatar-* size class, e.g. 'wv-avatar-sm'
+     avatar_fallback_id - a page-unique id for the fallback element
+   The fallback uses a genuine inline display:none (not the `hidden`
+   attribute, which .wv-avatar's own display rule would silently override),
+   so the image and monogram can never render side by side. #}
+{% if avatar_url %}
+<img class="{{ avatar_size }}" src="{{ avatar_url }}" alt=""
+     onerror="this.style.display='none'; document.getElementById('{{ avatar_fallback_id }}').style.display='inline-flex';">
+<span id="{{ avatar_fallback_id }}" class="wv-avatar {{ avatar_size }}" style="background:{{ avatar_username | avatar_color }}; display:none;" aria-hidden="true">{{ avatar_username[0] | upper }}</span>
+{% else %}
+<span class="wv-avatar {{ avatar_size }}" style="background:{{ avatar_username | avatar_color }};" aria-hidden="true">{{ avatar_username[0] | upper }}</span>
+{% endif %}

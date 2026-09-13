@@ -15,6 +15,7 @@ import hashlib
 import logging
 import os
 from datetime import datetime, timezone
+from urllib.parse import urlparse
 
 from flask import request, current_app
 from flask_login import current_user
@@ -28,6 +29,33 @@ logger = logging.getLogger(__name__)
 # visits don't skew their own stats).
 _SKIP_PREFIXES = ("/static/", "/api/", "/preview", "/admin/")
 _SKIP_EXACT = {"/favicon.ico"}
+
+# Private-messaging privacy: a message-thread URL embeds the OTHER
+# participant's username (/messages/u/<username>). That must never be
+# persisted verbatim — not as the recorded path, and not later as some other
+# page's referrer either (e.g. clicking "View profile" from a thread would
+# otherwise leak the conversation partner's username into analytics via the
+# Referer header of the *next* page view).
+_MESSAGE_THREAD_PATH_PREFIX = "/messages/u/"
+_MESSAGE_THREAD_PATH_PLACEHOLDER = "/messages/thread"
+
+
+def _sanitize_analytics_path(path):
+    if path.startswith(_MESSAGE_THREAD_PATH_PREFIX):
+        return _MESSAGE_THREAD_PATH_PLACEHOLDER
+    return path
+
+
+def _sanitize_analytics_referrer(referrer):
+    if not referrer:
+        return referrer
+    try:
+        ref_path = urlparse(referrer).path
+    except ValueError:
+        return referrer
+    if ref_path.startswith(_MESSAGE_THREAD_PATH_PREFIX):
+        return None
+    return referrer
 
 
 # ── GeoIP (optional, graceful) ───────────────────────────────────────
@@ -120,7 +148,8 @@ def record_pageview(response):
             cur.execute(
                 "INSERT INTO analytics_events (path, referrer, country, user_id, visitor_hash) "
                 "VALUES (%s, %s, %s, %s, %s)",
-                (request.path, request.referrer, country, user_id, visitor_hash),
+                (_sanitize_analytics_path(request.path), _sanitize_analytics_referrer(request.referrer),
+                 country, user_id, visitor_hash),
             )
     except Exception as e:
         logger.debug("Analytics recording skipped: %s", e)

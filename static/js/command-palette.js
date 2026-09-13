@@ -23,6 +23,7 @@
     if (window.WV && window.WV.authenticated) {
       return [
         { label: "View profile", href: "/me", hint: "@" + window.WV.username },
+        { label: "Messages", href: "/messages", hint: "Account" },
         { label: "Notifications", href: "/notifications", hint: "Account" },
         { label: "Log out", href: "/logout", hint: "Account" }
       ];

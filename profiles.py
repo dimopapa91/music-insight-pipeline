@@ -11,6 +11,7 @@ from flask_login import login_required, current_user
 from db import db_cursor
 from models import User
 from social import get_user_posts, get_follow_counts, toggle_follow, is_following
+from messaging import can_users_message
 from image_storage import (
     is_image_storage_configured, upload_profile_image, upload_cover_image,
     ImageValidationError, ImageStorageError,
@@ -45,11 +46,12 @@ def profile(username):
     posts = get_user_posts(user.id, viewer_id=viewer_id)
     is_own = current_user.is_authenticated and current_user.id == user.id
     following_this = bool(viewer_id and not is_own and is_following(viewer_id, user.id))
+    can_message = bool(viewer_id and not is_own and can_users_message(viewer_id, user.id))
     return render_template(
         "profile.html",
         user=user, artists=artists, posts=posts,
         followers=followers, following=following,
-        is_own=is_own, following_this=following_this,
+        is_own=is_own, following_this=following_this, can_message=can_message,
     )
 
 

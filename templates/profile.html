@@ -30,7 +30,7 @@
   .pf-identity-body { flex: 1; min-width: 0; padding-top: 10px; }
   .pf-identity-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--wv-3); flex-wrap: wrap; }
   .pf-name { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.5rem, 3.8vw, 2.1rem); letter-spacing: -.4px; line-height: 1.15; }
-  .pf-action { flex-shrink: 0; }
+  .pf-action { flex-shrink: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .pf-meta { font-size: .84rem; color: var(--wv-muted); margin-top: 8px; }
   .pf-meta a { color: var(--wv-accent-ink); text-decoration: none; }
   .pf-meta a:hover { text-decoration: underline; }
@@ -106,6 +106,9 @@
           <form method="POST" action="/u/{{ user.username }}/follow" class="inline">
             <button type="submit" class="wv-btn {{ 'wv-btn-ghost' if following_this else 'wv-btn-primary' }}">{{ 'Following' if following_this else 'Follow' }}</button>
           </form>
+          {% if can_message %}
+          <a class="wv-btn wv-btn-ghost" href="{{ url_for('messages.thread', username=user.username, _anchor='messages-end') }}">Message</a>
+          {% endif %}
           {% endif %}
         </div>
       </div>
