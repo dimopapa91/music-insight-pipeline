@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Discover people — Waveline{% endblock %}
+{% block description %}Find listeners exploring the same artists, genres and corners of music as you.{% endblock %}
+
+{% block head_extra %}
+<style>
+  .dc-wrap { max-width: var(--wv-maxw); margin: 0 auto; padding: var(--wv-6) var(--wv-5) var(--wv-8); }
+  .dc-head h1 { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.6rem, 4vw, 2.1rem); letter-spacing: -.3px; }
+  .dc-head p { color: var(--wv-muted); font-size: .95rem; margin-top: 6px; max-width: 60ch; }
+
+  .dc-search { margin: var(--wv-5) 0 var(--wv-7); }
+  .dc-search form { display: flex; gap: 8px; max-width: 480px; }
+  .dc-search input {
+    flex: 1; min-width: 0; font-family: var(--wv-font-body); font-size: .92rem;
+    border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill);
+    padding: 0 18px; height: 46px; background: var(--wv-surface-2); color: var(--wv-ink);
+  }
+  .dc-search input:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); }
+  .dc-search button { flex-shrink: 0; }
+
+  .dc-section { margin-top: var(--wv-7); }
+  .dc-section:first-of-type { margin-top: 0; }
+  .dc-section-head { margin-bottom: var(--wv-4); }
+  .dc-section-head h2 { font-family: var(--wv-font-display); font-weight: 700; font-size: 1.15rem; letter-spacing: -.2px; }
+  .dc-hint { font-size: .85rem; color: var(--wv-muted); margin-bottom: var(--wv-4); max-width: 60ch; }
+
+  .dc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--wv-4); }
+
+  .dc-card { display: flex; flex-direction: column; gap: 10px; padding: var(--wv-4); background: var(--wv-surface); border: 1px solid var(--wv-border); border-radius: var(--wv-radius-lg); }
+  .dc-avatar { flex-shrink: 0; }
+  .dc-name { font-family: var(--wv-font-display); font-weight: 700; font-size: 1rem; color: var(--wv-ink); text-decoration: none; }
+  .dc-name:hover { color: var(--wv-accent-ink); }
+  .dc-bio { font-size: .86rem; color: var(--wv-ink-2); line-height: 1.5; margin-top: 2px; }
+  .dc-chips, .dc-reason-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .dc-chip { min-height: auto; padding: 3px 10px; font-size: .72rem; }
+  .dc-reason { font-size: .8rem; color: var(--wv-ink-2); margin-top: 4px; }
+  .dc-reason strong { color: var(--wv-accent-ink); }
+  .dc-reason-muted { color: var(--wv-muted); }
+  .dc-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--wv-3); margin-top: auto; padding-top: var(--wv-3); border-top: 1px solid var(--wv-border); }
+  .dc-followers { font-family: var(--wv-font-display); font-size: .64rem; letter-spacing: .6px; text-transform: uppercase; color: var(--wv-muted); }
+
+  @media (max-width: 560px) {
+    .dc-search form { flex-direction: column; max-width: none; }
+    .dc-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dc-wrap">
+  <div class="dc-head">
+    <p class="wv-eyebrow">Community</p>
+    <h1>Discover people</h1>
+    <p>Find listeners exploring the same artists, genres and corners of music as you.</p>
+  </div>
+
+  <div class="dc-search">
+    <form method="GET" action="/discover">
+      <label class="wv-sr-only" for="dc-q">Search people</label>
+      <input type="text" id="dc-q" name="q" value="{{ q }}" maxlength="80" placeholder="Search by username, bio or genre…" autocomplete="off">
+      <button type="submit" class="wv-btn wv-btn-primary wv-btn-sm">Search</button>
+    </form>
+  </div>
+
+  {% if no_one_to_discover %}
+  <div class="wv-empty">
+    <h3>No one to discover yet</h3>
+    <p>Check back once more listeners join Waveline.</p>
+  </div>
+
+  {% elif q %}
+  <div class="dc-section">
+    <div class="dc-section-head"><h2>Results for &quot;{{ q }}&quot;</h2></div>
+    {% if search_results %}
+    <div class="dc-grid">
+      {% for p in search_results %}{% include "_discover_card.html" %}{% endfor %}
+    </div>
+    {% else %}
+    <div class="wv-empty">
+      <h3>No people found for &quot;{{ q }}&quot;</h3>
+      <p>Try a different username, bio keyword or genre.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {% else %}
+    {% if current_user.is_authenticated %}
+    <div class="dc-section">
+      <div class="dc-section-head"><h2>People for you</h2></div>
+      {% if not personalised %}
+      <p class="dc-hint">Explore more artists to make your recommendations more personal.</p>
+      {% endif %}
+      {% if people_for_you %}
+      <div class="dc-grid">
+        {% for p in people_for_you %}{% include "_discover_card.html" %}{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if community %}
+    <div class="dc-section">
+      <div class="dc-section-head"><h2>Explore the community</h2></div>
+      <div class="dc-grid">
+        {% for p in community %}{% include "_discover_card.html" %}{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

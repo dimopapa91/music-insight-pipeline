@@ -11,6 +11,7 @@
 
   var DESTINATIONS = [
     { label: "Home", href: "/", hint: "Page" },
+    { label: "Discover people", href: "/discover", hint: "Page" },
     { label: "Feed", href: "/feed", hint: "Page" },
     { label: "Compare artists", href: "/compare", hint: "Page" },
     { label: "News", href: "/news", hint: "Page" },
