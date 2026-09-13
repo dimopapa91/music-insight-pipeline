@@ -1,0 +1,24 @@
+{% if items %}
+{% for n in items %}
+<a class="nt-item{{ ' is-unread' if not n.is_read }}" href="{{ '/u/' ~ n.actor if n.type == 'follow' else '/feed' }}">
+  <span class="nt-avatar" aria-hidden="true">
+    {% if n.actor_avatar %}
+    <img class="wv-avatar wv-avatar-xs" src="{{ n.actor_avatar }}" alt="">
+    {% else %}
+    <span class="wv-avatar wv-avatar-xs" style="background:{{ n.actor | avatar_color }};">{{ n.actor[0] | upper }}</span>
+    {% endif %}
+  </span>
+  <span class="nt-body">
+    <span class="nt-line">
+      <span class="nt-actor">@{{ n.actor }}</span>
+      {% if n.type == 'like' %}liked your post{% elif n.type == 'comment' %}commented on your post{% else %}started following you{% endif -%}
+      {%- if n.post_body %} <span class="nt-snippet">&quot;{{ n.post_body[:60] }}{{ '…' if n.post_body | length > 60 }}&quot;</span>{% endif %}
+    </span>
+    <time class="nt-time">{{ n.created_at | timeago }}</time>
+  </span>
+  {% if not n.is_read %}<span class="nt-dot" aria-label="Unread"></span>{% endif %}
+</a>
+{% endfor %}
+{% else %}
+<p class="wv-notifmenu-empty">No notifications yet.</p>
+{% endif %}

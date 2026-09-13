@@ -85,7 +85,7 @@
      hover-only. */
   var openNavDropdownClose = null;
 
-  function initNavDropdown(triggerId, panelId) {
+  function initNavDropdown(triggerId, panelId, onOpen) {
     var trigger = document.getElementById(triggerId);
     var panel = document.getElementById(panelId);
     if (!trigger || !panel) return;
@@ -101,6 +101,7 @@
       panel.hidden = false;
       trigger.setAttribute("aria-expanded", "true");
       openNavDropdownClose = close;
+      if (typeof onOpen === "function") onOpen();
       var items = focusable();
       if (items.length) items[0].focus();
     }
@@ -135,6 +136,39 @@
       if (trigger.contains(e.target) || panel.contains(e.target)) return;
       close(false);
     });
+  }
+
+  /* ── Notification bell dropdown (desktop) ──
+     On each open: fetch a small server-rendered preview (also marks the
+     notifications read server-side, scoped to the logged-in user) and swap
+     it into the list, then clear the unread badge (desktop bell AND the
+     mirrored count in the mobile "More" panel). On failure, the badge/unread
+     state is left untouched, but the loading placeholder is replaced with a
+     short message so the panel never gets stuck — reopening tries again. */
+  function initNotifDropdown() {
+    var list = document.getElementById("wv-notif-list");
+    var trigger = document.getElementById("wv-notif-trigger");
+    if (!list || !trigger) return;
+    var inFlight = false;
+
+    return function onNotifOpen() {
+      if (inFlight) return;
+      inFlight = true;
+      fetch("/notifications/read", { method: "POST", credentials: "same-origin" })
+        .then(function (res) { if (!res.ok) throw new Error("bad response"); return res.text(); })
+        .then(function (html) {
+          list.innerHTML = html;
+          var badge = trigger.querySelector(".wv-badge");
+          if (badge) { badge.remove(); }
+          var mobileBadge = document.getElementById("wv-notif-badge-mobile");
+          if (mobileBadge) { mobileBadge.remove(); }
+          trigger.setAttribute("aria-label", "Notifications");
+        })
+        .catch(function () {
+          list.innerHTML = '<p class="wv-notifmenu-empty">Couldn’t load notifications.</p>';
+        })
+        .then(function () { inFlight = false; });
+    };
   }
 
   /* ── Scroll-reveal for elements marked .wv-reveal ── */
@@ -200,6 +234,7 @@
     initMorePanel();
     initNavDropdown("wv-profile-trigger", "wv-profile-menu");
     initNavDropdown("wv-navmenu-trigger", "wv-navmenu-panel");
+    initNavDropdown("wv-notif-trigger", "wv-notif-panel", initNotifDropdown());
     initReveal();
     initMagnetic();
     initScrollSpy();
