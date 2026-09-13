@@ -43,7 +43,17 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                 </button>
                 {% if current_user.is_authenticated %}
-                <a class="wv-iconbtn wv-bell wv-desktop-only" href="/notifications" aria-label="Notifications{% if unread_notifications %} ({{ unread_notifications }} unread){% endif %}">🔔{% if unread_notifications %}<span class="wv-badge">{{ unread_notifications }}</span>{% endif %}</a>
+                <div class="wv-notifmenu wv-desktop-only">
+                    <button type="button" class="wv-iconbtn wv-bell wv-notifmenu-trigger" id="wv-notif-trigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="wv-notif-panel" aria-label="Notifications{% if unread_notifications %} ({{ unread_notifications }} unread){% endif %}">
+                        🔔{% if unread_notifications %}<span class="wv-badge">{{ unread_notifications }}</span>{% endif %}
+                    </button>
+                    <div class="wv-notifmenu-panel" id="wv-notif-panel" role="dialog" aria-label="Notifications" hidden>
+                        <div class="wv-notifmenu-list" id="wv-notif-list" aria-live="polite">
+                            <p class="wv-notifmenu-empty">Loading…</p>
+                        </div>
+                        <a class="wv-notifmenu-footer" href="/notifications">View all notifications →</a>
+                    </div>
+                </div>
                 <div class="wv-profilemenu wv-desktop-only">
                     <button type="button" class="wv-profilemenu-trigger" id="wv-profile-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="wv-profile-menu">
                         {% if current_user.profile_image_url %}
@@ -138,7 +148,7 @@
             <a href="/about">About Waveline <span class="muted">How it works</span></a>
             {% if current_user.is_authenticated %}
             <h2>Account</h2>
-            <a href="/notifications">Notifications{% if unread_notifications %} <span class="wv-badge" style="position:static;">{{ unread_notifications }}</span>{% endif %}</a>
+            <a href="/notifications">Notifications{% if unread_notifications %} <span class="wv-badge" id="wv-notif-badge-mobile" style="position:static;">{{ unread_notifications }}</span>{% endif %}</a>
             <a href="/me">@{{ current_user.username }}</a>
             <a href="/settings">Settings</a>
             <a href="{{ url_for('auth.logout') }}">Log out</a>

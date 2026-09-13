@@ -212,6 +212,51 @@ img { max-width: 100%; display: block; }
   font-family: var(--wv-font-body); font-size: .68rem; font-weight: 600;
   display: flex; align-items: center; justify-content: center;
 }
+
+/* Notification row — shared by the full /notifications page and the
+   desktop notification-bell dropdown preview (Phase 4). */
+.nt-item {
+  display: flex; align-items: flex-start; gap: 12px; padding: var(--wv-4);
+  text-decoration: none; color: inherit; border-top: 1px solid var(--wv-border);
+  transition: background var(--wv-motion) var(--wv-ease);
+}
+.nt-item:first-child { border-top: none; }
+.nt-item:hover, .nt-item:focus-visible { background: var(--wv-surface-2); }
+.nt-item.is-unread { background: var(--wv-accent-soft); }
+.nt-item.is-unread:hover, .nt-item.is-unread:focus-visible { background: color-mix(in srgb, var(--wv-accent-soft) 65%, var(--wv-surface-2)); }
+.nt-icon {
+  flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; margin-top: 2px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--wv-surface-2); color: var(--wv-muted);
+}
+.nt-item.is-unread .nt-icon { background: var(--wv-surface); color: var(--wv-accent-ink); }
+.nt-avatar { flex-shrink: 0; margin-top: 2px; }
+.nt-body { flex: 1; min-width: 0; }
+.nt-line { font-size: .92rem; color: var(--wv-ink-2); line-height: 1.5; }
+.nt-actor { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); }
+.nt-snippet { color: var(--wv-muted); }
+.nt-time { display: block; margin-top: 3px; font-family: var(--wv-font-display); font-size: .66rem; letter-spacing: .6px; text-transform: uppercase; color: var(--wv-muted); }
+.nt-dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--wv-accent); margin-top: 8px; }
+
+/* Notification menu (desktop): bell trigger + dropdown preview */
+.wv-notifmenu { position: relative; }
+.wv-notifmenu-trigger[aria-expanded="true"] { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
+.wv-notifmenu-panel {
+  position: absolute; right: 0; top: calc(100% + 8px); width: min(400px, calc(100vw - 32px));
+  z-index: var(--wv-z-palette); background: var(--wv-surface); border: 1px solid var(--wv-border-2);
+  border-radius: var(--wv-radius-lg); box-shadow: var(--wv-shadow-lg); overflow: hidden;
+  animation: wv-palette-in var(--wv-motion) var(--wv-ease);
+}
+.wv-notifmenu-panel[hidden] { display: none; }
+.wv-notifmenu-list { max-height: 420px; overflow-y: auto; }
+.wv-notifmenu-list .nt-item { padding: var(--wv-3) var(--wv-4); }
+.wv-notifmenu-empty { padding: var(--wv-6) var(--wv-4); text-align: center; font-size: .86rem; color: var(--wv-muted); }
+.wv-notifmenu-footer {
+  display: block; padding: 12px var(--wv-4); text-align: center; border-top: 1px solid var(--wv-border);
+  font-family: var(--wv-font-display); font-size: .68rem; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--wv-accent-ink); text-decoration: none; background: var(--wv-surface-2);
+}
+.wv-notifmenu-footer:hover, .wv-notifmenu-footer:focus-visible { background: var(--wv-accent-soft); }
 .wv-userchip {
   font-family: var(--wv-font-display); font-size: .68rem; letter-spacing: 1px; text-transform: uppercase;
   color: var(--wv-ink); text-decoration: none; padding: 8px 12px; border: 1px solid var(--wv-border-2);
@@ -509,6 +554,8 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
 .wv-avatar-lg { width: 88px; height: 88px; font-size: 2rem; border-radius: var(--wv-radius-lg); }
 .wv-avatar-sm { width: 32px; height: 32px; font-size: .8rem; }
 .wv-avatar-xs { width: 26px; height: 26px; font-size: .68rem; border-radius: 6px; }
+/* Phase 4: a real uploaded photo reuses the same slot for notification actors */
+img.wv-avatar-xs { object-fit: cover; display: block; }
 
 /* Large circular variant for the public-profile cover hero specifically —
    everywhere else (post cards, notifications, the nav avatar chip) keeps

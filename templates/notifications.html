@@ -3,31 +3,12 @@
 
 {% block head_extra %}
 <style>
+  /* .nt-item/.nt-icon/.nt-body/.nt-line/.nt-actor/.nt-snippet/.nt-time/.nt-dot
+     live in waveline.css so the desktop notification-bell dropdown (Phase 4)
+     can reuse the exact same row styling. */
   .nt-wrap { max-width: 640px; margin: 0 auto; padding: var(--wv-6) var(--wv-5) var(--wv-8); }
   .nt-wrap h1 { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.4rem, 3.6vw, 1.8rem); margin-top: var(--wv-2); }
-
   .nt-list { overflow: hidden; }
-  .nt-item {
-    display: flex; align-items: flex-start; gap: 12px; padding: var(--wv-4);
-    text-decoration: none; color: inherit; border-top: 1px solid var(--wv-border);
-    transition: background var(--wv-motion) var(--wv-ease);
-  }
-  .nt-item:first-child { border-top: none; }
-  .nt-item:hover { background: var(--wv-surface-2); }
-  .nt-item.is-unread { background: var(--wv-accent-soft); }
-  .nt-item.is-unread:hover { background: color-mix(in srgb, var(--wv-accent-soft) 65%, var(--wv-surface-2)); }
-  .nt-icon {
-    flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; margin-top: 2px;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--wv-surface-2); color: var(--wv-muted);
-  }
-  .nt-item.is-unread .nt-icon { background: var(--wv-surface); color: var(--wv-accent-ink); }
-  .nt-body { flex: 1; min-width: 0; }
-  .nt-line { font-size: .92rem; color: var(--wv-ink-2); line-height: 1.5; }
-  .nt-actor { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); }
-  .nt-snippet { color: var(--wv-muted); }
-  .nt-time { display: block; margin-top: 3px; font-family: var(--wv-font-display); font-size: .66rem; letter-spacing: .6px; text-transform: uppercase; color: var(--wv-muted); }
-  .nt-dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--wv-accent); margin-top: 8px; }
 </style>
 {% endblock %}
 
