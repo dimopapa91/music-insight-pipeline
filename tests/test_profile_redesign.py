@@ -26,11 +26,12 @@ def _login(client, monkeypatch, user):
 
 
 def _mock_profile_data(monkeypatch, artists=None, posts=None, followers=3, following=5,
-                        is_following_result=False):
+                        is_following_result=False, can_message_result=False):
     monkeypatch.setattr(profiles, "get_user_searched_artists", lambda uid: artists or [])
     monkeypatch.setattr(profiles, "get_follow_counts", lambda uid: (followers, following))
     monkeypatch.setattr(profiles, "get_user_posts", lambda uid, viewer_id=None, **k: posts or [])
     monkeypatch.setattr(profiles, "is_following", lambda a, b: is_following_result)
+    monkeypatch.setattr(profiles, "can_users_message", lambda a, b: can_message_result)
     monkeypatch.setattr(User, "get_by_username",
                          classmethod(lambda cls, u: OWNER if u == "dimos" else None))
 

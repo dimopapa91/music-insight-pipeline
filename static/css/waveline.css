@@ -206,6 +206,7 @@ img { max-width: 100%; display: block; }
 }
 .wv-iconbtn:hover { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
 .wv-bell { position: relative; }
+.wv-msgicon { position: relative; }
 .wv-badge {
   position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px;
   background: var(--wv-danger); color: #fff; border-radius: var(--wv-radius-pill);

@@ -101,6 +101,40 @@ SCHEMA = [
     "CREATE INDEX IF NOT EXISTS idx_analytics_created_at ON analytics_events (created_at)",
     "CREATE INDEX IF NOT EXISTS idx_analytics_country ON analytics_events (country)",
     "CREATE INDEX IF NOT EXISTS idx_analytics_path ON analytics_events (path)",
+    # Phase 6: private one-to-one messaging. A conversation is the canonical,
+    # order-independent pair of two users (user1_id < user2_id enforced by
+    # the CHECK below, so the app always sorts the pair before any lookup —
+    # see messaging._canonical_pair) with at most one row per pair, courtesy
+    # of the UNIQUE constraint. That UNIQUE index also serves participant
+    # lookups, so no separate index is needed for that.
+    """
+    CREATE TABLE IF NOT EXISTS conversations (
+        id         SERIAL PRIMARY KEY,
+        user1_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        user2_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT conversations_pair_unique UNIQUE (user1_id, user2_id),
+        CONSTRAINT conversations_canonical_order CHECK (user1_id < user2_id)
+    )
+    """,
+    # is_read/recipient_id are denormalised onto the message itself (rather
+    # than derived from the conversation) so unread counts and "mark this
+    # conversation read" updates are single, simple, indexed statements.
+    """
+    CREATE TABLE IF NOT EXISTS direct_messages (
+        id              SERIAL PRIMARY KEY,
+        conversation_id INTEGER NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+        sender_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        recipient_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        body            TEXT NOT NULL,
+        is_read         BOOLEAN DEFAULT FALSE,
+        created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT direct_messages_not_self CHECK (sender_id <> recipient_id),
+        CONSTRAINT direct_messages_body_length CHECK (char_length(body) <= 2000)
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_dm_conversation_created ON direct_messages (conversation_id, created_at)",
+    "CREATE INDEX IF NOT EXISTS idx_dm_recipient_unread ON direct_messages (recipient_id, is_read)",
 ]
 
 

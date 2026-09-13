@@ -96,7 +96,7 @@ def test_desktop_dock_logged_in_has_logout_via_profile_menu(monkeypatch):
     assert '<a class="wv-userchip wv-desktop-only" href="/me">' not in dock
 
 
-def test_avatar_menu_contains_all_five_account_destinations(monkeypatch):
+def test_avatar_menu_contains_all_six_account_destinations(monkeypatch):
     client = _dashboard_client(monkeypatch)
     _login(client, monkeypatch)
     html = client.get("/").data.decode()
@@ -104,6 +104,7 @@ def test_avatar_menu_contains_all_five_account_destinations(monkeypatch):
 
     expected = [
         ("/me", "Profile"),
+        ("/messages", "Messages"),
         ("/profile", "Taste Profile"),
         ("/feed", "Feed"),
         ("/settings", "Settings"),
@@ -113,8 +114,8 @@ def test_avatar_menu_contains_all_five_account_destinations(monkeypatch):
         assert f'href="{href}"' in panel, f"missing link to {href}"
         assert f">{label}<" in panel, f"missing label {label!r}"
 
-    # exactly these five menu items, no more, no fewer
-    assert panel.count("role=\"menuitem\"") == 5
+    # exactly these six menu items, no more, no fewer
+    assert panel.count("role=\"menuitem\"") == 6
     # superseded labels from before this correction must be gone
     assert "View profile" not in panel
     assert ">Log out<" not in panel

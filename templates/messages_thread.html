@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}{{ target.username }} — Messages — Waveline{% endblock %}
+
+{% block head_extra %}
+<style>
+  .dm-thread-wrap { max-width: 640px; margin: 0 auto; padding: var(--wv-6) var(--wv-5) var(--wv-8); }
+  .dm-thread-back { font-family: var(--wv-font-display); font-size: .7rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); text-decoration: none; }
+  .dm-thread-back:hover { color: var(--wv-accent-ink); }
+
+  .dm-thread-head { display: flex; align-items: center; gap: 12px; margin-top: var(--wv-4); padding-bottom: var(--wv-4); border-bottom: 1px solid var(--wv-border); flex-wrap: wrap; }
+  .dm-thread-avatar { flex-shrink: 0; }
+  .dm-thread-identity { flex: 1; min-width: 0; }
+  .dm-thread-name { display: block; font-family: var(--wv-font-display); font-weight: 700; font-size: 1.05rem; color: var(--wv-ink); }
+  .dm-thread-viewlink { font-size: .78rem; color: var(--wv-accent-ink); text-decoration: none; }
+  .dm-thread-viewlink:hover { text-decoration: underline; }
+
+  .dm-thread-list { display: flex; flex-direction: column; gap: 10px; padding: var(--wv-5) 0; }
+  .dm-row { display: flex; }
+  .dm-row.is-own { justify-content: flex-end; }
+  .dm-bubble-wrap { max-width: 78%; }
+  .dm-bubble {
+    padding: 10px 14px; border-radius: var(--wv-radius-lg);
+    background: var(--wv-surface-2); color: var(--wv-ink); border: 1px solid var(--wv-border);
+    font-size: .92rem; line-height: 1.55; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: anywhere;
+  }
+  .dm-row.is-own .dm-bubble { background: var(--wv-accent); color: var(--wv-on-accent); border-color: transparent; }
+  .dm-bubble-time { display: block; margin-top: 4px; font-family: var(--wv-font-display); font-size: .6rem; letter-spacing: .5px; text-transform: uppercase; color: var(--wv-muted); }
+  .dm-row.is-own .dm-bubble-time { text-align: right; }
+
+  .dm-composer textarea {
+    width: 100%; min-height: 84px; font-family: var(--wv-font-body); font-size: .95rem;
+    border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 12px;
+    background: var(--wv-surface-2); color: var(--wv-ink); resize: vertical;
+  }
+  .dm-composer textarea:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); }
+  .dm-composer-row { display: flex; justify-content: flex-end; margin-top: 8px; }
+  .dm-locked { padding: var(--wv-5) var(--wv-4); text-align: center; color: var(--wv-muted); font-size: .88rem; border: 1px dashed var(--wv-border-2); border-radius: var(--wv-radius-lg); }
+  .dm-empty { text-align: center; color: var(--wv-muted); font-size: .9rem; padding: var(--wv-6) 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dm-thread-wrap">
+  <a class="dm-thread-back" href="/messages">← Messages</a>
+
+  <div class="dm-thread-head">
+    <span class="dm-thread-avatar" aria-hidden="true">
+      {% set avatar_url = target.profile_image_url %}
+      {% set avatar_username = target.username %}
+      {% set avatar_size = 'wv-avatar-sm' %}
+      {% set avatar_fallback_id = 'dm-fallback-thread' %}
+      {% include "_avatar.html" %}
+    </span>
+    <span class="dm-thread-identity">
+      <span class="dm-thread-name">{{ target.username }}</span>
+      <a class="dm-thread-viewlink" href="/u/{{ target.username }}">View profile</a>
+    </span>
+  </div>
+
+  <div class="dm-thread-list">
+    {% if messages %}
+    {% for m in messages %}
+    <div class="dm-row{{ ' is-own' if m.sender_id == current_user.id }}">
+      <div class="dm-bubble-wrap">
+        <div class="dm-bubble">{{ m.body }}</div>
+        <time class="dm-bubble-time">{{ m.created_at | timeago }}</time>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p class="dm-empty">No messages yet. Say hello.</p>
+    {% endif %}
+    <div id="messages-end"></div>
+  </div>
+
+  {% if can_send %}
+  <form class="dm-composer" method="POST" action="{{ url_for('messages.send', username=target.username) }}">
+    <label class="wv-sr-only" for="dm-body">Message {{ target.username }}</label>
+    <textarea id="dm-body" name="body" maxlength="{{ max_body_length }}" required placeholder="Write a message…"></textarea>
+    <div class="dm-composer-row">
+      <button type="submit" class="wv-btn wv-btn-primary wv-btn-sm">Send</button>
+    </div>
+  </form>
+  {% else %}
+  <div class="dm-locked">Follow each other to continue messaging.</div>
+  {% endif %}
+</div>
+{% endblock %}
