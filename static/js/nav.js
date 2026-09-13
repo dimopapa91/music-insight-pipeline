@@ -139,20 +139,24 @@
   }
 
   /* ── Notification bell dropdown (desktop) ──
-     On each open: fetch a small server-rendered preview (also marks the
+     On first open: fetch a small server-rendered preview (also marks the
      notifications read server-side, scoped to the logged-in user) and swap
      it into the list, then clear the unread badge (desktop bell AND the
-     mirrored count in the mobile "More" panel). On failure, the badge/unread
-     state is left untouched, but the loading placeholder is replaced with a
-     short message so the panel never gets stuck — reopening tries again. */
+     mirrored count in the mobile "More" panel). Once that succeeds, later
+     opens in the same page view are a no-op — the acknowledgement already
+     happened and re-POSTing would just re-run a completed mutation for no
+     benefit. On failure, the badge/unread state is left untouched, the
+     loading placeholder is replaced with a short message, and `loaded`
+     stays false so the next open retries. */
   function initNotifDropdown() {
     var list = document.getElementById("wv-notif-list");
     var trigger = document.getElementById("wv-notif-trigger");
     if (!list || !trigger) return;
     var inFlight = false;
+    var loaded = false;
 
     return function onNotifOpen() {
-      if (inFlight) return;
+      if (loaded || inFlight) return;
       inFlight = true;
       fetch("/notifications/read", { method: "POST", credentials: "same-origin" })
         .then(function (res) { if (!res.ok) throw new Error("bad response"); return res.text(); })
@@ -163,6 +167,7 @@
           var mobileBadge = document.getElementById("wv-notif-badge-mobile");
           if (mobileBadge) { mobileBadge.remove(); }
           trigger.setAttribute("aria-label", "Notifications");
+          loaded = true;
         })
         .catch(function () {
           list.innerHTML = '<p class="wv-notifmenu-empty">Couldn’t load notifications.</p>';

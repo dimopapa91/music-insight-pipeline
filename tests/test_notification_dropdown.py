@@ -165,6 +165,29 @@ def test_nav_js_clears_both_desktop_and_mobile_badges_on_success():
     assert 'setAttribute("aria-label", "Notifications")' in success_body
 
 
+def test_nav_js_does_not_repeat_the_read_request_after_success():
+    # Regression: initNotifDropdown() previously reset only `inFlight` after
+    # each request, so every reopen re-POSTed /notifications/read even after
+    # a prior success had already acknowledged everything. A `loaded` flag
+    # (or equivalent) must short-circuit onNotifOpen() once acknowledgement
+    # has actually succeeded, while a failed attempt must NOT set it, so the
+    # next open still retries.
+    with open("static/js/nav.js") as f:
+        src = f.read()
+    notif_block = src[src.index("function initNotifDropdown"):src.index("/* ── Scroll-reveal")]
+
+    assert "var loaded = false;" in notif_block or "loaded = false" in notif_block
+
+    guard_line = notif_block.split("return function onNotifOpen()", 1)[1].split("\n")[1]
+    assert "loaded" in guard_line and "inFlight" in guard_line and "return" in guard_line
+
+    success_body = notif_block.split(".then(function (html)", 1)[1].split(".catch(function ()")[0]
+    assert "loaded = true;" in success_body
+
+    catch_body = notif_block.split(".catch(function ()", 1)[1].split(".then(function () { inFlight = false; })")[0]
+    assert "loaded = true" not in catch_body
+
+
 def test_no_new_inline_script_added_to_base_html():
     with open("templates/base.html") as f:
         src = f.read()
