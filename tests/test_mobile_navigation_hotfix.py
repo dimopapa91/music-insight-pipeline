@@ -69,14 +69,19 @@ def _more_panel(html):
 # ── 1/2. bottom nav: still exactly five items, same routes ───────────
 
 def test_bottom_nav_has_exactly_five_items(monkeypatch):
+    # Phase 8.2: labels are visually removed (see test_mobile_tabbar_hotfix.py
+    # for the full icon-only redesign) — Home/Discover/Feed/Taste keep an
+    # accessible name via a visually-hidden .wv-sr-only span, and the fifth
+    # item (now Account, not "More") has no separate label at all, only an
+    # aria-label on the button itself.
     html = _dashboard_client(monkeypatch).get("/").data.decode()
     bottomnav = _bottomnav(html)
-    # one <a ...> or <button ...> per destination — count top-level items
-    # by counting the labels, which is what the pre-existing
-    # test_mobile_bottom_nav_present already anchors on
-    for label in ["Home", "Discover", "Feed", "Taste", "More"]:
-        assert f'<span class="lbl">{label}</span>' in bottomnav
-    assert bottomnav.count('<span class="lbl">') == 5
+    for label in ["Home", "Discover", "Feed", "Taste"]:
+        assert f'<span class="lbl wv-sr-only">{label}</span>' in bottomnav
+    assert bottomnav.count('<span class="lbl wv-sr-only">') == 4
+    assert 'id="wv-more-btn"' in bottomnav
+    # every one of the five destinations wraps exactly one icon container
+    assert bottomnav.count('class="ic') == 5
 
 
 def test_bottom_nav_routes_unchanged(monkeypatch):
@@ -102,9 +107,16 @@ def test_old_unicode_bottomnav_glyphs_are_gone():
 
 
 def test_all_five_bottom_items_use_inline_svg():
+    # Raw template source, not a rendered response: Home contributes two
+    # SVGs (outline + filled, CSS-toggled by aria-current — see
+    # test_mobile_tabbar_hotfix.py), Discover/Feed/Taste one each, and the
+    # account button's logged-out branch contributes one more (the
+    # authenticated branch swaps in an <img>/monogram span instead, never
+    # both at once in a real response) — 6 total in source.
     html = _read("templates/base.html")
     bottomnav = _bottomnav(html)
-    assert bottomnav.count("<svg") == 5
+    assert bottomnav.count("<svg") == 6
+    assert bottomnav.count('class="wv-home-icon') == 2
 
 
 # ── 5/6. Taste routing + icon identity distinct from theme icon ─────
@@ -113,7 +125,7 @@ def test_taste_still_links_to_profile():
     html = _read("templates/base.html")
     bottomnav = _bottomnav(html)
     taste_link = bottomnav[bottomnav.index('href="/profile"') - 10:bottomnav.index('href="/profile"') + 400]
-    assert '<span class="lbl">Taste</span>' in taste_link
+    assert '<span class="lbl wv-sr-only">Taste</span>' in taste_link
 
 
 def test_taste_icon_is_not_theme_icon_markup():
@@ -290,11 +302,19 @@ def test_new_mobile_header_svgs_are_aria_hidden(monkeypatch):
 # ── 13. bottom-nav SVGs are decorative (visible labels exist already) ──
 
 def test_bottom_nav_svgs_are_aria_hidden():
+    # Raw template source: the account button's .ic wrapper carries an
+    # extra class (wv-account-ic) so it doesn't match the bare
+    # class="ic" string the other four do — matched separately below.
     html = _read("templates/base.html")
     bottomnav = _bottomnav(html)
-    # every .ic wrapper (which contains the svg) is aria-hidden
-    assert bottomnav.count('class="ic" aria-hidden="true"') == 5
-    assert bottomnav.count('focusable="false"') == 5
+    assert bottomnav.count('class="ic" aria-hidden="true"') == 4
+    assert 'class="ic wv-account-ic" aria-hidden="true"' in bottomnav
+    ic_wrappers = re.findall(r'<span class="ic[^"]*" aria-hidden="true">', bottomnav)
+    assert len(ic_wrappers) == 5
+    # Home's outline+filled pair, Discover/Feed/Taste, and the logged-out
+    # account branch's person SVG (the authenticated branch has no <svg> —
+    # an <img>/monogram span instead)
+    assert bottomnav.count('focusable="false"') == 6
 
 
 # ── 14/15/16. desktop dropdowns untouched ────────────────────────────

@@ -71,8 +71,15 @@ def test_mobile_bottom_nav_present(monkeypatch):
     bottomnav_start = html.index('class="wv-bottomnav"')
     bottomnav_end = html.index("</nav>", bottomnav_start)
     bottomnav = html[bottomnav_start:bottomnav_end]
-    for label in ["Home", "Discover", "Feed", "Taste", "More"]:
+    # Phase 8.2: bottom-nav labels are visually removed (Instagram-style
+    # icon-only bar) but stay accessible via visually-hidden text, except
+    # the fifth item, which became an Account/avatar control with no
+    # separate "More" text at all (see test_mobile_tabbar_hotfix.py) — so
+    # it's checked for its accessible name instead of visible text.
+    for label in ["Home", "Discover", "Feed", "Taste"]:
         assert f">{label}<" in bottomnav
+    assert 'id="wv-more-btn"' in bottomnav
+    assert "aria-label=" in bottomnav[bottomnav.index('id="wv-more-btn"'):bottomnav.index('id="wv-more-btn"') + 400]
     # Phase 5: Compare gave up its permanent bottom-nav slot to Discover —
     # it now lives in the mobile More panel instead (see test below).
     assert ">Compare<" not in bottomnav
