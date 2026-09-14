@@ -6,10 +6,11 @@ project. All functions return plain dicts/tuples ready for templates.
 
 from db import db_cursor
 
-# Common projection for a post row, including like/comment counts and whether
-# the current viewer has liked it. Uses named params (%(viewer)s).
+# Common projection for a post row, including the author's profile image,
+# like/comment counts, and whether the current viewer has liked it. Uses
+# named params (%(viewer)s).
 POST_SELECT = """
-    SELECT p.id, p.body, p.artist, p.created_at, p.user_id, u.username,
+    SELECT p.id, p.body, p.artist, p.created_at, p.user_id, u.username, u.profile_image_url,
            (SELECT COUNT(*) FROM likes l    WHERE l.post_id = p.id)  AS like_count,
            (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id)  AS comment_count,
            CASE WHEN %(viewer)s IS NULL THEN FALSE
@@ -19,32 +20,61 @@ POST_SELECT = """
     JOIN users u ON u.id = p.user_id
 """
 
+# How many of a post's most recent comments a compact card (feed/profile
+# Activity) previews before offering a "View all N comments" link to the
+# post's own detail page.
+COMMENT_PREVIEW_LIMIT = 3
+
 
 def _row_to_post(r):
     return {
         "id": r[0], "body": r[1], "artist": r[2], "created_at": r[3],
-        "user_id": r[4], "username": r[5],
-        "like_count": r[6], "comment_count": r[7], "liked": r[8],
-        "comments": [],
+        "user_id": r[4], "username": r[5], "profile_image_url": r[6],
+        "like_count": r[7], "comment_count": r[8], "liked": r[9],
+        "comments": [], "has_more_comments": False,
     }
 
 
-def _attach_comments(cur, posts):
+def _attach_comments(cur, posts, limit=None):
+    """Batched comment loader — one query for every post passed in, never a
+    query per post. When `limit` is given (feed/profile card previews),
+    only each post's most recent `limit` comments are attached (still
+    displayed oldest-first, via a ROW_NUMBER() window function scoped per
+    post), and `has_more_comments` is set so the template can offer a
+    "View all N comments" link. `limit=None` (post detail) loads every
+    comment for the post.
+    """
     ids = [p["id"] for p in posts]
     if not ids:
         return
-    cur.execute("""
-        SELECT c.post_id, u.username, c.body, c.created_at
-        FROM comments c JOIN users u ON u.id = c.user_id
-        WHERE c.post_id = ANY(%s)
-        ORDER BY c.created_at ASC
-    """, (ids,))
+    if limit is None:
+        cur.execute("""
+            SELECT c.post_id, u.username, c.body, c.created_at
+            FROM comments c JOIN users u ON u.id = c.user_id
+            WHERE c.post_id = ANY(%s)
+            ORDER BY c.created_at ASC, c.id ASC
+        """, (ids,))
+        rows = cur.fetchall()
+    else:
+        cur.execute("""
+            SELECT post_id, username, body, created_at FROM (
+                SELECT c.post_id, u.username, c.body, c.created_at, c.id,
+                       ROW_NUMBER() OVER (PARTITION BY c.post_id ORDER BY c.created_at DESC, c.id DESC) AS rn
+                FROM comments c JOIN users u ON u.id = c.user_id
+                WHERE c.post_id = ANY(%s)
+            ) ranked
+            WHERE rn <= %s
+            ORDER BY post_id, created_at ASC, id ASC
+        """, (ids, limit))
+        rows = cur.fetchall()
     by_post = {}
-    for post_id, username, body, created_at in cur.fetchall():
+    for post_id, username, body, created_at in rows:
         by_post.setdefault(post_id, []).append(
             {"username": username, "body": body, "created_at": created_at})
     for p in posts:
-        p["comments"] = by_post.get(p["id"], [])
+        shown = by_post.get(p["id"], [])
+        p["comments"] = shown
+        p["has_more_comments"] = limit is not None and p["comment_count"] > len(shown)
 
 
 # ── Posts ───────────────────────────────────────────────────────────
@@ -66,21 +96,31 @@ def delete_post(post_id, user_id):
         return cur.rowcount > 0
 
 
-def get_feed(viewer_id, scope="discover", page=1, per_page=15):
-    """scope='following' → viewer's own posts + people they follow; else global.
-    Paginated: returns at most per_page posts for the given 1-based page."""
+def get_feed(viewer_id, scope="latest", page=1, per_page=15, limit=None):
+    """scope='following' → viewer's own posts + people they follow; anything
+    else (the global chronological feed, "Latest") → all public posts.
+    Deterministic ordering: created_at DESC, then id DESC as a tiebreaker.
+
+    Paginated for the given 1-based page. `per_page` determines the OFFSET
+    (i.e. what a "page" means); `limit` — defaulting to `per_page` — is how
+    many rows are actually fetched. Callers doing exact-pagination (is
+    there really a next page?) pass `limit=per_page + 1` and inspect
+    whether more than `per_page` rows came back, without that probe row
+    disturbing the OFFSET math for the *next* page.
+    """
     page = max(1, int(page or 1))
-    params = {"viewer": viewer_id, "limit": per_page, "offset": (page - 1) * per_page}
+    fetch_limit = per_page if limit is None else limit
+    params = {"viewer": viewer_id, "limit": fetch_limit, "offset": (page - 1) * per_page}
     if scope == "following" and viewer_id:
         where = (" WHERE p.user_id = %(viewer)s "
                  " OR p.user_id IN (SELECT followee_id FROM follows WHERE follower_id = %(viewer)s) ")
     else:
         where = ""
-    sql = POST_SELECT + where + " ORDER BY p.created_at DESC LIMIT %(limit)s OFFSET %(offset)s"
+    sql = POST_SELECT + where + " ORDER BY p.created_at DESC, p.id DESC LIMIT %(limit)s OFFSET %(offset)s"
     with db_cursor() as cur:
         cur.execute(sql, params)
         posts = [_row_to_post(r) for r in cur.fetchall()]
-        _attach_comments(cur, posts)
+        _attach_comments(cur, posts, limit=COMMENT_PREVIEW_LIMIT)
     return posts
 
 
@@ -88,12 +128,27 @@ def get_user_posts(user_id, viewer_id=None, page=1, per_page=15):
     page = max(1, int(page or 1))
     params = {"viewer": viewer_id, "uid": user_id,
               "limit": per_page, "offset": (page - 1) * per_page}
-    sql = POST_SELECT + " WHERE p.user_id = %(uid)s ORDER BY p.created_at DESC LIMIT %(limit)s OFFSET %(offset)s"
+    sql = POST_SELECT + " WHERE p.user_id = %(uid)s ORDER BY p.created_at DESC, p.id DESC LIMIT %(limit)s OFFSET %(offset)s"
     with db_cursor() as cur:
         cur.execute(sql, params)
         posts = [_row_to_post(r) for r in cur.fetchall()]
-        _attach_comments(cur, posts)
+        _attach_comments(cur, posts, limit=COMMENT_PREVIEW_LIMIT)
     return posts
+
+
+def get_post(post_id, viewer_id=None):
+    """A single post plus ALL of its comments, for the public post-detail
+    page. Returns None if the post doesn't exist. Never exposes anything
+    beyond what POST_SELECT already exposes for the feed/profile."""
+    with db_cursor() as cur:
+        cur.execute(POST_SELECT + " WHERE p.id = %(post_id)s",
+                    {"viewer": viewer_id, "post_id": post_id})
+        row = cur.fetchone()
+        if not row:
+            return None
+        post = _row_to_post(row)
+        _attach_comments(cur, [post], limit=None)
+    return post
 
 
 # ── Likes ───────────────────────────────────────────────────────────
@@ -178,6 +233,18 @@ def _notify_post_owner(cur, post_id, actor_id, kind):
             (row[0], actor_id, kind, post_id))
 
 
+def _notification_target_url(type_, actor, post_id):
+    """Where clicking this notification should go. Follows go to the
+    actor's profile; likes/comments go to the actual post (comments deep
+    link straight to the discussion) now that post-detail pages exist —
+    falling back to the feed only if a post_id is somehow missing."""
+    if type_ == "follow":
+        return f"/u/{actor}"
+    if post_id:
+        return f"/post/{post_id}" + ("#comments" if type_ == "comment" else "")
+    return "/feed"
+
+
 def get_notifications(user_id, limit=30):
     with db_cursor() as cur:
         cur.execute("""
@@ -192,7 +259,8 @@ def get_notifications(user_id, limit=30):
         """, (user_id, limit))
         return [{"id": r[0], "type": r[1], "post_id": r[2], "is_read": r[3],
                  "created_at": r[4], "actor": r[5], "post_body": r[6],
-                 "actor_avatar": r[7]} for r in cur.fetchall()]
+                 "actor_avatar": r[7],
+                 "target_url": _notification_target_url(r[1], r[5], r[2])} for r in cur.fetchall()]
 
 
 def count_unread(user_id):

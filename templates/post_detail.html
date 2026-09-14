@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ post.username }} on Waveline{% endblock %}
+{% block description %}{{ post.body[:140] }}{% endblock %}
+
+{% block head_extra %}
+<style>
+  .pd-wrap { max-width: 640px; margin: 0 auto; padding: var(--wv-6) var(--wv-5) var(--wv-8); }
+  .pd-back { font-family: var(--wv-font-display); font-size: .7rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); text-decoration: none; }
+  .pd-back:hover { color: var(--wv-accent-ink); }
+  .pd-card { margin-top: var(--wv-4); padding: 0 var(--wv-5); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pd-wrap">
+  <a class="pd-back" href="/feed">← Feed</a>
+  <div class="wv-card pd-card">
+    {% set like_next = url_for('feed.post_detail', post_id=post.id) %}
+    {% set comment_next = url_for('feed.post_detail', post_id=post.id) ~ '#comments' %}
+    {% set delete_next = url_for('feed.feed', tab='latest') %}
+    {% set comments_anchor_id = 'comments' %}
+    {% include "_post_card.html" %}
+  </div>
+</div>
+{% endblock %}

@@ -27,15 +27,27 @@ def _post(id=5, username="alice", body="Loving this new album", user_id=2):
     }
 
 
-def test_feed_discover_renders_posts_and_comments(monkeypatch):
+def test_feed_latest_renders_posts_and_comments(monkeypatch):
     monkeypatch.setattr(views_feed, "get_feed",
-                        lambda viewer_id, scope="discover", page=1, per_page=15: [_post()])
+                        lambda viewer_id, scope="latest", page=1, per_page=15, limit=None: [_post()])
     client = dashboard.app.test_client()
-    resp = client.get("/feed?tab=discover")
+    resp = client.get("/feed?tab=latest")
     assert resp.status_code == 200
     assert b"Loving this new album" in resp.data
     assert b"totally agreed" in resp.data
-    assert b"@alice" in resp.data
+    # Post author heading is now clean (no @), matching Profile/Discover;
+    # the comment author keeps its existing @username convention.
+    assert b">alice<" in resp.data
+    assert b"@bob" in resp.data
+
+
+def test_legacy_tab_discover_redirects_to_latest(monkeypatch):
+    monkeypatch.setattr(views_feed, "get_feed",
+                        lambda viewer_id, scope="latest", page=1, per_page=15, limit=None: [])
+    client = dashboard.app.test_client()
+    resp = client.get("/feed?tab=discover")
+    assert resp.status_code == 302
+    assert resp.headers["Location"] == "/feed?tab=latest"
 
 
 def test_feed_logged_out_shows_signin_prompt(monkeypatch):

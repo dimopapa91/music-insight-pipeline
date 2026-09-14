@@ -1,6 +1,6 @@
 {% if items %}
 {% for n in items %}
-<a class="nt-item{{ ' is-unread' if not n.is_read }}" href="{{ '/u/' ~ n.actor if n.type == 'follow' else '/feed' }}">
+<a class="nt-item{{ ' is-unread' if not n.is_read }}" href="{{ n.target_url }}">
   <span class="nt-avatar" aria-hidden="true">
     {% if n.actor_avatar %}
     <img class="wv-avatar wv-avatar-xs" src="{{ n.actor_avatar }}" alt="">

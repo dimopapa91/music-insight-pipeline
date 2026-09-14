@@ -1,10 +1,11 @@
-"""Community feed blueprint: posting, likes, comments, and the feed itself."""
+"""Community feed blueprint: posting, likes, comments, the feed itself, and
+the public single-post detail/conversation page."""
 
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, abort
 from flask_login import login_required, current_user
 
 from social import (
-    create_post, delete_post, get_feed, toggle_like, add_comment,
+    create_post, delete_post, get_feed, get_post, toggle_like, add_comment,
 )
 
 feed_bp = Blueprint("feed", __name__)
@@ -27,11 +28,36 @@ def feed():
     except (TypeError, ValueError):
         page = 1
     viewer_id = current_user.id if current_user.is_authenticated else None
-    if tab not in ("following", "discover"):
-        tab = "following" if viewer_id else "discover"
-    posts = get_feed(viewer_id, scope=tab, page=page, per_page=PER_PAGE)
-    has_next = len(posts) == PER_PAGE
+
+    if tab == "discover":
+        # Legacy alias from before Discover meant "find people" (Phase 5) —
+        # the global chronological feed is now called Latest. Canonicalise
+        # the URL rather than silently rendering under the old name.
+        args = {"tab": "latest"}
+        if page != 1:
+            args["page"] = page
+        return redirect(url_for("feed.feed", **args))
+
+    if tab not in ("following", "latest"):
+        tab = "following" if viewer_id else "latest"
+    if tab == "following" and not viewer_id:
+        # Anonymous visitors have nothing to follow — never label the page
+        # Following while actually serving the global feed.
+        tab = "latest"
+
+    rows = get_feed(viewer_id, scope=tab, page=page, per_page=PER_PAGE, limit=PER_PAGE + 1)
+    has_next = len(rows) > PER_PAGE
+    posts = rows[:PER_PAGE]
     return render_template("feed.html", posts=posts, tab=tab, page=page, has_next=has_next)
+
+
+@feed_bp.route("/post/<int:post_id>")
+def post_detail(post_id):
+    viewer_id = current_user.id if current_user.is_authenticated else None
+    post = get_post(post_id, viewer_id=viewer_id)
+    if not post:
+        abort(404)
+    return render_template("post_detail.html", post=post)
 
 
 @feed_bp.route("/post", methods=["POST"])

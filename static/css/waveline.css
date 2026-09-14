@@ -588,6 +588,7 @@ img.wv-avatar-hero { object-fit: cover; display: block; }
 .wv-post { padding: var(--wv-4) 0; border-top: 1px solid var(--wv-border); }
 .wv-post:first-child { border-top: none; }
 .wv-post-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.wv-post-avatar { flex-shrink: 0; }
 .wv-post-author { font-family: var(--wv-font-display); font-weight: 700; font-size: .85rem; color: var(--wv-ink); text-decoration: none; }
 .wv-post-author:hover { color: var(--wv-accent-ink); }
 .wv-post-artist {
@@ -597,7 +598,8 @@ img.wv-avatar-hero { object-fit: cover; display: block; }
   border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill); padding: 4px 10px;
 }
 .wv-post-artist:hover { border-color: var(--wv-accent); }
-.wv-post-time { margin-left: auto; font-family: var(--wv-font-display); font-size: .66rem; letter-spacing: .3px; color: var(--wv-muted); white-space: nowrap; }
+.wv-post-time { margin-left: auto; font-family: var(--wv-font-display); font-size: .66rem; letter-spacing: .3px; color: var(--wv-muted); white-space: nowrap; text-decoration: none; }
+.wv-post-time:hover { color: var(--wv-accent-ink); text-decoration: underline; }
 .wv-post-body { font-size: .96rem; line-height: 1.65; color: var(--wv-ink-2); white-space: pre-wrap; word-wrap: break-word; max-width: 62ch; }
 .wv-post-actions { display: flex; align-items: center; gap: 8px; margin-top: var(--wv-3); flex-wrap: wrap; }
 .wv-act-btn {
@@ -614,11 +616,17 @@ button.wv-act-btn:disabled { opacity: .5; cursor: not-allowed; }
 .wv-like-btn.is-liked svg { fill: currentColor; }
 button.wv-del-btn:hover { border-color: var(--wv-danger); color: var(--wv-danger); }
 
+.wv-post-discussion { scroll-margin-top: calc(var(--wv-dock-h) + var(--wv-5)); }
 .wv-comments { margin: var(--wv-3) 0 0 15px; padding-left: 21px; border-left: 1px solid var(--wv-border); display: grid; gap: 10px; }
 .wv-comment { font-size: .86rem; color: var(--wv-ink-2); line-height: 1.55; }
 .wv-c-author { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); text-decoration: none; font-size: .82rem; }
 .wv-c-author:hover { color: var(--wv-accent-ink); }
 .wv-c-time { color: var(--wv-muted); font-size: .74rem; margin-left: 6px; }
+.wv-post-viewall {
+  display: inline-block; margin: var(--wv-3) 0 0 15px; font-family: var(--wv-font-display);
+  font-size: .72rem; letter-spacing: .3px; color: var(--wv-accent-ink); text-decoration: none;
+}
+.wv-post-viewall:hover { text-decoration: underline; }
 .wv-comment-form { display: flex; gap: 8px; margin: var(--wv-3) 0 0 15px; padding-left: 21px; }
 .wv-comment-form input {
   flex: 1; min-width: 0; font-family: var(--wv-font-body); font-size: .86rem;
@@ -634,5 +642,5 @@ button.wv-del-btn:hover { border-color: var(--wv-danger); color: var(--wv-danger
 .wv-comment-form button:hover { background: var(--wv-accent-ink); }
 @media (max-width: 480px) {
   .wv-post-list { padding: var(--wv-2) var(--wv-4); }
-  .wv-comments, .wv-comment-form { margin-left: 6px; padding-left: 10px; }
+  .wv-comments, .wv-comment-form, .wv-post-viewall { margin-left: 6px; padding-left: 10px; }
 }
