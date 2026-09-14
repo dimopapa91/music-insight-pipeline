@@ -23,6 +23,7 @@
   --wv-on-accent: #160f0a;   /* text placed on top of --wv-accent */
   --wv-danger:    #ff6b61;
   --wv-danger-soft:rgba(255,107,97,.13);
+  --wv-on-danger: #160f0a;  /* text placed on top of --wv-danger (dark: danger is light, so text is dark) */
   --wv-success:   #4ecb86;
   --wv-success-soft: rgba(78,203,134,.13);
 
@@ -86,12 +87,16 @@ body.light {
   --wv-muted:     #6b7178;
   --wv-border:    #ddd9cf;
   --wv-border-2:  #cac5b8;
-  --wv-accent:      #d6431f;
+  /* #c73717 (not the darker --wv-accent-ink) so --wv-on-accent text on this
+     background clears WCAG AA (4.5:1) for normal-weight button text — the
+     previous #d6431f only reached 4.27:1. */
+  --wv-accent:      #c73717;
   --wv-accent-ink:  #b23417;
-  --wv-accent-soft: rgba(214,67,31,.10);
+  --wv-accent-soft: rgba(199,55,23,.10);
   --wv-on-accent: #fff8f3;
   --wv-danger:    #b3261e;
   --wv-danger-soft:#fdecea;
+  --wv-on-danger: #fff8f3;  /* light: danger is dark, so text is light */
   --wv-success:   #1a7f4b;
   --wv-success-soft:#e8f6ee;
   --wv-shadow-sm: 0 1px 2px rgba(20,22,26,.06), 0 1px 3px rgba(20,22,26,.05);
@@ -209,7 +214,7 @@ img { max-width: 100%; display: block; }
 .wv-msgicon { position: relative; }
 .wv-badge {
   position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px;
-  background: var(--wv-danger); color: #fff; border-radius: var(--wv-radius-pill);
+  background: var(--wv-danger); color: var(--wv-on-danger); border-radius: var(--wv-radius-pill);
   font-family: var(--wv-font-body); font-size: .68rem; font-weight: 600;
   display: flex; align-items: center; justify-content: center;
 }
@@ -234,8 +239,8 @@ img { max-width: 100%; display: block; }
 .nt-avatar { flex-shrink: 0; margin-top: 2px; }
 .nt-body { flex: 1; min-width: 0; }
 .nt-line { font-size: .92rem; color: var(--wv-ink-2); line-height: 1.5; }
-.nt-actor { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); }
-.nt-snippet { color: var(--wv-muted); }
+.nt-actor { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); overflow-wrap: anywhere; }
+.nt-snippet { color: var(--wv-muted); overflow-wrap: anywhere; }
 .nt-time { display: block; margin-top: 3px; font-family: var(--wv-font-display); font-size: .66rem; letter-spacing: .6px; text-transform: uppercase; color: var(--wv-muted); }
 .nt-dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--wv-accent); margin-top: 8px; }
 
@@ -273,7 +278,7 @@ img { max-width: 100%; display: block; }
 .dm-item.is-unread:hover, .dm-item.is-unread:focus-visible { background: color-mix(in srgb, var(--wv-accent-soft) 65%, var(--wv-surface-2)); }
 .dm-body { flex: 1; min-width: 0; }
 .dm-line { font-size: .92rem; color: var(--wv-ink-2); line-height: 1.5; }
-.dm-name { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); }
+.dm-name { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); overflow-wrap: anywhere; }
 .dm-preview {
   display: block; color: var(--wv-muted); overflow: hidden; text-overflow: ellipsis;
   white-space: nowrap; max-width: 46ch;
@@ -333,7 +338,7 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
 .wv-profilemenu-caret { font-size: .6rem; color: var(--wv-muted); transition: transform var(--wv-motion) var(--wv-ease); }
 .wv-profilemenu-trigger[aria-expanded="true"] .wv-profilemenu-caret { transform: rotate(180deg); }
 .wv-profilemenu-panel {
-  position: absolute; right: 0; top: calc(100% + 8px); min-width: 200px; z-index: var(--wv-z-palette);
+  position: absolute; right: 0; top: calc(100% + 8px); min-width: 200px; max-width: calc(100vw - 32px); z-index: var(--wv-z-palette);
   background: var(--wv-surface); border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-lg);
   box-shadow: var(--wv-shadow-lg); padding: var(--wv-2); animation: wv-palette-in var(--wv-motion) var(--wv-ease);
 }
@@ -358,7 +363,7 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
 .wv-navmenu-caret { font-size: .6rem; transition: transform var(--wv-motion) var(--wv-ease); }
 .wv-navmenu-trigger[aria-expanded="true"] .wv-navmenu-caret { transform: rotate(180deg); }
 .wv-navmenu-panel {
-  position: absolute; right: 0; top: calc(100% + 8px); min-width: 160px; z-index: var(--wv-z-palette);
+  position: absolute; right: 0; top: calc(100% + 8px); min-width: 160px; max-width: calc(100vw - 32px); z-index: var(--wv-z-palette);
   background: var(--wv-surface); border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-lg);
   box-shadow: var(--wv-shadow-lg); padding: var(--wv-2); animation: wv-palette-in var(--wv-motion) var(--wv-ease);
 }
@@ -391,6 +396,16 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
    (e.g. the search trigger) a matter of picking a class, not a page-local
    workaround. */
 .wv-header .wv-mobile-only { display: none; }
+
+/* Header crowding, 861–1100px: the full desktop dock (brand + 4 nav links +
+   search + messages + notifications + profile menu + More + theme toggle)
+   all show at once here with no bottom-nav fallback yet. Rather than
+   removing any destination, trim the lowest-value width first: the ⌘K
+   shortcut hint and the visible @username (the avatar + accessible label
+   already identify the account menu). */
+@media (min-width: 861px) and (max-width: 1100px) {
+  .wv-header .wv-hide-crowded { display: none; }
+}
 
 @media (max-width: 860px) {
   .wv-dock { padding-right: var(--wv-2); }
@@ -465,7 +480,7 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
   flex: 1; min-width: 0; background: none; border: none; color: var(--wv-ink); font-size: 1rem;
   font-family: var(--wv-font-body);
 }
-.wv-palette-inputrow input:focus { outline: none; }
+.wv-palette-inputrow input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--wv-accent-soft) inset; border-radius: var(--wv-radius); }
 .wv-palette-inputrow kbd {
   font-family: var(--wv-font-display); font-size: .64rem; border: 1px solid var(--wv-border-2); border-radius: 4px;
   padding: 2px 6px; color: var(--wv-muted);
@@ -581,7 +596,7 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
   display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px;
   border: 1px solid var(--wv-border-2); background: var(--wv-surface); color: var(--wv-ink-2);
   border-radius: var(--wv-radius-pill); font-size: .82rem; text-decoration: none; cursor: pointer;
-  font-family: var(--wv-font-body);
+  font-family: var(--wv-font-body); max-width: 100%; overflow-wrap: anywhere;
   transition: border-color var(--wv-motion) var(--wv-ease), color var(--wv-motion) var(--wv-ease);
 }
 .wv-chip:hover { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
@@ -645,13 +660,14 @@ img.wv-avatar-hero { object-fit: cover; display: block; }
 .wv-post:first-child { border-top: none; }
 .wv-post-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
 .wv-post-avatar { flex-shrink: 0; }
-.wv-post-author { font-family: var(--wv-font-display); font-weight: 700; font-size: .85rem; color: var(--wv-ink); text-decoration: none; }
+.wv-post-author { font-family: var(--wv-font-display); font-weight: 700; font-size: .85rem; color: var(--wv-ink); text-decoration: none; overflow-wrap: anywhere; }
 .wv-post-author:hover { color: var(--wv-accent-ink); }
 .wv-post-artist {
   display: inline-flex; align-items: center; gap: 4px;
   font-family: var(--wv-font-display); font-size: .62rem; letter-spacing: 1px; text-transform: uppercase;
   color: var(--wv-accent-ink); text-decoration: none;
   border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill); padding: 4px 10px;
+  max-width: 100%; overflow-wrap: anywhere;
 }
 .wv-post-artist:hover { border-color: var(--wv-accent); }
 .wv-post-time { margin-left: auto; font-family: var(--wv-font-display); font-size: .66rem; letter-spacing: .3px; color: var(--wv-muted); white-space: nowrap; text-decoration: none; }
@@ -674,8 +690,8 @@ button.wv-del-btn:hover { border-color: var(--wv-danger); color: var(--wv-danger
 
 .wv-post-discussion { scroll-margin-top: calc(var(--wv-dock-h) + var(--wv-5)); }
 .wv-comments { margin: var(--wv-3) 0 0 15px; padding-left: 21px; border-left: 1px solid var(--wv-border); display: grid; gap: 10px; }
-.wv-comment { font-size: .86rem; color: var(--wv-ink-2); line-height: 1.55; }
-.wv-c-author { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); text-decoration: none; font-size: .82rem; }
+.wv-comment { font-size: .86rem; color: var(--wv-ink-2); line-height: 1.55; overflow-wrap: anywhere; }
+.wv-c-author { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); text-decoration: none; font-size: .82rem; overflow-wrap: anywhere; }
 .wv-c-author:hover { color: var(--wv-accent-ink); }
 .wv-c-time { color: var(--wv-muted); font-size: .74rem; margin-left: 6px; }
 .wv-post-viewall {

@@ -52,7 +52,7 @@
       <div class="wv-section-head"><h2 class="wv-h2" id="nw-headlines">Headlines</h2></div>
       {% if articles %}
         {% for a in articles %}
-        <a class="wv-card nw-article" href="{{ a.link }}" target="_blank" rel="noopener">
+        <a class="wv-card nw-article" href="{{ a.link }}" target="_blank" rel="noopener noreferrer">
           <span class="nw-source" style="background: {{ a.color }}">{{ a.source }}</span>
           <div class="nw-title">{{ a.title }}</div>
           {% if a.pub %}<div class="nw-meta">{{ a.pub }}</div>{% endif %}
@@ -79,7 +79,7 @@
           {% endif %}
           <div class="nw-releases">
             {% for r in releases %}
-            <a class="wv-card nw-rel" href="{{ r.url }}" target="_blank" rel="noopener">
+            <a class="wv-card nw-rel" href="{{ r.url }}" target="_blank" rel="noopener noreferrer">
               {% if r.image %}<img src="{{ r.image }}" alt="" loading="lazy">{% else %}<div class="ph" aria-hidden="true">♪</div>{% endif %}
               <div class="nw-rel-info">
                 <div class="nw-rel-name">{{ r.name }}</div>

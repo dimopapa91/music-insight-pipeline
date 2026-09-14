@@ -38,7 +38,9 @@
   .cp-catrow { border-top: 1px solid var(--wv-border); padding-top: var(--wv-3); margin-top: var(--wv-3); }
   .cp-catrow .h { font-family: var(--wv-font-display); font-size: .64rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-accent-ink); margin-bottom: 8px; }
   .cp-track { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: .88rem; padding: 5px 0; }
-  .cp-track button { font-size: .68rem; color: var(--wv-accent-ink); background: none; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 3px 8px; cursor: pointer; }
+  /* Only 5 tracks are ever rendered per artist (see services.py), so a full
+     44px target here doesn't push the card to an awkward height. */
+  .cp-track button { font-size: .68rem; color: var(--wv-accent-ink); background: none; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 3px 8px; min-height: 44px; min-width: 44px; cursor: pointer; }
   .cp-track button:hover { border-color: var(--wv-accent); }
   .cp-verdict { padding: var(--wv-6); margin-top: var(--wv-5); }
   .cp-verdict h2 { font-family: var(--wv-font-display); font-size: .95rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-accent-ink); margin-bottom: var(--wv-3); }
@@ -100,10 +102,10 @@
       </div>
       {% if a_data.tracks %}
       <div class="cp-catrow"><div class="h">Top tracks</div>
-        {% for t in a_data.tracks %}<div class="cp-track"><span>{{ t }}</span><button type="button" onclick='wvPlay({{ a_data.name|tojson }}, {{ t|tojson }}, this)'>▶</button></div>{% endfor %}
+        {% for t in a_data.tracks %}<div class="cp-track"><span>{{ t }}</span><button type="button" aria-label="Play {{ t }}" onclick='wvPlay({{ a_data.name|tojson }}, {{ t|tojson }}, this)'>▶</button></div>{% endfor %}
       </div>
       {% endif %}
-      {% if a_data.spotify_url %}<div class="cp-catrow"><div class="h">Listen</div><a class="wv-link" href="{{ a_data.spotify_url }}" target="_blank" rel="noopener">Open on Spotify →</a></div>{% endif %}
+      {% if a_data.spotify_url %}<div class="cp-catrow"><div class="h">Listen</div><a class="wv-link" href="{{ a_data.spotify_url }}" target="_blank" rel="noopener noreferrer">Open on Spotify →</a></div>{% endif %}
     </article>
 
     <div class="cp-results-vs" aria-hidden="true">VS</div>
@@ -115,10 +117,10 @@
       </div>
       {% if b_data.tracks %}
       <div class="cp-catrow"><div class="h">Top tracks</div>
-        {% for t in b_data.tracks %}<div class="cp-track"><span>{{ t }}</span><button type="button" onclick='wvPlay({{ b_data.name|tojson }}, {{ t|tojson }}, this)'>▶</button></div>{% endfor %}
+        {% for t in b_data.tracks %}<div class="cp-track"><span>{{ t }}</span><button type="button" aria-label="Play {{ t }}" onclick='wvPlay({{ b_data.name|tojson }}, {{ t|tojson }}, this)'>▶</button></div>{% endfor %}
       </div>
       {% endif %}
-      {% if b_data.spotify_url %}<div class="cp-catrow"><div class="h">Listen</div><a class="wv-link" href="{{ b_data.spotify_url }}" target="_blank" rel="noopener">Open on Spotify →</a></div>{% endif %}
+      {% if b_data.spotify_url %}<div class="cp-catrow"><div class="h">Listen</div><a class="wv-link" href="{{ b_data.spotify_url }}" target="_blank" rel="noopener noreferrer">Open on Spotify →</a></div>{% endif %}
     </article>
   </div>
 
