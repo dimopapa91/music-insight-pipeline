@@ -44,6 +44,19 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                 </button>
                 {% if current_user.is_authenticated %}
+                <!-- Mobile-only: direct navigation, NOT the desktop dropdown
+                     re-rendered small. Keeps a single panel id/loading-state/
+                     read-mutation implementation (the desktop wv-msg-panel /
+                     wv-notif-panel below, untouched) instead of duplicating
+                     it into a second, cramped floating panel on a phone. -->
+                <a class="wv-iconbtn wv-msgicon wv-mobile-only" href="/messages" aria-label="Messages{% if unread_messages %} ({{ unread_messages }} unread){% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    {% if unread_messages %}<span class="wv-badge">{{ unread_messages if unread_messages <= 9 else '9+' }}</span>{% endif %}
+                </a>
+                <a class="wv-iconbtn wv-bell wv-mobile-only" href="/notifications" aria-label="Notifications{% if unread_notifications %} ({{ unread_notifications }} unread){% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="M12 3a5 5 0 0 0-5 5v3.2c0 .5-.15 1-.44 1.4L5 15.5c-.6.9.02 2.1 1.1 2.1h11.8c1.08 0 1.7-1.2 1.1-2.1l-1.56-2.9a2.5 2.5 0 0 1-.44-1.4V8a5 5 0 0 0-5-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9.5 18.5a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    {% if unread_notifications %}<span class="wv-badge" id="wv-notif-badge-header-mobile">{{ unread_notifications if unread_notifications <= 9 else '9+' }}</span>{% endif %}
+                </a>
                 <div class="wv-msgmenu wv-desktop-only">
                     <button type="button" class="wv-iconbtn wv-msgicon wv-msgmenu-trigger" id="wv-msg-trigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="wv-msg-panel" aria-label="Messages{% if unread_messages %} ({{ unread_messages }} unread){% endif %}">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -88,7 +101,8 @@
                 </div>
                 {% else %}
                 <a class="wv-userchip wv-desktop-only" href="/login">Log in</a>
-                <a class="wv-btn wv-btn-primary wv-btn-sm" href="/register">Sign up</a>
+                <a class="wv-userchip wv-mobile-only" href="/login">Log in</a>
+                <a class="wv-btn wv-btn-primary wv-btn-sm wv-desktop-only" href="/register">Sign up</a>
                 {% endif %}
                 <div class="wv-navmenu wv-desktop-only">
                     <button type="button" class="wv-navmenu-trigger{{ ' is-active' if path.startswith('/compare') or path.startswith('/news') }}" id="wv-navmenu-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="wv-navmenu-panel">
@@ -100,7 +114,10 @@
                         <a role="menuitem" href="/news" {% if path.startswith('/news') %}aria-current="page"{% endif %}>News</a>
                     </div>
                 </div>
-                <button class="wv-iconbtn wv-desktop-only" id="wv-theme-btn" type="button" aria-label="Toggle light theme" title="Toggle light theme">◑</button>
+                <button class="wv-iconbtn wv-theme-btn wv-desktop-only" id="wv-theme-btn" type="button" aria-label="Switch to light theme" title="Switch to light theme">
+                    <span class="wv-theme-icon wv-theme-icon-sun" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" focusable="false"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                    <span class="wv-theme-icon wv-theme-icon-moon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" focusable="false"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+                </button>
             </div>
         </div>
     </header>
@@ -140,15 +157,36 @@
         </div>
     </footer>
 
-    <!-- ═══ MOBILE BOTTOM NAVIGATION ═══ -->
+    <!-- ═══ MOBILE BOTTOM NAVIGATION ═══
+         One consistent inline-SVG icon family (24x24 viewBox, currentColor,
+         rounded caps/joins) replaces the previous unrelated Unicode glyphs.
+         Taste deliberately gets a waveform/equalizer glyph, never anything
+         moon/sun-shaped — that visual language is reserved for the theme
+         control so the two are never confused. -->
     <nav class="wv-bottomnav" aria-label="Primary mobile">
         <div class="wv-bottomnav-inner">
-            <a href="/" {% if path == '/' %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">◎</span><span class="lbl">Home</span></a>
-            <a href="/discover" {% if path.startswith('/discover') %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">✦</span><span class="lbl">Discover</span></a>
-            <a href="/feed" {% if path.startswith('/feed') %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">◈</span><span class="lbl">Feed</span></a>
-            <a href="/profile" {% if path.startswith('/profile') %}aria-current="page"{% endif %}><span class="ic" aria-hidden="true">◑</span><span class="lbl">Taste</span></a>
+            <a href="/" {% if path == '/' %}aria-current="page"{% endif %}>
+                <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" focusable="false"><circle cx="12" cy="18" r="1.6" fill="currentColor"/><path d="M8.2 14.6a5.6 5.6 0 0 1 7.6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M5 11.2a10 10 0 0 1 14 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                <span class="lbl">Home</span>
+            </a>
+            <a href="/discover" {% if path.startswith('/discover') %}aria-current="page"{% endif %}>
+                <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" focusable="false"><path d="M12 3.5l1.7 5.1 5.1 1.7-5.1 1.7-1.7 5.1-1.7-5.1-5.1-1.7 5.1-1.7L12 3.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
+                <span class="lbl">Discover</span>
+            </a>
+            <a href="/feed" {% if path.startswith('/feed') %}aria-current="page"{% endif %}>
+                <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" focusable="false"><rect x="4" y="4.5" width="16" height="6" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="13.5" width="16" height="6" rx="2" stroke="currentColor" stroke-width="1.8"/></svg></span>
+                <span class="lbl">Feed</span>
+            </a>
+            <a href="/profile" {% if path.startswith('/profile') %}aria-current="page"{% endif %}>
+                <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" focusable="false"><path d="M4 13v-2M8 15.5v-7M12 17v-10M16 15.5v-7M20 13v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                <span class="lbl">Taste</span>
+            </a>
             <button type="button" class="wv-moretrigger" id="wv-more-btn" aria-haspopup="dialog" aria-controls="wv-morepanel" aria-expanded="false">
-                <span class="ic" aria-hidden="true">☰</span><span class="lbl">More</span>
+                <span class="ic" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" focusable="false"><circle cx="6" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="18" cy="12" r="1.7" fill="currentColor"/></svg>
+                    {% if current_user.is_authenticated and (unread_messages or unread_notifications) %}<span class="wv-moredot" aria-hidden="true"></span>{% endif %}
+                </span>
+                <span class="lbl">More</span>
             </button>
         </div>
     </nav>
@@ -158,27 +196,60 @@
         <div class="wv-scrim" id="wv-more-scrim"></div>
         <div class="wv-morepanel-sheet">
             <div class="wv-morepanel-handle" aria-hidden="true"></div>
+
+            {% if current_user.is_authenticated %}
+            <div class="wv-more-account">
+                <span class="wv-more-account-avatar" aria-hidden="true">
+                    {% if current_user.profile_image_url %}
+                    <img src="{{ current_user.profile_image_url }}" alt="">
+                    {% else %}
+                    <span class="wv-avatar" style="background:{{ current_user.username | avatar_color }};">{{ current_user.username[0] | upper }}</span>
+                    {% endif %}
+                </span>
+                <span class="wv-more-account-name">@{{ current_user.username }}</span>
+            </div>
+
+            <div class="wv-more-quickgrid">
+                <a class="wv-more-quick" href="/messages">
+                    <span class="wv-more-quick-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span>Messages</span>
+                    {% if unread_messages %}<span class="wv-badge" id="wv-msg-badge-mobile">{{ unread_messages if unread_messages <= 9 else '9+' }}</span>{% endif %}
+                </a>
+                <a class="wv-more-quick" href="/notifications">
+                    <span class="wv-more-quick-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" focusable="false"><path d="M12 3a5 5 0 0 0-5 5v3.2c0 .5-.15 1-.44 1.4L5 15.5c-.6.9.02 2.1 1.1 2.1h11.8c1.08 0 1.7-1.2 1.1-2.1l-1.56-2.9a2.5 2.5 0 0 1-.44-1.4V8a5 5 0 0 0-5-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9.5 18.5a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+                    <span>Notifications</span>
+                    {% if unread_notifications %}<span class="wv-badge" id="wv-notif-badge-mobile">{{ unread_notifications if unread_notifications <= 9 else '9+' }}</span>{% endif %}
+                </a>
+            </div>
+
+            <a href="/me">Profile</a>
+            <a href="/settings">Settings</a>
+            {% else %}
+            <div class="wv-more-join">
+                <h2 class="wv-more-join-head">Join Waveline</h2>
+                <a class="wv-btn wv-btn-primary wv-more-join-primary" href="/register">Create account</a>
+                <a class="wv-btn wv-btn-ghost wv-more-join-secondary" href="/login">Log in</a>
+            </div>
+            {% endif %}
+
             <h2>Explore</h2>
             <a href="/compare" {% if path.startswith('/compare') %}aria-current="page"{% endif %}>Compare <span class="muted">Side-by-side artists</span></a>
             <a href="/news" {% if path.startswith('/news') %}aria-current="page"{% endif %}>News <span class="muted">Headlines &amp; releases</span></a>
             <a href="/about">About Waveline <span class="muted">How it works</span></a>
-            {% if current_user.is_authenticated %}
-            <h2>Account</h2>
-            <a href="/notifications">Notifications{% if unread_notifications %} <span class="wv-badge" id="wv-notif-badge-mobile" style="position:static;">{{ unread_notifications }}</span>{% endif %}</a>
-            <a href="/messages">Messages{% if unread_messages %} <span class="wv-badge" id="wv-msg-badge-mobile" style="position:static;">{{ unread_messages }}</span>{% endif %}</a>
-            <a href="/me">@{{ current_user.username }}</a>
-            <a href="/settings">Settings</a>
-            <a href="{{ url_for('auth.logout') }}">Log out</a>
-            {% else %}
-            <h2>Account</h2>
-            <a href="/login">Log in</a>
-            <a href="/register">Sign up</a>
-            {% endif %}
-            <h2>Display</h2>
+
+            <h2>Appearance</h2>
             <div class="wv-more-row">
-                <span>Theme</span>
-                <button class="wv-btn wv-btn-ghost wv-btn-sm" type="button" id="wv-theme-btn-mobile">Toggle light theme</button>
+                <span>Appearance</span>
+                <button class="wv-btn wv-btn-ghost wv-btn-sm wv-theme-btn" type="button" id="wv-theme-btn-mobile" aria-label="Switch to light theme">
+                    <span class="wv-theme-icon wv-theme-icon-sun" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" focusable="false"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                    <span class="wv-theme-icon wv-theme-icon-moon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" focusable="false"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+                    <span class="wv-theme-label-text">Switch to light</span>
+                </button>
             </div>
+
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('auth.logout') }}">Sign out</a>
+            {% endif %}
         </div>
     </div>
 

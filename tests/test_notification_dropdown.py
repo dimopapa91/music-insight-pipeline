@@ -114,13 +114,17 @@ def test_mobile_more_panel_badge_has_a_targeted_id(monkeypatch):
     # The mobile "More" panel keeps its own /notifications link+badge — JS
     # must be able to clear this one specifically (not every .wv-badge on
     # the page) once the desktop dropdown's fetch marks everything read.
+    # Phase 8.1 added a third badge: the mobile HEADER's own Notifications
+    # icon-link (a plain nav link, no dropdown/JS of its own — see
+    # test_mobile_navigation_hotfix.py), so the total is now 3, not 2.
     monkeypatch.setattr(dashboard, "count_unread", lambda uid: 3)
     client = dashboard.app.test_client()
     _login(client, monkeypatch)
     html = client.get("/about").data.decode()
     assert 'id="wv-notif-badge-mobile"' in html
-    assert html.count('class="wv-badge"') == 2  # desktop bell + mobile More row, nothing else
-    assert 'href="/notifications">Notifications' in html
+    assert html.count('class="wv-badge"') == 3  # desktop bell + mobile header icon + mobile More card
+    assert 'href="/notifications"' in html
+    assert ">Notifications<" in html
 
 
 def test_logged_out_pages_have_no_notif_dropdown():
