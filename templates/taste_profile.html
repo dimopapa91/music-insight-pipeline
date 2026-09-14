@@ -46,11 +46,16 @@
     </div>
   </section>
 
-  {% elif state == 'empty' %}
+  {% elif state == 'forming' %}
   <div class="wv-empty" style="margin-top:var(--wv-5);">
-    <h3>Your profile is waiting for a few searches</h3>
-    <p>Analyse a handful of artists you like and Waveline will build your taste profile from them.</p>
-    <a class="wv-btn wv-btn-primary" href="/" style="margin-top:var(--wv-4);">Analyse an artist</a>
+    <h3>Your wave is forming.</h3>
+    {% if artist_count %}
+    <p class="tp-progress">{{ artist_count }} / {{ min_taste_artists }} artists explored</p>
+    <p>Explore {{ 'one more artist' if (min_taste_artists - artist_count) == 1 else (min_taste_artists - artist_count) ~ ' more artists' }} and your first taste profile will appear.</p>
+    {% else %}
+    <p>Explore a few artists you like and Waveline will start building your taste profile from them.</p>
+    {% endif %}
+    <a class="wv-btn wv-btn-primary" href="/" style="margin-top:var(--wv-4);">Explore an artist</a>
   </div>
 
   {% else %}
@@ -59,10 +64,10 @@
     {% if taste_analysis %}
     <div class="tp-text">{{ taste_analysis | markdown }}</div>
     {% else %}
-    <div class="wv-notice wv-notice-info">We couldn't generate your written profile just now. Your explored artists are below. Try refreshing in a moment.</div>
+    <div class="wv-notice wv-notice-info">Your artists are here. The written read couldn't tune in just now.</div>
     {% endif %}
     <form method="POST" action="/profile/refresh" style="margin-top:var(--wv-4);">
-      <button type="submit" class="wv-btn wv-btn-ghost wv-btn-sm">↻ Refresh analysis</button>
+      <button type="submit" class="wv-btn wv-btn-ghost wv-btn-sm">{{ 'Try again' if not taste_analysis else '↻ Refresh analysis' }}</button>
     </form>
   </section>
 

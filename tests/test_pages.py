@@ -27,7 +27,7 @@ def test_dashboard_page_renders(monkeypatch):
     client = dashboard.app.test_client()
     resp = client.get("/")
     assert resp.status_code == 200
-    assert b"Find the signal" in resp.data  # search-first signal-system hero
+    assert b"Follow the sound" in resp.data  # Phase 7.5: minimal, artistic hero voice
     assert b"Radiohead" in resp.data
     assert b"Explore full analysis" in resp.data  # one featured analysis, not equal cards
 

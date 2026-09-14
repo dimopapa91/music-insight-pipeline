@@ -18,6 +18,7 @@ from messaging import (
 messages_bp = Blueprint("messages", __name__)
 
 INBOX_LIMIT = 50
+PREVIEW_LIMIT = 5
 THREAD_LIMIT = 200
 
 
@@ -26,6 +27,16 @@ THREAD_LIMIT = 200
 def inbox():
     conversations = get_inbox(current_user.id, limit=INBOX_LIMIT)
     return render_template("messages_inbox.html", conversations=conversations)
+
+
+@messages_bp.route("/messages/preview")
+@login_required
+def preview():
+    """Desktop Messages-bell dropdown fragment. Read-only: unlike the
+    Notifications dropdown, this must NEVER mark anything read — Phase 6
+    intentionally marks messages read only when a real thread is opened."""
+    conversations = get_inbox(current_user.id, limit=PREVIEW_LIMIT)
+    return render_template("_message_items.html", conversations=conversations)
 
 
 @messages_bp.route("/messages/u/<username>")

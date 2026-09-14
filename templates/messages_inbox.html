@@ -4,37 +4,13 @@
 
 {% block head_extra %}
 <style>
+  /* .dm-item/.dm-avatar/.dm-body/.dm-line/.dm-name/.dm-preview/.dm-time/
+     .dm-unread-count live in waveline.css so the desktop Messages-bell
+     dropdown (Phase 7.5) can reuse the exact same row styling. */
   .dm-wrap { max-width: 640px; margin: 0 auto; padding: var(--wv-6) var(--wv-5) var(--wv-8); }
   .dm-wrap h1 { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.4rem, 3.6vw, 1.8rem); margin-top: var(--wv-2); }
   .dm-sub { color: var(--wv-muted); font-size: .92rem; margin-top: 4px; }
-
   .dm-list { overflow: hidden; }
-  .dm-avatar { flex-shrink: 0; margin-top: 2px; }
-  .dm-item {
-    display: flex; align-items: flex-start; gap: 12px; padding: var(--wv-4);
-    text-decoration: none; color: inherit; border-top: 1px solid var(--wv-border);
-    transition: background var(--wv-motion) var(--wv-ease);
-  }
-  .dm-item:first-child { border-top: none; }
-  .dm-item:hover, .dm-item:focus-visible { background: var(--wv-surface-2); }
-  .dm-item.is-unread { background: var(--wv-accent-soft); }
-  .dm-item.is-unread:hover { background: color-mix(in srgb, var(--wv-accent-soft) 65%, var(--wv-surface-2)); }
-  .dm-body { flex: 1; min-width: 0; }
-  .dm-line { font-size: .92rem; color: var(--wv-ink-2); line-height: 1.5; }
-  .dm-name { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); }
-  .dm-preview {
-    display: block; color: var(--wv-muted); overflow: hidden; text-overflow: ellipsis;
-    white-space: nowrap; max-width: 46ch;
-  }
-  .dm-time { display: block; margin-top: 3px; font-family: var(--wv-font-display); font-size: .66rem; letter-spacing: .6px; text-transform: uppercase; color: var(--wv-muted); }
-  .dm-unread-count {
-    flex-shrink: 0; min-width: 20px; height: 20px; padding: 0 6px; margin-top: 2px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--wv-font-display); font-size: .66rem; font-weight: 700;
-    color: var(--wv-on-accent); background: var(--wv-accent); border-radius: var(--wv-radius-pill);
-  }
-
-  @media (max-width: 560px) { .dm-preview { max-width: 56vw; } }
 </style>
 {% endblock %}
 
