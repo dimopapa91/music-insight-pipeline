@@ -46,9 +46,20 @@ def _more_panel(html):
 # ── 1/2/3: logged-out navigation ──
 
 def test_desktop_dock_logged_out_has_exactly_one_login_and_one_signup(monkeypatch):
+    # Phase 8.1: the mobile header gained its own compact, decoupled Log in
+    # link (previously Log in was desktop-only with no mobile counterpart
+    # at all) — so the header now legitimately contains two <a href="/login">
+    # elements, one per surface, matching the wv-desktop-only/wv-mobile-only
+    # pairing already used everywhere else (e.g. the search trigger). "Exactly
+    # one" is checked per surface now, not as a single whole-header count —
+    # same philosophy test_logged_out_dock_has_no_stray_third_signup_copy
+    # already documents below. Sign up stays desktop-only only (it's
+    # promoted prominently inside the mobile More panel instead).
     html = _dashboard_client(monkeypatch).get("/").data.decode()
     dock = _dock(html)
-    assert dock.count('href="/login"') == 1
+    assert dock.count('href="/login"') == 2
+    assert dock.count('wv-desktop-only" href="/login"') == 1
+    assert dock.count('wv-mobile-only" href="/login"') == 1
     assert dock.count('href="/register"') == 1
     assert "logout" not in dock.lower()
 
@@ -127,10 +138,14 @@ def test_avatar_menu_contains_all_six_account_destinations(monkeypatch):
 
 
 def test_mobile_more_panel_logged_in_has_logout_and_no_login_signup(monkeypatch):
+    # Phase 8.1: relabelled "Log out" -> "Sign out" in the mobile More panel
+    # to match the desktop profile menu, which already deliberately uses
+    # "Sign out" (see test_avatar_menu_contains_all_six_account_destinations
+    # below, which asserts the old "Log out" label is gone from THAT panel).
     client = _dashboard_client(monkeypatch)
     _login(client, monkeypatch)
     panel = _more_panel(client.get("/").data.decode())
-    assert panel.count("Log out") == 1
+    assert panel.count("Sign out") == 1
     assert 'href="/login"' not in panel
     assert 'href="/register"' not in panel
 

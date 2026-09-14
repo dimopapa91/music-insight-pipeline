@@ -201,7 +201,12 @@ img { max-width: 100%; display: block; }
 .wv-nav a:hover { color: var(--wv-ink); background: var(--wv-surface-2); }
 .wv-nav a[aria-current="page"] { color: var(--wv-on-accent); background: var(--wv-accent); }
 
-.wv-header-actions { display: flex; align-items: center; gap: var(--wv-2); flex-shrink: 0; }
+/* margin-left:auto is the real fix here, not just belt-and-suspenders with
+   .wv-nav's margin-right:auto: on mobile .wv-nav is display:none (removed
+   from flex layout entirely), so without its own margin this block used to
+   collapse right next to the brand — leaving the rest of the pill-shaped
+   dock looking empty. */
+.wv-header-actions { display: flex; align-items: center; gap: var(--wv-2); flex-shrink: 0; margin-left: auto; }
 .wv-iconbtn {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 38px; height: 38px; padding: 0 10px;
@@ -210,6 +215,17 @@ img { max-width: 100%; display: block; }
   transition: border-color var(--wv-motion) var(--wv-ease), color var(--wv-motion) var(--wv-ease), background var(--wv-motion) var(--wv-ease);
 }
 .wv-iconbtn:hover { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
+
+/* Theme toggle: shows the icon for the action a click performs (sun =
+   "switch to light" while dark is active; moon = "switch to dark" while
+   light is active) — CSS-driven off body.light so nav.js never has to touch
+   these SVGs (only the aria-label/title and the mobile button's text span
+   are updated in JS, see initTheme()). Shared by both the desktop icon-only
+   button and the mobile More-panel row button. */
+.wv-theme-icon { display: inline-flex; align-items: center; justify-content: center; }
+.wv-theme-icon-moon { display: none; }
+body.light .wv-theme-icon-sun { display: none; }
+body.light .wv-theme-icon-moon { display: inline-flex; }
 .wv-bell { position: relative; }
 .wv-msgicon { position: relative; }
 .wv-badge {
@@ -411,6 +427,10 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
   .wv-dock { padding-right: var(--wv-2); }
   .wv-nav, .wv-header .wv-desktop-only { display: none; }
   .wv-header .wv-mobile-only { display: inline-flex; }
+  /* ~44px touch areas for mobile header actions (search / messages /
+     notifications / log in) — bigger than the 38px desktop icon buttons. */
+  .wv-header .wv-iconbtn.wv-mobile-only { min-width: 44px; height: 44px; }
+  .wv-header .wv-userchip.wv-mobile-only { min-height: 40px; display: inline-flex; align-items: center; }
 
   .wv-bottomnav {
     display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--wv-z-bottomnav);
@@ -426,10 +446,34 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
     text-decoration: none; color: var(--wv-muted); background: none; border: none; cursor: pointer;
     font-family: var(--wv-font-body); min-height: 44px;
   }
-  .wv-bottomnav .ic { font-size: 1.1rem; line-height: 1; }
-  .wv-bottomnav .lbl { font-family: var(--wv-font-display); font-size: .58rem; letter-spacing: .8px; text-transform: uppercase; }
-  .wv-bottomnav a[aria-current="page"], .wv-bottomnav a[aria-current="page"] .ic { color: var(--wv-accent-ink); }
-  .wv-moretrigger { display: flex; }
+  /* Icon sits inside its own small circular area so the active state (below)
+     has somewhere to put a coral background without resizing the whole tab. */
+  .wv-bottomnav .ic {
+    position: relative; width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: background var(--wv-motion) var(--wv-ease), color var(--wv-motion) var(--wv-ease), transform var(--wv-motion) var(--wv-ease);
+  }
+  .wv-bottomnav .ic svg { width: 22px; height: 22px; }
+  .wv-bottomnav .lbl { font-family: var(--wv-font-display); font-size: .58rem; letter-spacing: .8px; text-transform: uppercase; transition: color var(--wv-motion) var(--wv-ease); }
+  .wv-bottomnav a[aria-current="page"] .ic {
+    background: var(--wv-accent-soft); color: var(--wv-accent-ink);
+    transform: translateY(-1px) scale(1.06);
+    animation: wv-nav-select .42s var(--wv-ease) 1;
+  }
+  .wv-bottomnav a[aria-current="page"] .lbl { color: var(--wv-accent-ink); font-weight: 700; }
+  /* One-shot only (not looping) — and like .wv-pulse-once elsewhere, already
+     covered by the global prefers-reduced-motion override further up this
+     file, which forces every animation/transition to ~0 duration. */
+  @keyframes wv-nav-select {
+    0% { transform: translateY(0) scale(.86); box-shadow: 0 0 0 0 var(--wv-accent-soft); }
+    60% { transform: translateY(-2px) scale(1.12); }
+    100% { transform: translateY(-1px) scale(1.06); box-shadow: 0 0 0 8px transparent; }
+  }
+  .wv-moretrigger { display: flex; position: relative; }
+  .wv-moredot {
+    position: absolute; top: -1px; right: -1px; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--wv-accent); border: 2px solid var(--wv-surface);
+  }
 
   body { padding-bottom: calc(var(--wv-bottomnav-h) + env(safe-area-inset-bottom, 0)); }
 
@@ -457,6 +501,36 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
   }
   .wv-morepanel a:last-child, .wv-morepanel .wv-more-row:last-child { border-bottom: none; }
   .wv-morepanel .muted { color: var(--wv-muted); font-size: .8rem; }
+
+  /* ── Account identity header (authenticated) ── */
+  .wv-more-account { display: flex; align-items: center; gap: var(--wv-3); padding: var(--wv-2) 4px var(--wv-4); }
+  .wv-more-account-avatar { flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .wv-more-account-avatar img, .wv-more-account-avatar .wv-avatar { width: 100%; height: 100%; border-radius: 50%; font-size: 1.1rem; }
+  .wv-more-account-name { font-family: var(--wv-font-display); font-weight: 700; font-size: 1rem; color: var(--wv-ink); overflow-wrap: anywhere; }
+
+  /* ── Two-column quick actions (Messages / Notifications) ──
+     Higher-specificity compound selectors (.wv-morepanel a.wv-more-quick)
+     rather than !important, to cleanly beat the shared .wv-morepanel a
+     list-row rule above instead of fighting it property-by-property. */
+  .wv-more-quickgrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--wv-3); margin-bottom: var(--wv-3); }
+  .wv-morepanel a.wv-more-quick {
+    position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 8px;
+    padding: 14px; min-height: 76px; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-lg);
+    background: var(--wv-surface-2); color: var(--wv-ink); text-decoration: none; font-size: .88rem; font-weight: 600;
+    border-bottom: 1px solid var(--wv-border-2);
+  }
+  .wv-more-quick-ic { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--wv-accent-soft); color: var(--wv-accent-ink); }
+  .wv-more-quick-ic svg { width: 18px; height: 18px; }
+  /* .wv-more-quick already establishes position:relative above, so the
+     shared .wv-badge component's default top:-6px/right:-6px anchors it to
+     this card's corner with no extra override needed. */
+
+  /* ── Logged-out: authentication is the first thing you see, not the
+     last thing you scroll to past Compare/News. ── */
+  .wv-more-join { padding: var(--wv-2) 0 var(--wv-4); }
+  .wv-morepanel h2.wv-more-join-head { margin: 0 0 var(--wv-3); }
+  .wv-more-join-primary, .wv-more-join-secondary { width: 100%; margin-bottom: 10px; }
+  .wv-more-join-secondary:last-child { margin-bottom: 0; }
 }
 @media (min-width: 861px) { .wv-bottomnav, .wv-morepanel { display: none !important; } }
 

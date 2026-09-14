@@ -15,8 +15,16 @@
     function apply(light) {
       document.body.classList.toggle("light", light);
       document.documentElement.classList.remove("pre-light");
+      // The sun/moon SVG swap itself is pure CSS (keyed off body.light —
+      // see .wv-theme-icon rules), so this never touches those child nodes.
+      // Only text-based state (never markup) is updated here: the shared
+      // aria-label/title, and the mobile row's own separate label span.
+      var label = light ? "Switch to dark theme" : "Switch to light theme";
       btns.forEach(function (b) {
-        if (b.id === "wv-theme-btn") b.textContent = light ? "☾" : "◑";
+        b.setAttribute("aria-label", label);
+        if ("title" in b) b.title = label;
+        var text = b.querySelector(".wv-theme-label-text");
+        if (text) text.textContent = light ? "Switch to dark" : "Switch to light";
       });
     }
     var stored;
@@ -166,6 +174,11 @@
           if (badge) { badge.remove(); }
           var mobileBadge = document.getElementById("wv-notif-badge-mobile");
           if (mobileBadge) { mobileBadge.remove(); }
+          // The mobile header's own Notifications icon-link (Phase 8.1) has
+          // no dropdown of its own, but the breakpoints aren't airtight
+          // against a live viewport resize — keep it in sync too.
+          var headerMobileBadge = document.getElementById("wv-notif-badge-header-mobile");
+          if (headerMobileBadge) { headerMobileBadge.remove(); }
           trigger.setAttribute("aria-label", "Notifications");
           loaded = true;
         })
