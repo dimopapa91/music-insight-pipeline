@@ -258,6 +258,55 @@ img { max-width: 100%; display: block; }
   color: var(--wv-accent-ink); text-decoration: none; background: var(--wv-surface-2);
 }
 .wv-notifmenu-footer:hover, .wv-notifmenu-footer:focus-visible { background: var(--wv-accent-soft); }
+
+/* Direct-message row — shared by the full /messages inbox and the
+   desktop Messages-bell dropdown preview (Phase 7.5). */
+.dm-avatar { flex-shrink: 0; margin-top: 2px; }
+.dm-item {
+  display: flex; align-items: flex-start; gap: 12px; padding: var(--wv-4);
+  text-decoration: none; color: inherit; border-top: 1px solid var(--wv-border);
+  transition: background var(--wv-motion) var(--wv-ease);
+}
+.dm-item:first-child { border-top: none; }
+.dm-item:hover, .dm-item:focus-visible { background: var(--wv-surface-2); }
+.dm-item.is-unread { background: var(--wv-accent-soft); }
+.dm-item.is-unread:hover, .dm-item.is-unread:focus-visible { background: color-mix(in srgb, var(--wv-accent-soft) 65%, var(--wv-surface-2)); }
+.dm-body { flex: 1; min-width: 0; }
+.dm-line { font-size: .92rem; color: var(--wv-ink-2); line-height: 1.5; }
+.dm-name { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); }
+.dm-preview {
+  display: block; color: var(--wv-muted); overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; max-width: 46ch;
+}
+.dm-time { display: block; margin-top: 3px; font-family: var(--wv-font-display); font-size: .66rem; letter-spacing: .6px; text-transform: uppercase; color: var(--wv-muted); }
+.dm-unread-count {
+  flex-shrink: 0; min-width: 20px; height: 20px; padding: 0 6px; margin-top: 2px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--wv-font-display); font-size: .66rem; font-weight: 700;
+  color: var(--wv-on-accent); background: var(--wv-accent); border-radius: var(--wv-radius-pill);
+}
+@media (max-width: 560px) { .dm-preview { max-width: 56vw; } }
+
+/* Messages menu (desktop): envelope trigger + dropdown preview — same
+   shell/tokens as .wv-notifmenu, deliberately. */
+.wv-msgmenu { position: relative; }
+.wv-msgmenu-trigger[aria-expanded="true"] { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
+.wv-msgmenu-panel {
+  position: absolute; right: 0; top: calc(100% + 8px); width: min(400px, calc(100vw - 32px));
+  z-index: var(--wv-z-palette); background: var(--wv-surface); border: 1px solid var(--wv-border-2);
+  border-radius: var(--wv-radius-lg); box-shadow: var(--wv-shadow-lg); overflow: hidden;
+  animation: wv-palette-in var(--wv-motion) var(--wv-ease);
+}
+.wv-msgmenu-panel[hidden] { display: none; }
+.wv-msgmenu-list { max-height: 420px; overflow-y: auto; }
+.wv-msgmenu-list .dm-item { padding: var(--wv-3) var(--wv-4); }
+.wv-msgmenu-footer {
+  display: block; padding: 12px var(--wv-4); text-align: center; border-top: 1px solid var(--wv-border);
+  font-family: var(--wv-font-display); font-size: .68rem; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--wv-accent-ink); text-decoration: none; background: var(--wv-surface-2);
+}
+.wv-msgmenu-footer:hover, .wv-msgmenu-footer:focus-visible { background: var(--wv-accent-soft); }
+
 .wv-userchip {
   font-family: var(--wv-font-display); font-size: .68rem; letter-spacing: 1px; text-transform: uppercase;
   color: var(--wv-ink); text-decoration: none; padding: 8px 12px; border: 1px solid var(--wv-border-2);
@@ -337,9 +386,16 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
 .wv-bottomnav, .wv-moretrigger, .wv-morepanel { display: none; }
 
 /* ── Mobile navigation: sticky bottom bar + More panel ─────── */
+/* Inverse of .wv-desktop-only: hidden by default, shown only at/under the
+   mobile breakpoint below. Keeps "exactly one visible control" pairs
+   (e.g. the search trigger) a matter of picking a class, not a page-local
+   workaround. */
+.wv-header .wv-mobile-only { display: none; }
+
 @media (max-width: 860px) {
   .wv-dock { padding-right: var(--wv-2); }
   .wv-nav, .wv-header .wv-desktop-only { display: none; }
+  .wv-header .wv-mobile-only { display: inline-flex; }
 
   .wv-bottomnav {
     display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--wv-z-bottomnav);

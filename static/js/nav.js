@@ -176,6 +176,34 @@
     };
   }
 
+  /* ── Messages bell dropdown (desktop) ──
+     Same first-open/cache/retry shape as the notification dropdown, but a
+     plain GET with NO read-marking side effect at all: Phase 6 deliberately
+     marks a conversation read only when its actual thread is opened, so the
+     preview must never touch is_read or the unread badge/count. */
+  function initMsgDropdown() {
+    var list = document.getElementById("wv-msg-list");
+    var trigger = document.getElementById("wv-msg-trigger");
+    if (!list || !trigger) return;
+    var inFlight = false;
+    var loaded = false;
+
+    return function onMsgOpen() {
+      if (loaded || inFlight) return;
+      inFlight = true;
+      fetch("/messages/preview", { method: "GET", credentials: "same-origin" })
+        .then(function (res) { if (!res.ok) throw new Error("bad response"); return res.text(); })
+        .then(function (html) {
+          list.innerHTML = html;
+          loaded = true;
+        })
+        .catch(function () {
+          list.innerHTML = '<p class="wv-notifmenu-empty">Couldn’t load messages.</p>';
+        })
+        .then(function () { inFlight = false; });
+    };
+  }
+
   /* ── Scroll-reveal for elements marked .wv-reveal ── */
   function initReveal() {
     if (reduceMotion || !("IntersectionObserver" in window)) {
@@ -240,6 +268,7 @@
     initNavDropdown("wv-profile-trigger", "wv-profile-menu");
     initNavDropdown("wv-navmenu-trigger", "wv-navmenu-panel");
     initNavDropdown("wv-notif-trigger", "wv-notif-panel", initNotifDropdown());
+    initNavDropdown("wv-msg-trigger", "wv-msg-panel", initMsgDropdown());
     initReveal();
     initMagnetic();
     initScrollSpy();

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Waveline — Find the signal behind the artist{% endblock %}
-{% block description %}Search any artist for listening data, top tracks, AI-powered music insights and the connections leading to your next discovery.{% endblock %}
+{% block title %}Waveline — Follow the sound{% endblock %}
+{% block description %}Explore artists, discover connections and shape your music taste with Waveline.{% endblock %}
 
 {% block head_extra %}
 <style>
@@ -53,9 +53,6 @@
   }
 
   /* ── Chapter 01: search recap ── */
-  .wv-chapter-search { display: flex; gap: var(--wv-2); max-width: 480px; margin-bottom: var(--wv-5); }
-  .wv-chapter-search input { flex: 1; min-width: 0; height: 46px; padding: 0 16px; font-size: .92rem; font-family: var(--wv-font-body); background: var(--wv-surface-2); color: var(--wv-ink); border: 1.5px solid var(--wv-border-2); border-radius: var(--wv-radius); }
-  .wv-chapter-search input:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); }
   .wv-recent-grid { display: grid; gap: var(--wv-2); }
   .wv-recent-row { display: flex; align-items: center; gap: var(--wv-4); padding: var(--wv-3) var(--wv-4); border: 1px solid var(--wv-border); border-radius: var(--wv-radius); background: var(--wv-surface); text-decoration: none; color: inherit; transition: border-color var(--wv-motion) var(--wv-ease); }
   .wv-recent-row:hover { border-color: var(--wv-accent); }
@@ -118,18 +115,18 @@
   <canvas id="wv-signal-canvas" class="wv-hero-canvas" aria-hidden="true"></canvas>
 
   <div class="wv-container wv-hero-inner">
-    <p class="wv-coord">Search · Insight · Discovery</p>
-    <h1 id="wv-title">Find the signal<br>behind the artist.</h1>
-    <p class="wv-hero-sub">Explore listening data, top tracks, AI-powered music insights and the connections leading to your next discovery.</p>
+    <p class="wv-coord">Music · Taste · Discovery</p>
+    <h1 id="wv-title">Follow the sound.</h1>
+    <p class="wv-hero-sub">One artist can lead anywhere.</p>
 
     <form method="POST" action="/search" id="search-form" class="wv-hero-searchcard" autocomplete="off" role="search" aria-label="Search for an artist">
       <div class="wv-hero-search-wrap">
         <div class="wv-hero-searchrow">
           <label class="wv-sr-only" for="artist-input">Artist name</label>
-          <input type="text" name="artist" id="artist-input" placeholder="Search an artist…"
+          <input type="text" name="artist" id="artist-input" placeholder="Start with an artist…"
                  autocomplete="off" autocapitalize="words" role="combobox" aria-expanded="false"
                  aria-controls="suggestions" aria-autocomplete="list" required>
-          <button type="submit" class="wv-btn wv-btn-primary wv-btn-lg wv-magnetic">Analyse</button>
+          <button type="submit" class="wv-btn wv-btn-primary wv-btn-lg wv-magnetic">Tune in</button>
         </div>
         <div id="suggestions" class="wv-suggestions" role="listbox" aria-label="Artist suggestions"></div>
       </div>
@@ -164,16 +161,12 @@
     <div class="wv-chapter-head">
       <span class="wv-chapter-num" aria-hidden="true">01</span>
       <div class="wv-chapter-title">
-        <h2 id="ch01-h">Search the signal</h2>
-        <p>Every profile starts with a name — type one above, or pick up a thread Waveline has already started.</p>
+        <h2 id="ch01-h">Tune in</h2>
+        <p>Start with a name. See where it takes you.</p>
       </div>
     </div>
 
-    <form method="POST" action="/search" class="wv-chapter-search" autocomplete="off" role="search" aria-label="Search another artist">
-      <label class="wv-sr-only" for="artist-input-2">Artist name</label>
-      <input type="text" name="artist" id="artist-input-2" placeholder="Search another artist…" autocapitalize="words" required>
-      <button type="submit" class="wv-btn wv-btn-ghost">Analyse</button>
-    </form>
+    <a class="wv-btn wv-btn-ghost wv-btn-sm" href="#top" style="margin-bottom:var(--wv-5);display:inline-flex;">Search another artist ↑</a>
 
     {% if latest_insights %}
     <div class="wv-recent-grid">
@@ -201,8 +194,8 @@
     <div class="wv-chapter-head">
       <span class="wv-chapter-num" aria-hidden="true">02</span>
       <div class="wv-chapter-title">
-        <h2 id="ch02-h">Understand the artist</h2>
-        <p>One featured analysis, not fifteen equal boxes: listener data, top tracks and an AI-written read, sourced and timestamped.</p>
+        <h2 id="ch02-h">Go deeper</h2>
+        <p>Tracks, context, and the shape behind the sound.</p>
       </div>
     </div>
 
@@ -254,8 +247,8 @@
     <div class="wv-chapter-head">
       <span class="wv-chapter-num" aria-hidden="true">03</span>
       <div class="wv-chapter-title">
-        <h2 id="ch03-h">Follow the connections</h2>
-        <p>Artists similar to the ones already explored on Waveline, ones nobody here has analysed yet. Pick one to open its profile.</p>
+        <h2 id="ch03-h">Follow the current</h2>
+        <p>Move sideways into something you might not have found.</p>
       </div>
     </div>
     <div class="wv-journey-line" aria-hidden="true"></div>
@@ -277,8 +270,8 @@
     <div class="wv-chapter-head">
       <span class="wv-chapter-num" aria-hidden="true">04</span>
       <div class="wv-chapter-title">
-        <h2 id="ch04-h">Join the community</h2>
-        <p>Waveline's community sits on top of the same data: share discoveries, follow listeners, and build a taste profile from what you explore.</p>
+        <h2 id="ch04-h">Find your people</h2>
+        <p>Share what you find. Follow taste that takes you somewhere new.</p>
       </div>
     </div>
     <div class="wv-community-grid">
@@ -348,7 +341,7 @@
     form.addEventListener('submit', function () {
       hero.classList.add('is-tuning');
       var btn = form.querySelector('button[type=submit]');
-      if (btn) { btn.disabled = true; btn.textContent = 'Analysing…'; }
+      if (btn) { btn.disabled = true; }
       try {
         var name = document.getElementById('artist-input').value.trim();
         if (name) {

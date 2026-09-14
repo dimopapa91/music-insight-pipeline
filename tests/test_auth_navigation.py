@@ -61,13 +61,18 @@ def test_mobile_more_panel_logged_out_has_exactly_one_login_and_one_signup(monke
 
 
 def test_logged_out_dock_has_no_stray_third_signup_copy(monkeypatch):
-    # Regression for the exact bug: a stray wv-mobile-only block that made a
+    # Regression for the exact bug: a stray mobile-only block that made a
     # SECOND Sign up appear inside the desktop dock itself, alongside the
     # legitimate one. (Page *content* — e.g. the homepage's own "Create
     # account" CTA — legitimately links to /register too; this only checks
     # the navigation chrome.)
+    #
+    # Phase 7.5 introduces a real, correctly-scoped .wv-mobile-only utility
+    # (hidden on desktop, shown only at/under the mobile breakpoint — see
+    # the search-trigger duplicate-control fix), so the class name itself
+    # is no longer a safe proxy for "the old bug is back." Assert the
+    # actual invariant directly instead: exactly one Sign up in each surface.
     html = _dashboard_client(monkeypatch).get("/").data.decode()
-    assert "wv-mobile-only" not in html
     assert _dock(html).count('href="/register"') == 1
     assert _more_panel(html).count('href="/register"') == 1
 
