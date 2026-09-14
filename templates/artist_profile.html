@@ -63,7 +63,7 @@
 
 {% block content %}
 <div class="ar-wrap">
-  <a class="ar-back" href="/">← Discover</a>
+  <a class="ar-back" href="/">← Home</a>
 
   <div class="wv-card ar-hero" id="overview" style="--wv-amb: {{ amb_accent | default('var(--wv-accent)') }}; --wv-amb-ink: {{ amb_accent_ink | default('var(--wv-accent-ink)') }}; --wv-amb-soft: {{ amb_soft | default('var(--wv-accent-soft)') }};" data-wv-artist-hero data-artist-image="{{ deezer_image or spotify.image or '' }}">
     {% if deezer_image or spotify.image %}<img src="{{ deezer_image or spotify.image }}" alt="" width="128" height="128" crossorigin="anonymous">{% else %}<div class="ph" aria-hidden="true">{{ artist_name[0] | upper }}</div>{% endif %}
@@ -80,9 +80,9 @@
       {% endif %}
       <div class="ar-meta">Analysed {{ search_count }} time{{ 's' if search_count != 1 }} · last on {{ last_searched }}</div>
       <div class="ar-actions">
-        {% if spotify.spotify_url %}<a class="wv-btn wv-btn-ghost wv-btn-sm ar-spotify" href="{{ spotify.spotify_url }}" target="_blank" rel="noopener">Open on Spotify →</a>{% endif %}
+        {% if spotify.spotify_url %}<a class="wv-btn wv-btn-ghost wv-btn-sm ar-spotify" href="{{ spotify.spotify_url }}" target="_blank" rel="noopener noreferrer">Open on Spotify →</a>{% endif %}
         <a class="wv-btn wv-btn-ghost wv-btn-sm" href="/compare?a={{ artist_name | urlencode }}">Compare this artist</a>
-        <a class="wv-btn wv-btn-ghost wv-btn-sm" href="/feed?tab=discover">Talk about it in Community</a>
+        <a class="wv-btn wv-btn-ghost wv-btn-sm" href="/feed?tab=latest">Talk about it in Community</a>
       </div>
     </div>
   </div>

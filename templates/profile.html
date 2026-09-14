@@ -29,9 +29,9 @@
   .pf-avatar { margin-top: -64px; flex-shrink: 0; position: relative; z-index: 1; }
   .pf-identity-body { flex: 1; min-width: 0; padding-top: 10px; }
   .pf-identity-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--wv-3); flex-wrap: wrap; }
-  .pf-name { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.5rem, 3.8vw, 2.1rem); letter-spacing: -.4px; line-height: 1.15; }
+  .pf-name { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.5rem, 3.8vw, 2.1rem); letter-spacing: -.4px; line-height: 1.15; min-width: 0; overflow-wrap: anywhere; }
   .pf-action { flex-shrink: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .pf-meta { font-size: .84rem; color: var(--wv-muted); margin-top: 8px; }
+  .pf-meta { font-size: .84rem; color: var(--wv-muted); margin-top: 8px; overflow-wrap: anywhere; }
   .pf-meta a { color: var(--wv-accent-ink); text-decoration: none; }
   .pf-meta a:hover { text-decoration: underline; }
   .pf-bio { font-size: .95rem; color: var(--wv-ink-2); margin-top: var(--wv-3); line-height: 1.65; max-width: 60ch; }
@@ -82,7 +82,7 @@
 
   <div class="pf-hero" style="--pf-glow: {{ user.username | avatar_color }};" aria-hidden="true">
     {% if user.cover_image_url %}
-    <img class="pf-hero-img" src="{{ user.cover_image_url }}" alt="" loading="lazy" onerror="this.remove()">
+    <img class="pf-hero-img" src="{{ user.cover_image_url }}" alt="" onerror="this.remove()">
     {% endif %}
   </div>
 
@@ -115,7 +115,7 @@
       <p class="pf-meta">
         {% if user.location %}{{ user.location }} · {% endif -%}
         {%- if user.created_at %}Joined {{ user.created_at.strftime('%B %Y') }}{% endif -%}
-        {%- if user.website %} · <a href="{{ user.website }}" target="_blank" rel="noopener nofollow">{{ user.website | replace('https://','') | replace('http://','') }}</a>{% endif %}
+        {%- if user.website %} · <a href="{{ user.website }}" target="_blank" rel="noopener nofollow noreferrer">{{ user.website | replace('https://','') | replace('http://','') }}</a>{% endif %}
       </p>
       {% if user.bio %}<p class="pf-bio">{{ user.bio }}</p>{% endif %}
       {% if user.genre_list %}<div class="pf-genres">{% for g in user.genre_list %}<span class="wv-chip wv-btn-sm" style="cursor:default;">{{ g }}</span>{% endfor %}</div>{% endif %}

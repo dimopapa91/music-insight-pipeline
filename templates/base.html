@@ -18,7 +18,7 @@
     <style>html.pre-light body { background:#e9e7e1; color:#16181b; }</style>
 </head>
 <body>
-    <a class="wv-skip" href="#main">Skip to content</a>
+    <a class="wv-skip" href="#main-content">Skip to content</a>
 
     {% set path = request.path %}
 
@@ -38,7 +38,7 @@
                 <button class="wv-searchbtn wv-desktop-only" type="button" id="wv-search-trigger" aria-haspopup="dialog" aria-controls="wv-palette-overlay">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                     <span>Search</span>
-                    <kbd>&#8984;K</kbd>
+                    <kbd class="wv-hide-crowded" aria-hidden="true">&#8984;K</kbd>
                 </button>
                 <button class="wv-iconbtn wv-mobile-only" id="wv-search-trigger-mobile" type="button" aria-haspopup="dialog" aria-controls="wv-palette-overlay" aria-label="Search" title="Search">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -68,13 +68,13 @@
                     </div>
                 </div>
                 <div class="wv-profilemenu wv-desktop-only">
-                    <button type="button" class="wv-profilemenu-trigger" id="wv-profile-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="wv-profile-menu">
+                    <button type="button" class="wv-profilemenu-trigger" id="wv-profile-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="wv-profile-menu" aria-label="Account menu, @{{ current_user.username }}">
                         {% if current_user.profile_image_url %}
                         <img class="wv-profile-avatar" src="{{ current_user.profile_image_url }}" alt="" aria-hidden="true">
                         {% else %}
                         <span class="wv-profile-avatar" aria-hidden="true">{{ current_user.username[0] | upper }}</span>
                         {% endif %}
-                        <span>@{{ current_user.username }}</span>
+                        <span class="wv-hide-crowded" aria-hidden="true">@{{ current_user.username }}</span>
                         <span class="wv-profilemenu-caret" aria-hidden="true">▾</span>
                     </button>
                     <div class="wv-profilemenu-panel" id="wv-profile-menu" role="menu" aria-label="Profile menu" hidden>
@@ -105,7 +105,7 @@
         </div>
     </header>
 
-    <main id="main">
+    <main id="main-content">
         {% block content %}{% endblock %}
     </main>
 
@@ -128,8 +128,8 @@
             <div>
                 <h3>About</h3>
                 <a href="/about">How Waveline works</a>
-                <a href="https://github.com/dimopapa91/music-insight-pipeline" target="_blank" rel="noopener">GitHub</a>
-                <a href="https://dimospapageorgiou.com" target="_blank" rel="noopener">Portfolio</a>
+                <a href="https://github.com/dimopapa91/music-insight-pipeline" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <a href="https://dimospapageorgiou.com" target="_blank" rel="noopener noreferrer">Portfolio</a>
             </div>
             <div>
                 <h3>Data</h3>

@@ -8,7 +8,7 @@ dashboard:app`` (see Procfile).
 
 import os
 
-from flask import Flask
+from flask import Flask, render_template
 from flask_login import LoginManager, current_user
 from dotenv import load_dotenv
 
@@ -94,6 +94,24 @@ def inject_unread_notifications():
     except Exception:
         messages = 0
     return {"unread_notifications": notifications, "unread_messages": messages}
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template(
+        "error.html",
+        heading="Page not found",
+        message="The page you're looking for doesn't exist, or may have moved.",
+    ), 404
+
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template(
+        "error.html",
+        heading="Something went wrong",
+        message="This might be a temporary issue. Please try again in a moment.",
+    ), 500
+
 
 # Ensure all application tables exist (idempotent — safe on every boot/worker).
 init_db()

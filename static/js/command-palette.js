@@ -69,6 +69,7 @@
       empty.innerHTML = 'No matches for "' + escapeHtml(query) + '". Press Enter to analyse it as a new artist.';
       list.appendChild(empty);
       addItem("Analyse “" + query + "”", null, "New search", function () { submitArtistSearch(query); });
+      updateSelection();
       return;
     }
 
@@ -97,10 +98,13 @@
     list.appendChild(g);
   }
 
+  var itemSeq = 0;
+
   function addItem(label, href, hint, onActivate) {
     var el = document.createElement(href ? "a" : "button");
     el.className = "wv-palette-item";
     el.setAttribute("role", "option");
+    el.id = "wv-palette-item-" + (itemSeq++);
     if (href) el.setAttribute("href", href); else el.setAttribute("type", "button");
     el.innerHTML = '<span>' + escapeHtml(label) + '</span><span class="meta">' + escapeHtml(hint || "") + '</span>';
     el.addEventListener("click", function (e) { e.preventDefault(); onActivate(); });
@@ -112,7 +116,12 @@
   function updateSelection() {
     var els = items();
     els.forEach(function (el, i) { el.setAttribute("aria-selected", i === activeIndex ? "true" : "false"); });
-    if (activeIndex >= 0 && els[activeIndex]) els[activeIndex].scrollIntoView({ block: "nearest" });
+    if (activeIndex >= 0 && els[activeIndex]) {
+      els[activeIndex].scrollIntoView({ block: "nearest" });
+      input.setAttribute("aria-activedescendant", els[activeIndex].id);
+    } else {
+      input.removeAttribute("aria-activedescendant");
+    }
   }
 
   function navigate(href) { window.location.href = href; }
@@ -151,6 +160,7 @@
   function close() {
     overlay.hidden = true;
     document.body.style.overflow = "";
+    input.removeAttribute("aria-activedescendant");
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
 
