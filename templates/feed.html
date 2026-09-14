@@ -25,31 +25,10 @@
   .cm-tab { font-family: var(--wv-font-display); font-size: .72rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); text-decoration: none; padding: 8px 16px; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill); background: var(--wv-surface); min-height: 40px; display: inline-flex; align-items: center; }
   .cm-tab[aria-current="page"] { background: var(--wv-accent); color: #fff; border-color: var(--wv-accent); }
 
-  /* Post card (shared with profile via _post_card.html) */
-  .post { padding: var(--wv-4) var(--wv-5); margin-bottom: var(--wv-3); background: var(--wv-surface); border: 1px solid var(--wv-border); border-radius: var(--wv-radius-lg); }
-  .post-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
-  .post-author { font-family: var(--wv-font-display); font-weight: 700; font-size: .92rem; color: var(--wv-ink); text-decoration: none; }
-  .post-author:hover { color: var(--wv-accent-ink); }
-  .post-artist { font-size: .72rem; color: var(--wv-accent-ink); text-decoration: none; border: 1px solid var(--wv-accent); border-radius: var(--wv-radius-pill); padding: 2px 10px; }
-  .post-time { font-size: .72rem; color: var(--wv-muted); margin-left: auto; }
-  .post-body { font-size: .95rem; line-height: 1.6; color: var(--wv-ink-2); white-space: pre-wrap; word-wrap: break-word; }
-  .post-actions { display: flex; align-items: center; gap: 8px; margin-top: var(--wv-3); }
+  /* Post/comment card styling itself (.wv-post, .wv-post-head, .wv-act-btn,
+     .wv-comment, etc.) lives in waveline.css — shared with public profiles'
+     Activity section and the post-detail page via _post_card.html. */
   .inline { display: inline; }
-  .act-btn { font-family: var(--wv-font-body); font-size: .78rem; color: var(--wv-muted); background: none; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 5px 11px; cursor: pointer; min-height: 34px; }
-  button.act-btn:hover { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
-  .like-btn.liked { color: #e0245e; border-color: #e0245e; }
-  button.del-btn { color: var(--wv-danger); }
-  button.del-btn:hover { border-color: var(--wv-danger); color: var(--wv-danger); }
-  .comments { margin-top: var(--wv-3); border-top: 1px solid var(--wv-border); padding-top: 10px; }
-  .comment { font-size: .86rem; color: var(--wv-ink-2); padding: 5px 0; line-height: 1.5; }
-  .c-author { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); text-decoration: none; }
-  .c-author:hover { color: var(--wv-accent-ink); }
-  .c-time { color: var(--wv-muted); font-size: .9em; }
-  .comment-form { display: flex; gap: 8px; margin-top: 10px; }
-  .comment-form input { flex: 1; min-width: 0; font-family: var(--wv-font-body); font-size: .86rem; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 0 12px; height: 40px; background: var(--wv-surface-2); color: var(--wv-ink); }
-  .comment-form input:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); }
-  .comment-form button { font-family: var(--wv-font-display); font-size: .68rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #fff; background: var(--wv-accent); border: none; border-radius: var(--wv-radius); padding: 0 16px; min-height: 40px; cursor: pointer; }
-  .comment-form button:hover { background: var(--wv-accent-ink); }
 
   .cm-pager { display: flex; align-items: center; justify-content: space-between; margin-top: var(--wv-5); }
 </style>
@@ -59,8 +38,8 @@
 <div class="cm-wrap">
   <div class="cm-head">
     <p class="wv-eyebrow">Community</p>
-    <h1>Share what you're listening to</h1>
-    <p>See what other listeners are discovering, and follow the ones whose taste matches yours.</p>
+    <h1>What listeners are finding</h1>
+    <p>Share discoveries, follow people with interesting taste, and join the conversation.</p>
   </div>
 
   {% if current_user.is_authenticated %}
@@ -82,7 +61,7 @@
       <li>Follow people whose taste you like</li>
       <li>Like and comment on posts</li>
     </ul>
-    <p style="font-size:.88rem;color:var(--wv-ink-2);">You can browse the public <strong>Discover</strong> feed below without an account.</p>
+    <p style="font-size:.88rem;color:var(--wv-ink-2);">You can browse the public <strong>Latest</strong> feed below without an account.</p>
     <div class="row">
       <a class="wv-btn wv-btn-primary" href="/register">Create account</a>
       <a class="wv-btn wv-btn-ghost" href="/login">Log in</a>
@@ -91,8 +70,10 @@
   {% endif %}
 
   <div class="cm-tabs" role="tablist" aria-label="Feed">
+    {% if current_user.is_authenticated %}
     <a class="cm-tab" href="/feed?tab=following" {% if tab == 'following' %}aria-current="page"{% endif %}>Following</a>
-    <a class="cm-tab" href="/feed?tab=discover" {% if tab == 'discover' %}aria-current="page"{% endif %}>Discover</a>
+    {% endif %}
+    <a class="cm-tab" href="/feed?tab=latest" {% if tab == 'latest' %}aria-current="page"{% endif %}>Latest</a>
   </div>
 
   {% set next = '/feed?tab=' ~ tab ~ '&page=' ~ page %}
@@ -109,7 +90,8 @@
     <div class="wv-empty">
     {% if tab == 'following' %}
       <h3>Your Following feed is quiet</h3>
-      <p>Follow people to see their posts here. Open a profile from the <a href="/feed?tab=discover">Discover</a> feed and hit Follow, or <a href="/">explore an artist</a> to find like-minded listeners.</p>
+      <p>Follow people to see their posts here.</p>
+      <a class="wv-btn wv-btn-primary" style="margin-top:var(--wv-4);" href="/discover">Discover people</a>
     {% elif page > 1 %}
       <h3>No more posts</h3>
       <p><a href="/feed?tab={{ tab }}">Back to the top →</a></p>

@@ -24,7 +24,7 @@ def dashboard():
     error = request.args.get("error")
     total_searches, unique_artists, searches_today, artist_plays, latest_insights, discovery = get_dashboard_data()
     try:
-        community_posts = get_feed(current_user.id if current_user.is_authenticated else None, scope="discover", page=1, per_page=3)
+        community_posts = get_feed(current_user.id if current_user.is_authenticated else None, scope="latest", page=1, per_page=3)
     except Exception:
         community_posts = []
     return render_template("index.html",

@@ -20,7 +20,7 @@
   {% if items %}
   <div class="wv-card nt-list" style="margin-top:var(--wv-5);">
     {% for n in items %}
-    <a class="nt-item{{ ' is-unread' if not n.is_read }}" href="{{ '/u/' ~ n.actor if n.type == 'follow' else '/feed' }}">
+    <a class="nt-item{{ ' is-unread' if not n.is_read }}" href="{{ n.target_url }}">
       <span class="nt-icon" aria-hidden="true">
         {% if n.type == 'like' %}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7.1-4.4-9.5-9C.7 8.3 2 4.4 5.8 4c2-.2 3.7.8 4.7 2.4.3.5 1 .5 1.3 0C12.8 4.7 14.5 3.7 16.5 4c3.8.5 5.1 4.4 3.3 8-2.4 4.6-9.5 9-9.5 9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>

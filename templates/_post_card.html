@@ -1,14 +1,23 @@
+{% set like_return = like_next if like_next is defined else next %}
+{% set comment_return = comment_next if comment_next is defined else next %}
+{% set delete_return = delete_next if delete_next is defined else next %}
 <article class="wv-post">
     <div class="wv-post-head">
-        <span class="wv-avatar wv-avatar-xs" style="background:{{ post.username | avatar_color }};" aria-hidden="true">{{ post.username[0] | upper }}</span>
-        <a class="wv-post-author" href="/u/{{ post.username }}">@{{ post.username }}</a>
+        <span class="wv-post-avatar" aria-hidden="true">
+            {% set avatar_url = post.profile_image_url %}
+            {% set avatar_username = post.username %}
+            {% set avatar_size = 'wv-avatar-xs' %}
+            {% set avatar_fallback_id = 'post-avatar-fallback-' ~ post.id %}
+            {% include "_avatar.html" %}
+        </span>
+        <a class="wv-post-author" href="/u/{{ post.username }}">{{ post.username }}</a>
         {% if post.artist %}<a class="wv-post-artist" href="/artist/{{ post.artist | urlencode }}">♪ {{ post.artist }}</a>{% endif %}
-        <time class="wv-post-time" datetime="{{ post.created_at.isoformat() if post.created_at else '' }}">{{ post.created_at | timeago }}</time>
+        <a class="wv-post-time" href="{{ url_for('feed.post_detail', post_id=post.id) }}"><time datetime="{{ post.created_at.isoformat() if post.created_at else '' }}">{{ post.created_at | timeago }}</time></a>
     </div>
     <div class="wv-post-body">{{ post.body }}</div>
     <div class="wv-post-actions">
         <form method="POST" action="/post/{{ post.id }}/like" class="inline">
-            <input type="hidden" name="next" value="{{ next }}">
+            <input type="hidden" name="next" value="{{ like_return }}">
             <button type="submit" class="wv-act-btn wv-like-btn{{ ' is-liked' if post.liked }}"
                     {% if not current_user.is_authenticated %}disabled title="Log in to like"{% endif %}
                     aria-label="{{ post.like_count }} like{{ 's' if post.like_count != 1 }}{{ ', liked by you' if post.liked }}">
@@ -22,24 +31,29 @@
         </span>
         {% if current_user.is_authenticated and current_user.id == post.user_id %}
         <form method="POST" action="/post/{{ post.id }}/delete" class="inline" onsubmit="return confirm('Delete this post?')">
-            <input type="hidden" name="next" value="{{ next }}">
+            <input type="hidden" name="next" value="{{ delete_return }}">
             <button type="submit" class="wv-act-btn wv-del-btn">Delete</button>
         </form>
         {% endif %}
     </div>
-    {% if post.comments %}
-    <div class="wv-comments">
-        {% for c in post.comments %}
-        <div class="wv-comment"><a class="wv-c-author" href="/u/{{ c.username }}">@{{ c.username }}</a> {{ c.body }} <span class="wv-c-time">· {{ c.created_at | timeago }}</span></div>
-        {% endfor %}
+    <div class="wv-post-discussion"{% if comments_anchor_id %} id="{{ comments_anchor_id }}"{% endif %}>
+        {% if post.comments %}
+        <div class="wv-comments">
+            {% for c in post.comments %}
+            <div class="wv-comment"><a class="wv-c-author" href="/u/{{ c.username }}">@{{ c.username }}</a> {{ c.body }} <span class="wv-c-time">· {{ c.created_at | timeago }}</span></div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if post.has_more_comments %}
+        <a class="wv-post-viewall" href="{{ url_for('feed.post_detail', post_id=post.id) }}#comments">View all {{ post.comment_count }} comments</a>
+        {% endif %}
+        {% if current_user.is_authenticated %}
+        <form method="POST" action="/post/{{ post.id }}/comment" class="wv-comment-form">
+            <input type="hidden" name="next" value="{{ comment_return }}">
+            <label class="wv-sr-only" for="comment-{{ post.id }}">Add a comment</label>
+            <input type="text" id="comment-{{ post.id }}" name="body" placeholder="Add a comment…" maxlength="500" required>
+            <button type="submit">Reply</button>
+        </form>
+        {% endif %}
     </div>
-    {% endif %}
-    {% if current_user.is_authenticated %}
-    <form method="POST" action="/post/{{ post.id }}/comment" class="wv-comment-form">
-        <input type="hidden" name="next" value="{{ next }}">
-        <label class="wv-sr-only" for="comment-{{ post.id }}">Add a comment</label>
-        <input type="text" id="comment-{{ post.id }}" name="body" placeholder="Add a comment…" maxlength="500" required>
-        <button type="submit">Reply</button>
-    </form>
-    {% endif %}
 </article>

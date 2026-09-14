@@ -53,18 +53,41 @@ def test_richer_profile_renders(monkeypatch):
 
 # ── pagination ──
 
-def test_feed_shows_older_link_when_page_full(monkeypatch):
-    full_page = [{
+def _posts(n):
+    return [{
         "id": i, "body": f"post {i}", "artist": None,
         "created_at": datetime.datetime.utcnow(), "user_id": 9, "username": "bob",
         "like_count": 0, "comment_count": 0, "liked": False, "comments": [],
-    } for i in range(15)]
+    } for i in range(n)]
+
+
+def test_feed_exact_pagination_no_false_older_link_on_last_page(monkeypatch):
+    # Regression: has_next used to be inferred from len(posts) == PER_PAGE,
+    # which produced a false "Older" link whenever the final page happened
+    # to contain exactly PER_PAGE rows. The route now requests PER_PAGE + 1
+    # rows and only shows "Older" if more than PER_PAGE actually came back —
+    # here there are genuinely only 15 posts total, so get_feed (which
+    # respects `limit`, like the real one) returns all 15 even when asked
+    # for up to 16.
+    exactly_15 = _posts(15)
     monkeypatch.setattr(views_feed, "get_feed",
-                        lambda viewer_id, scope="discover", page=1, per_page=15: full_page)
+                        lambda viewer_id, scope="latest", page=1, per_page=15, limit=None: exactly_15[:limit])
     client = dashboard.app.test_client()
-    resp = client.get("/feed?tab=discover&page=1")
+    resp = client.get("/feed?tab=latest&page=1")
+    assert resp.status_code == 200
+    assert b"Older" not in resp.data
+
+
+def test_feed_shows_older_link_when_a_16th_post_exists(monkeypatch):
+    sixteen = _posts(16)
+    monkeypatch.setattr(views_feed, "get_feed",
+                        lambda viewer_id, scope="latest", page=1, per_page=15, limit=None: sixteen[:limit])
+    client = dashboard.app.test_client()
+    resp = client.get("/feed?tab=latest&page=1")
     assert resp.status_code == 200
     assert b"Older" in resp.data
+    # exactly 15 posts rendered, not 16
+    assert resp.data.count(b'class="wv-post"') == 15
 
 
 # ── notifications ──
