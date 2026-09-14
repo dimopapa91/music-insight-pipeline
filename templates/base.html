@@ -158,35 +158,56 @@
     </footer>
 
     <!-- ═══ MOBILE BOTTOM NAVIGATION ═══
-         One consistent inline-SVG icon family (24x24 viewBox, currentColor,
-         rounded caps/joins) replaces the previous unrelated Unicode glyphs.
-         Taste deliberately gets a waveform/equalizer glyph, never anything
-         moon/sun-shaped — that visual language is reserved for the theme
-         control so the two are never confused. -->
+         Instagram-style icon-only tab bar (own SVG language/colours, not
+         a clone): visible text labels are removed from the bar itself —
+         each destination keeps a real accessible name via a visually-hidden
+         .wv-sr-only span (or aria-label on the account button, which has no
+         other visible text to draw from). Home is now an unmistakable house
+         (outline inactive, filled when active) instead of the old
+         signal/ripple glyph. Taste deliberately keeps its waveform/
+         equalizer glyph — never anything moon/sun-shaped, which stays
+         reserved for the theme control. -->
     <nav class="wv-bottomnav" aria-label="Primary mobile">
         <div class="wv-bottomnav-inner">
             <a href="/" {% if path == '/' %}aria-current="page"{% endif %}>
-                <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" focusable="false"><circle cx="12" cy="18" r="1.6" fill="currentColor"/><path d="M8.2 14.6a5.6 5.6 0 0 1 7.6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M5 11.2a10 10 0 0 1 14 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-                <span class="lbl">Home</span>
+                <span class="ic" aria-hidden="true">
+                    <svg class="wv-home-icon wv-home-icon-outline" viewBox="0 0 24 24" fill="none" focusable="false"><path d="M3.5 10.8 12 3.4l8.5 7.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10v9.5a.5.5 0 0 0 .5.5h4v-6h5v6h4.5a.5.5 0 0 0 .5-.5V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <svg class="wv-home-icon wv-home-icon-filled" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M12 3.4 3.5 10.8V19.5a.5.5 0 0 0 .5.5h4v-6h5v6h4.5a.5.5 0 0 0 .5-.5V10.8z"/></svg>
+                </span>
+                <span class="lbl wv-sr-only">Home</span>
             </a>
             <a href="/discover" {% if path.startswith('/discover') %}aria-current="page"{% endif %}>
                 <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" focusable="false"><path d="M12 3.5l1.7 5.1 5.1 1.7-5.1 1.7-1.7 5.1-1.7-5.1-5.1-1.7 5.1-1.7L12 3.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
-                <span class="lbl">Discover</span>
+                <span class="lbl wv-sr-only">Discover</span>
             </a>
             <a href="/feed" {% if path.startswith('/feed') %}aria-current="page"{% endif %}>
                 <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" focusable="false"><rect x="4" y="4.5" width="16" height="6" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="13.5" width="16" height="6" rx="2" stroke="currentColor" stroke-width="1.8"/></svg></span>
-                <span class="lbl">Feed</span>
+                <span class="lbl wv-sr-only">Feed</span>
             </a>
             <a href="/profile" {% if path.startswith('/profile') %}aria-current="page"{% endif %}>
                 <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" focusable="false"><path d="M4 13v-2M8 15.5v-7M12 17v-10M16 15.5v-7M20 13v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-                <span class="lbl">Taste</span>
+                <span class="lbl wv-sr-only">Taste</span>
             </a>
-            <button type="button" class="wv-moretrigger" id="wv-more-btn" aria-haspopup="dialog" aria-controls="wv-morepanel" aria-expanded="false">
-                <span class="ic" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" focusable="false"><circle cx="6" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="18" cy="12" r="1.7" fill="currentColor"/></svg>
+            <!-- Account, not a generic "More" menu visually — same panel
+                 (#wv-morepanel) and same initMorePanel() behaviour as
+                 before, only the trigger's face changed. Still a <button>
+                 (opens a sheet, doesn't navigate), so the accessible name
+                 comes from aria-label alone, matching the desktop profile
+                 trigger's existing #wv-profile-trigger convention. -->
+            <button type="button" class="wv-moretrigger" id="wv-more-btn" aria-haspopup="dialog" aria-controls="wv-morepanel" aria-expanded="false"
+                    aria-label="{{ 'Account menu, @' ~ current_user.username if current_user.is_authenticated else 'Account' }}">
+                <span class="ic wv-account-ic" aria-hidden="true">
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.profile_image_url %}
+                        <img class="wv-account-avatar-img" src="{{ current_user.profile_image_url }}" alt="">
+                        {% else %}
+                        <span class="wv-avatar wv-account-avatar-mono" style="background:{{ current_user.username | avatar_color }};">{{ current_user.username[0] | upper }}</span>
+                        {% endif %}
+                    {% else %}
+                    <svg viewBox="0 0 24 24" fill="none" focusable="false"><circle cx="12" cy="8.5" r="3.4" stroke="currentColor" stroke-width="1.8"/><path d="M5 20c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    {% endif %}
                     {% if current_user.is_authenticated and (unread_messages or unread_notifications) %}<span class="wv-moredot" aria-hidden="true"></span>{% endif %}
                 </span>
-                <span class="lbl">More</span>
             </button>
         </div>
     </nav>

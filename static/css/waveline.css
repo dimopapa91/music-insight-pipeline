@@ -441,35 +441,53 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
   .wv-bottomnav-inner { display: flex; align-items: stretch; width: 100%; }
+  /* Icon-only, Instagram-tab-bar-inspired: no visible label competing with
+     the icon for attention, equal-width slots, a bigger (48-56px) target
+     now that there's no second line of text to make room for. */
   .wv-bottomnav a, .wv-bottomnav button.wv-moretrigger {
-    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    flex: 1; display: flex; align-items: center; justify-content: center;
     text-decoration: none; color: var(--wv-muted); background: none; border: none; cursor: pointer;
-    font-family: var(--wv-font-body); min-height: 44px;
+    font-family: var(--wv-font-body); min-height: 52px;
   }
-  /* Icon sits inside its own small circular area so the active state (below)
-     has somewhere to put a coral background without resizing the whole tab. */
   .wv-bottomnav .ic {
-    position: relative; width: 34px; height: 34px; border-radius: 50%;
+    position: relative; width: 28px; height: 28px;
     display: flex; align-items: center; justify-content: center;
-    transition: background var(--wv-motion) var(--wv-ease), color var(--wv-motion) var(--wv-ease), transform var(--wv-motion) var(--wv-ease);
+    transition: color var(--wv-motion) var(--wv-ease);
   }
-  .wv-bottomnav .ic svg { width: 22px; height: 22px; }
-  .wv-bottomnav .lbl { font-family: var(--wv-font-display); font-size: .58rem; letter-spacing: .8px; text-transform: uppercase; transition: color var(--wv-motion) var(--wv-ease); }
-  .wv-bottomnav a[aria-current="page"] .ic {
-    background: var(--wv-accent-soft); color: var(--wv-accent-ink);
-    transform: translateY(-1px) scale(1.06);
-    animation: wv-nav-select .42s var(--wv-ease) 1;
-  }
-  .wv-bottomnav a[aria-current="page"] .lbl { color: var(--wv-accent-ink); font-weight: 700; }
-  /* One-shot only (not looping) — and like .wv-pulse-once elsewhere, already
+  .wv-bottomnav .ic svg { width: 24px; height: 24px; }
+  /* Deliberately restrained per design review: a coral soft-circle behind
+     every active icon read as too heavy/busy for a 5-icon bar this small —
+     a plain colour change (like Instagram's own tab bar) carries the
+     "selected" state clearly enough on its own. Very subtle, capped,
+     one-shot scale accompanies it: <=180ms, <=1.04, never looping — already
      covered by the global prefers-reduced-motion override further up this
-     file, which forces every animation/transition to ~0 duration. */
-  @keyframes wv-nav-select {
-    0% { transform: translateY(0) scale(.86); box-shadow: 0 0 0 0 var(--wv-accent-soft); }
-    60% { transform: translateY(-2px) scale(1.12); }
-    100% { transform: translateY(-1px) scale(1.06); box-shadow: 0 0 0 8px transparent; }
+     file, which forces every animation to ~0 duration (same mechanism as
+     .wv-pulse-once elsewhere). */
+  .wv-bottomnav a[aria-current="page"] .ic {
+    color: var(--wv-accent-ink);
+    animation: wv-nav-select .16s var(--wv-ease) 1;
   }
+  @keyframes wv-nav-select {
+    0% { transform: scale(.96); }
+    100% { transform: scale(1.04); }
+  }
+
+  /* Home: outline by default, filled ("heavier") only when active — same
+     CSS-driven swap technique as the theme sun/moon icons, so no JS needed. */
+  .wv-home-icon-filled { display: none; }
+  .wv-bottomnav a[aria-current="page"] .wv-home-icon-outline { display: none; }
+  .wv-bottomnav a[aria-current="page"] .wv-home-icon-filled { display: inline-flex; }
+
   .wv-moretrigger { display: flex; position: relative; }
+  /* The account/avatar trigger gets a subtle coral ring only while its
+     sheet is open (aria-expanded, already set by initMorePanel() — no new
+     JS needed), never a permanent border, and never distorts the avatar. */
+  .wv-account-ic { border-radius: 50%; }
+  .wv-moretrigger[aria-expanded="true"] .wv-account-ic { box-shadow: 0 0 0 2px var(--wv-accent); }
+  .wv-account-avatar-img, .wv-account-avatar-mono {
+    width: 26px; height: 26px; border-radius: 50%; object-fit: cover;
+    display: flex; align-items: center; justify-content: center; font-size: .7rem;
+  }
   .wv-moredot {
     position: absolute; top: -1px; right: -1px; width: 8px; height: 8px;
     border-radius: 50%; background: var(--wv-accent); border: 2px solid var(--wv-surface);
@@ -480,6 +498,17 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
   .wv-morepanel {
     position: fixed; inset: 0; z-index: var(--wv-z-palette);
   }
+  /* The real bug behind "tapping More does nothing" on a real phone: the
+     global `.wv-bottomnav, .wv-moretrigger, .wv-morepanel { display: none; }`
+     rule above is never overridden for the non-hidden case — only
+     [hidden] was ever addressed, so removing the hidden attribute (which
+     initMorePanel() does correctly) left the panel stuck at display:none
+     regardless. Both rules below have equal (0,2,0) specificity — the
+     class plus an attribute selector either way, [hidden] directly or via
+     :not()'s argument — but are mutually exclusive (an element can't both
+     have and not have the attribute), so whichever actually matches always
+     wins over the bare (0,1,0) global default. */
+  .wv-morepanel:not([hidden]) { display: block; }
   .wv-morepanel[hidden] { display: none; }
   .wv-morepanel .wv-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.55); }
   .wv-morepanel-sheet {
