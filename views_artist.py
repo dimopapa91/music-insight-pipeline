@@ -12,7 +12,7 @@ from db import db_cursor
 from pipeline import run_pipeline
 from services import (
     get_similar_artists, get_spotify_artist, get_artist_db, artist_titlecase,
-    clean_deezer_image, LASTFM_BASE, LASTFM_API_KEY,
+    clean_deezer_image, resolve_insight, LASTFM_BASE, LASTFM_API_KEY,
 )
 
 artist_bp = Blueprint("artist", __name__)
@@ -43,6 +43,11 @@ def artist_profile(artist_name):
                     message="We couldn't fetch this artist from our data sources just now. Check the spelling, or try again in a moment."), 500
 
         name, insight, last_searched, top_tracks_raw = row
+        # If the newest search's Claude call failed (empty insight), fall
+        # back to the most recent older non-empty insight for this artist
+        # rather than showing a broken/blank AI section — see pipeline.py's
+        # run_pipeline() for why an empty insight can exist at all.
+        insight, insight_is_reused = resolve_insight(name, insight)
         tracks_list = top_tracks_raw if isinstance(top_tracks_raw, list) else json.loads(top_tracks_raw)
         tracks = [{"name": t["name"], "plays": int(t.get("playcount", 0))} for t in tracks_list]
         top_playcount = f"{tracks[0]['plays']:,}" if tracks else "—"
@@ -90,6 +95,7 @@ def artist_profile(artist_name):
         return render_template("artist_profile.html",
             artist_name=name,
             insight=insight,
+            insight_is_reused=insight_is_reused,
             tracks=tracks,
             similar_artists=similar,
             search_count=search_count,
@@ -132,13 +138,16 @@ def compare():
     b_data = get_artist_db(b) if b else None
     verdict = ""
     if a_data and b_data:
+        # get_artist_db() already guarantees a string via resolve_insight(),
+        # but never make artist AI insight a prerequisite for this page —
+        # .get(...) or "" stays safe even if that guarantee ever changes.
         prompt = f"""Compare these two artists:
 
 {a_data['name']} top tracks: {', '.join(a_data['tracks'])}
-Insight: {a_data['insight'][:400]}
+Insight: {(a_data.get('insight') or '')[:400]}
 
 {b_data['name']} top tracks: {', '.join(b_data['tracks'])}
-Insight: {b_data['insight'][:400]}
+Insight: {(b_data.get('insight') or '')[:400]}
 
 Write a 2-paragraph comparison in plain prose. Cover: how their sounds and appeal differ, what they share, and which type of listener would prefer each. No markdown, no bullet points. Do not use em dashes (the "—" character); use commas, colons or separate sentences instead."""
         try:

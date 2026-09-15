@@ -46,12 +46,21 @@ def search():
     artist = request.form.get("artist", "").strip()
     if not artist:
         return redirect(url_for("main.dashboard", message="Please enter an artist name.", error=True))
+    uid = current_user.id if current_user.is_authenticated else None
     try:
-        uid = current_user.id if current_user.is_authenticated else None
-        run_pipeline(artist, user_id=uid)
+        insight = run_pipeline(artist, user_id=uid)
+    except Exception:
+        # Never leak the raw provider/DB exception text to a public message —
+        # detailed diagnostics belong only in the pipeline's own logs.
+        return redirect(url_for("main.dashboard",
+            message=f"Could not load {artist_titlecase(artist)} just now. Check the spelling, or try again.",
+            error=True))
+    if insight:
         return redirect(url_for("main.dashboard", message=f"✅ {artist_titlecase(artist)} analysed and saved successfully!"))
-    except Exception as e:
-        return redirect(url_for("main.dashboard", message=f"❌ Could not analyse {artist_titlecase(artist)}: {str(e)}", error=True))
+    # Core search (Last.fm + DB save) succeeded; only the optional Claude
+    # enrichment failed — still a successful search, so no error styling.
+    return redirect(url_for("main.dashboard",
+        message=f"{artist_titlecase(artist)} data is ready. AI insight is temporarily unavailable."))
 
 
 @main_bp.route("/about")

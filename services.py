@@ -212,6 +212,41 @@ def get_discovery_artists(searched_artists):
 
 # ── Dashboard + compare data builders ───────────────────────────────
 
+def _latest_nonempty_insight(artist_name):
+    """Most recent non-empty claude_insight for this artist from an earlier
+    search — used only as a fallback when the newest row's insight is empty
+    (Claude was unavailable at analysis time), so a perfectly good older
+    insight isn't hidden just because the latest attempt happened to fail.
+    One extra, single-artist query; never raises."""
+    try:
+        with db_cursor() as cur:
+            cur.execute(
+                "SELECT claude_insight FROM searches "
+                "WHERE LOWER(artist_name) = LOWER(%s) AND claude_insight <> '' "
+                "ORDER BY searched_at DESC LIMIT 1",
+                (artist_name,),
+            )
+            row = cur.fetchone()
+            return row[0] if row else ""
+    except Exception:
+        return ""
+
+
+def resolve_insight(artist_name, current_insight):
+    """(insight, is_reused) for display. current_insight is the newest
+    search row's claude_insight for this artist (possibly "" or None if
+    Claude failed at analysis time — the column itself is NOT NULL with no
+    default, so "" is the only representation that should ever reach here,
+    but callers may pass a raw DB value defensively). Falls back to the
+    most recent older non-empty insight for the same artist when the
+    current one is empty, so callers never need to special-case None."""
+    current_insight = current_insight or ""
+    if current_insight:
+        return current_insight, False
+    fallback = _latest_nonempty_insight(artist_name)
+    return fallback, bool(fallback)
+
+
 def get_dashboard_data():
     with db_cursor() as cur:
         cur.execute("SELECT COUNT(*) FROM searches")
@@ -250,7 +285,7 @@ def get_dashboard_data():
         class Row:
             def __init__(self, r):
                 self.artist = r[0]
-                self.insight = r[1]
+                self.insight, self.insight_is_reused = resolve_insight(r[0], r[1])
                 self.searched_at = r[2]
                 tracks_raw = r[3] if isinstance(r[3], list) else json.loads(r[3])
                 self.top_tracks = [t["name"] for t in tracks_raw[:4]]
@@ -280,9 +315,11 @@ def get_artist_db(name):
             return None
         tracks_raw = row[2] if isinstance(row[2], list) else json.loads(row[2])
         spotify = get_spotify_artist(row[0])
+        insight, insight_is_reused = resolve_insight(row[0], row[1])
         return {
             "name": row[0],
-            "insight": row[1],
+            "insight": insight,
+            "insight_is_reused": insight_is_reused,
             "tracks": [t["name"] for t in tracks_raw[:5]],
             "spotify_url": spotify.get("spotify_url", ""),
             "image": spotify.get("image", "")
