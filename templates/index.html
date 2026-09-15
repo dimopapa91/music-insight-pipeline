@@ -215,7 +215,11 @@
       </div>
       <div class="wv-featured-body">
         <p class="wv-eyebrow">AI insight</p>
+        {% if featured.insight %}
         <p class="wv-featured-summary">{{ featured.insight | markdown_preview(320) }}…</p>
+        {% else %}
+        <p class="wv-featured-summary">Written insight is temporarily unavailable for this artist.</p>
+        {% endif %}
         {% if featured.similar_artists %}
         <div class="wv-featured-similar">
           <span class="lbl">Similar</span>
@@ -233,7 +237,7 @@
       {% for row in latest_insights[1:4] %}
       <a class="wv-secondary-row" href="/artist/{{ row.artist | urlencode }}">
         <span class="nm">{{ row.artist | titlecase }}</span>
-        <span class="sm">{{ row.insight | markdown_preview(90) }}…</span>
+        <span class="sm">{% if row.insight %}{{ row.insight | markdown_preview(90) }}…{% else %}AI insight unavailable{% endif %}</span>
       </a>
       {% endfor %}
     </div>
