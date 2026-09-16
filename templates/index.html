@@ -146,8 +146,8 @@
     <div class="wv-notice {{ 'wv-notice-error' if error else 'wv-notice-info' }}" style="margin-top:var(--wv-4);" role="status">{{ message }}</div>
     {% endif %}
 
-    {% if unique_artists and total_searches %}
-    <p class="wv-hero-status">Waveline has analysed {{ unique_artists }} artist{{ 's' if unique_artists != 1 }} across {{ total_searches }} search{{ 'es' if total_searches != 1 }}{% if searches_today %}, {{ searches_today }} today{% endif %}.</p>
+    {% if unique_artists %}
+    <p class="wv-hero-status">Waveline has analysed {{ unique_artists }} artist{{ 's' if unique_artists != 1 }} so far.</p>
     {% endif %}
   </div>
 

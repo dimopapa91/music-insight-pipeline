@@ -25,10 +25,33 @@ from db import db_cursor
 logger = logging.getLogger(__name__)
 
 # Paths that should never generate a pageview row: static assets, JSON APIs,
-# the Deezer preview endpoint, and the admin area itself (so the owner's own
-# visits don't skew their own stats).
-_SKIP_PREFIXES = ("/static/", "/api/", "/preview", "/admin/")
-_SKIP_EXACT = {"/favicon.ico"}
+# the Deezer preview endpoint, the admin area itself (so the owner's own
+# visits don't skew their own stats), robots.txt, and the .well-known/
+# probe space (ACME challenges, browser devtools probes, security.txt —
+# none of it is a human page view).
+_SKIP_PREFIXES = ("/static/", "/api/", "/preview", "/admin/", "/.well-known/")
+_SKIP_EXACT = {"/favicon.ico", "/robots.txt"}
+
+# Obvious, well-known crawler/automation signatures. Deliberately not
+# exhaustive or a maintained "bot list" product — just the well-known search
+# engine/social-preview crawlers and generic automation-tool user agents
+# that were inflating pageview/visitor counts with non-human traffic. An
+# empty User-Agent is also treated as non-human: every real browser sends one.
+_BOT_USER_AGENT_MARKERS = (
+    "bot", "spider", "crawl", "slurp", "bingpreview",
+    "facebookexternalhit", "whatsapp", "telegrambot", "discordbot",
+    "slackbot", "embedly", "quora link preview", "pinterest",
+    "ahrefsbot", "semrushbot", "mj12bot", "dotbot", "petalbot",
+    "yandexbot", "baiduspider", "applebot", "duckduckbot",
+    "curl", "wget", "python-requests", "scrapy", "headlesschrome",
+)
+
+
+def _looks_like_a_bot(user_agent):
+    if not user_agent:
+        return True
+    ua = user_agent.lower()
+    return any(marker in ua for marker in _BOT_USER_AGENT_MARKERS)
 
 # Private-messaging privacy: a message-thread URL embeds the OTHER
 # participant's username (/messages/u/<username>). That must never be
@@ -125,6 +148,8 @@ def _should_record(response):
         return False
     content_type = response.content_type or ""
     if not content_type.startswith("text/html"):
+        return False
+    if _looks_like_a_bot(request.headers.get("User-Agent", "")):
         return False
     return True
 

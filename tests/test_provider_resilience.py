@@ -20,8 +20,16 @@ import pipeline
 import services
 import views_artist
 import views_main
+from models import User
 
 SECRET = "SECRET_PROVIDER_FAILURE_12345"
+FAKE_USER = User(id=1, username="dimos", email="d@e.com", password_hash="x")
+
+
+def _login(client, monkeypatch, user=FAKE_USER):
+    monkeypatch.setattr(User, "get", classmethod(lambda cls, i: user))
+    with client.session_transaction() as sess:
+        sess["_user_id"] = str(user.id)
 
 
 def _dashboard_client(monkeypatch, **overrides):
@@ -215,6 +223,9 @@ def test_tracks_and_stats_area_remains_present_without_ai(monkeypatch):
 # ── new artist: Claude fails inside run_pipeline, core still succeeds ──
 
 def test_new_artist_claude_failure_inside_run_pipeline_still_renders_profile(monkeypatch):
+    # The auto-fetch-on-miss flow is now member-only (see
+    # test_abuse_and_cost_controls.py for the anonymous side of that split)
+    # — this test is specifically about logged-in behaviour, unchanged.
     found_row = ("Some Artist", "", dt.datetime(2026, 1, 1), '[{"name": "Track One", "playcount": 10}]')
     fake_cursor, state = _fake_row_cursor(found_row, found_immediately=False)
     monkeypatch.setattr(views_artist, "db_cursor", fake_cursor)
@@ -228,6 +239,7 @@ def test_new_artist_claude_failure_inside_run_pipeline_still_renders_profile(mon
 
     monkeypatch.setattr(views_artist, "run_pipeline", fake_run_pipeline)
     client = dashboard.app.test_client()
+    _login(client, monkeypatch)
     resp = client.get("/artist/Some Artist", follow_redirects=True)
     assert resp.status_code == 200
     html = resp.data.decode()
@@ -245,6 +257,7 @@ def test_new_artist_genuine_core_failure_still_returns_calm_error(monkeypatch):
 
     monkeypatch.setattr(views_artist, "run_pipeline", fake_run_pipeline)
     client = dashboard.app.test_client()
+    _login(client, monkeypatch)
     resp = client.get("/artist/Unknown Artist Xyz")
     assert resp.status_code == 500
     html = resp.data.decode()
@@ -264,6 +277,7 @@ def test_new_artist_flow_does_not_redirect_loop(monkeypatch):
 
     monkeypatch.setattr(views_artist, "run_pipeline", fake_run_pipeline)
     client = dashboard.app.test_client()
+    _login(client, monkeypatch)
     first = client.get("/artist/Some Artist")
     assert first.status_code == 302
     second = client.get(first.headers["Location"])

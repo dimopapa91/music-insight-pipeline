@@ -131,7 +131,10 @@ def test_should_record_skips_non_html_content_type():
 
 
 def test_should_record_true_for_real_html_page():
-    with dashboard.app.test_request_context("/about", method="GET"):
+    # A real UA header — an empty one now (correctly) reads as bot-like, see
+    # test_should_record_false_for_bot_user_agents below.
+    headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}
+    with dashboard.app.test_request_context("/about", method="GET", headers=headers):
         assert analytics._should_record(Response("<html></html>", content_type="text/html; charset=utf-8")) is True
 
 

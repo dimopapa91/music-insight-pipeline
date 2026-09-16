@@ -798,7 +798,10 @@ def test_record_pageview_sanitizes_path_before_insert(monkeypatch):
     monkeypatch.setattr(analytics, "db_cursor", fake_cm)
     response = Response("ok", content_type="text/html")
 
-    with dashboard.app.test_request_context("/messages/u/alice_music", method="GET"):
+    # A real UA — an empty one is now (correctly) treated as bot-like and
+    # would never reach the INSERT this test is actually checking.
+    headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}
+    with dashboard.app.test_request_context("/messages/u/alice_music", method="GET", headers=headers):
         analytics.record_pageview(response)
 
     assert calls, "expected an analytics INSERT to have been attempted"
