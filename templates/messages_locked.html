@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Messages locked — Waveline{% endblock %}
+{% block description %}You can message {{ target.username }} once you both follow each other.{% endblock %}
+
+{% block head_extra %}
+<style>
+  .anf-wrap { max-width: 560px; margin: 0 auto; padding: var(--wv-8) var(--wv-5); }
+  .anf-wrap .wv-card { padding: var(--wv-7) var(--wv-6); text-align: center; }
+  .anf-wrap h1 { font-family: var(--wv-font-display); font-size: clamp(1.4rem, 3.4vw, 1.9rem); font-weight: 700; margin: var(--wv-2) 0 var(--wv-3); }
+  .anf-wrap p { color: var(--wv-ink-2); font-size: .98rem; line-height: 1.7; max-width: 44ch; margin: 0 auto var(--wv-5); }
+  .anf-cta { display: flex; gap: var(--wv-3); justify-content: center; flex-wrap: wrap; }
+  .anf-alt { margin-top: var(--wv-5); font-size: .85rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="anf-wrap">
+  <div class="wv-card">
+    <p class="wv-eyebrow">Messages locked</p>
+    <h1>You can message {{ target.username }} once you both follow each other</h1>
+    <p>
+      {% if already_following %}
+      You already follow {{ target.username }} — messaging opens up as soon as they follow you back.
+      {% else %}
+      Follow {{ target.username }} to open the door — messaging works once you both follow each other.
+      {% endif %}
+    </p>
+    <div class="anf-cta">
+      <form method="POST" action="/u/{{ target.username }}/follow" class="inline">
+        <button type="submit" class="wv-btn wv-btn-primary">{{ 'Following' if already_following else 'Follow' }}</button>
+      </form>
+      <a class="wv-btn wv-btn-ghost" href="{{ url_for('profiles.profile', username=target.username) }}">View profile</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

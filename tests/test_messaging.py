@@ -460,6 +460,14 @@ def test_messages_inbox_empty_state(monkeypatch):
     assert 'href="/discover"' in html
 
 
+def test_messages_inbox_empty_state_explains_mutual_follow_requirement(monkeypatch):
+    monkeypatch.setattr(views_messages, "get_inbox", lambda uid, limit=50: [])
+    client = dashboard.app.test_client()
+    _login(client, monkeypatch)
+    html = client.get("/messages").data.decode()
+    assert "You'll be able to message someone once you both follow each other." in html
+
+
 def test_opening_inbox_does_not_mark_anything_read(monkeypatch):
     monkeypatch.setattr(views_messages, "get_inbox", lambda uid, limit=50: [_conv(unread_count=2)])
     called = {"n": 0}
@@ -472,13 +480,14 @@ def test_opening_inbox_does_not_mark_anything_read(monkeypatch):
 
 # ── /messages/u/<username> thread route (GET) ───────────────────────
 
-def _mock_thread_route(monkeypatch, conversation_id=None, mutual=True, messages=None):
+def _mock_thread_route(monkeypatch, conversation_id=None, mutual=True, messages=None, already_following=False):
     monkeypatch.setattr(views_messages, "get_conversation_between",
                          lambda a, b, create=False: conversation_id)
     monkeypatch.setattr(views_messages, "can_users_message", lambda a, b: mutual)
     monkeypatch.setattr(views_messages, "get_thread",
                          lambda uid, other_id, limit=200: (conversation_id, messages or []))
     monkeypatch.setattr(views_messages, "mark_conversation_read", lambda *a: None)
+    monkeypatch.setattr(views_messages, "is_following", lambda a, b: already_following)
     monkeypatch.setattr(User, "get_by_username",
                          classmethod(lambda cls, u: OTHER if u == "alice" else None))
 
@@ -522,6 +531,28 @@ def test_non_mutual_user_with_no_history_gets_403(monkeypatch):
     _login(client, monkeypatch)
     resp = client.get("/messages/u/alice")
     assert resp.status_code == 403
+
+
+def test_locked_thread_renders_branded_page_not_raw_403(monkeypatch):
+    _mock_thread_route(monkeypatch, conversation_id=None, mutual=False, already_following=False)
+    client = dashboard.app.test_client()
+    _login(client, monkeypatch)
+    resp = client.get("/messages/u/alice")
+    html = resp.data.decode()
+    assert resp.status_code == 403
+    assert "You can message alice once you both follow each other" in html
+    assert 'action="/u/alice/follow"' in html
+    assert '>Follow<' in html
+    assert 'href="/u/alice"' in html
+
+
+def test_locked_thread_varies_copy_when_already_following(monkeypatch):
+    _mock_thread_route(monkeypatch, conversation_id=None, mutual=False, already_following=True)
+    client = dashboard.app.test_client()
+    _login(client, monkeypatch)
+    html = client.get("/messages/u/alice").data.decode()
+    assert "follow you back" in html
+    assert '>Following<' in html
 
 
 def test_existing_conversation_stays_readable_after_unfollow(monkeypatch):
@@ -692,6 +723,23 @@ def test_profile_message_button_absent_without_mutual_follow(monkeypatch):
     _login(client, monkeypatch, OWNER)
     html = client.get("/u/alice").data.decode()
     assert ">Message<" not in html
+
+
+def test_profile_shows_follow_back_hint_when_viewer_already_follows(monkeypatch):
+    _mock_profile_route(monkeypatch, OTHER, can_message_result=False, following_result=True)
+    client = dashboard.app.test_client()
+    _login(client, monkeypatch, OWNER)
+    html = client.get("/u/alice").data.decode()
+    assert "Message unlocks once they follow you back." in html
+    assert ">Message<" not in html
+
+
+def test_profile_hides_message_hint_when_viewer_does_not_follow_yet(monkeypatch):
+    _mock_profile_route(monkeypatch, OTHER, can_message_result=False, following_result=False)
+    client = dashboard.app.test_client()
+    _login(client, monkeypatch, OWNER)
+    html = client.get("/u/alice").data.decode()
+    assert "Message unlocks once they follow you back." not in html
 
 
 def test_profile_message_button_absent_on_own_profile(monkeypatch):

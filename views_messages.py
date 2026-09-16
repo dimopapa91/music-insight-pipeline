@@ -14,6 +14,7 @@ from messaging import (
     can_users_message, get_conversation_between, get_inbox, get_thread,
     send_direct_message, mark_conversation_read, MAX_BODY_LENGTH,
 )
+from social import is_following
 
 messages_bp = Blueprint("messages", __name__)
 
@@ -49,7 +50,14 @@ def thread(username):
     conversation_id = get_conversation_between(current_user.id, target.id, create=False)
     mutual = can_users_message(current_user.id, target.id)
     if conversation_id is None and not mutual:
-        abort(403)
+        # A stale/shared DM link rather than an active conversation — a
+        # branded explanation plus a way forward (Follow) beats a bare 403.
+        # Status stays 403: this genuinely isn't accessible yet, and
+        # test_non_mutual_user_with_no_history_gets_403 pins that down.
+        already_following = is_following(current_user.id, target.id)
+        return render_template(
+            "messages_locked.html", target=target, already_following=already_following,
+        ), 403
 
     conversation_id, thread_messages = get_thread(current_user.id, target.id, limit=THREAD_LIMIT)
     if conversation_id is not None:
