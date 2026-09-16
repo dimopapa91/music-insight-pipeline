@@ -190,15 +190,21 @@ plain 404.
 
 ### GeoIP setup (optional)
 
-Country breakdowns need a MaxMind **GeoLite2-Country** database:
+Country breakdowns need a MaxMind **GeoLite2-Country** database.
 
-1. Create a free MaxMind account at [maxmind.com](https://www.maxmind.com/en/geolite2/signup) and download `GeoLite2-Country.mmdb`.
-2. Put the file somewhere on the server (not in the repo — it's `.gitignore`d as `*.mmdb`, and MaxMind's license doesn't allow redistributing it anyway).
-3. Set `GEOIP_DB_PATH` to its absolute path.
-4. On Railway: add a persistent [volume](https://docs.railway.app/reference/volumes), upload the `.mmdb` file into it, and set `GEOIP_DB_PATH` to the mounted path in the service's environment variables.
+**Recommended: auto-download via license key.**
 
-If `GEOIP_DB_PATH` is unset, or the file can't be read, analytics still work
-exactly the same — `country` is just recorded as `NULL` and the "top
+1. Create a free MaxMind account at [maxmind.com](https://www.maxmind.com/en/geolite2/signup) and generate a license key (Account → My License Keys).
+2. Set `GEOIP_LICENSE_KEY` to that key in the service's environment variables — on Railway, no volume or file handling needed. On startup, the app downloads `GeoLite2-Country.mmdb` straight from MaxMind and caches it at `/tmp/GeoLite2-Country.mmdb` for reuse by both gunicorn worker processes; a failed download just leaves GeoIP off (`country` recorded as `NULL`) rather than crashing the app.
+
+**Alternative: explicit file path.** Useful for local dev, or anywhere you'd rather manage the file yourself.
+
+1. Download `GeoLite2-Country.mmdb` from the same MaxMind account.
+2. Put the file somewhere on disk (not in the repo — it's `.gitignore`d as `*.mmdb`, and MaxMind's license doesn't allow redistributing it anyway).
+3. Set `GEOIP_DB_PATH` to its absolute path. When set, this always takes priority over `GEOIP_LICENSE_KEY`.
+
+If neither variable is set, or the database can't be loaded, analytics still
+work exactly the same — `country` is just recorded as `NULL` and the "top
 countries" table is simply empty.
 
 ---
