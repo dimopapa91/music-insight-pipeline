@@ -389,6 +389,39 @@ def test_compare_verdict_failure_is_never_cached(monkeypatch):
     assert key not in views_artist._compare_cache
 
 
+def test_compare_verdict_strips_em_dashes_even_if_the_model_ignores_the_prompt(monkeypatch):
+    # The prompt already asks Claude not to use em dashes, but that's a
+    # request, not a guarantee -- this proves the deterministic fallback
+    # (text_clean.strip_em_dashes) catches a slip before it's ever cached.
+    #
+    # Deliberately NOT "Radiohead"/"Muse" -- other tests in this file and in
+    # test_provider_resilience.py reuse that exact pair against the same
+    # module-level _compare_cache, and this is the only test in the suite
+    # that leaves a truthy cached verdict behind under a real-looking key;
+    # a distinct pair sidesteps any cross-test/order dependency entirely.
+    class FakeMessages:
+        def create(self, **kwargs):
+            return SimpleNamespace(content=[SimpleNamespace(
+                text="Aphex Twin leans experimental — Boards of Canada leans nostalgic.")])
+
+    class FakeClient:
+        def __init__(self, api_key=None):
+            self.messages = FakeMessages()
+
+    monkeypatch.setattr(anthropic, "Anthropic", FakeClient)
+    views_artist._compare_cache.clear()
+
+    a_data = {"name": "Aphex Twin", "insight": "x", "tracks": ["Windowlicker"]}
+    b_data = {"name": "Boards of Canada", "insight": "y", "tracks": ["Roygbiv"]}
+
+    result = views_artist._cached_compare_verdict(a_data, b_data)
+    assert "—" not in result
+    assert result == "Aphex Twin leans experimental, Boards of Canada leans nostalgic."
+    # And the cleaned version, not the raw one, is what got cached.
+    key = views_artist._compare_cache_key("Aphex Twin", "Boards of Canada")
+    assert views_artist._compare_cache[key] == result
+
+
 # ── 7. analytics: crawler user-agents never recorded ───────────────────
 
 def _record_with_ua(monkeypatch, user_agent, path="/about"):

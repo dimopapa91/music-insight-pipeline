@@ -71,6 +71,17 @@ def test_analyse_with_claude_success(monkeypatch):
     assert result == "A great analysis."
 
 
+def test_analyse_with_claude_strips_em_dashes_even_if_the_model_ignores_the_prompt(monkeypatch):
+    # The prompt already asks Claude not to use em dashes, but that's a
+    # request, not a guarantee -- this proves the deterministic fallback
+    # (text_clean.strip_em_dashes) actually catches a slip.
+    monkeypatch.setattr(pipeline, "_get_anthropic_client",
+                         lambda: _FakeClient(text="Moody textures — sparse percussion — hazy vocals."))
+    result = pipeline.analyse_with_claude("Some Artist", TRACKS)
+    assert "—" not in result
+    assert result == "Moody textures, sparse percussion, hazy vocals."
+
+
 def test_analyse_with_claude_raises_on_failure(monkeypatch):
     monkeypatch.setattr(pipeline, "_get_anthropic_client", lambda: _FakeClient(exception=RuntimeError("boom")))
     with pytest.raises(RuntimeError):

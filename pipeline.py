@@ -7,6 +7,7 @@ import anthropic
 from dotenv import load_dotenv
 
 from db import get_db_connection
+from text_clean import strip_em_dashes
 
 load_dotenv()
 
@@ -99,7 +100,10 @@ Write in plain prose only. No markdown, no headers, no bullet points, no bold or
         messages=[{"role": "user", "content": prompt}]
     )
     logging.info(f"Claude analysis completed for {artist_name}")
-    return message.content[0].text
+    # Belt and suspenders: the prompt already asks Claude not to use em
+    # dashes, but that's a request, not a guarantee. Enforce it
+    # deterministically before this ever reaches the database.
+    return strip_em_dashes(message.content[0].text)
 
 
 def _log_claude_failure(artist_name, exc):
