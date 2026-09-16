@@ -31,6 +31,7 @@
   .pf-identity-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--wv-3); flex-wrap: wrap; }
   .pf-name { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.5rem, 3.8vw, 2.1rem); letter-spacing: -.4px; line-height: 1.15; min-width: 0; overflow-wrap: anywhere; }
   .pf-action { flex-shrink: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pf-message-hint { font-size: .78rem; color: var(--wv-muted); }
   .pf-meta { font-size: .84rem; color: var(--wv-muted); margin-top: 8px; overflow-wrap: anywhere; }
   .pf-meta a { color: var(--wv-accent-ink); text-decoration: none; }
   .pf-meta a:hover { text-decoration: underline; }
@@ -108,6 +109,8 @@
           </form>
           {% if can_message %}
           <a class="wv-btn wv-btn-ghost" href="{{ url_for('messages.thread', username=user.username, _anchor='messages-end') }}">Message</a>
+          {% elif following_this %}
+          <span class="pf-message-hint">Message unlocks once they follow you back.</span>
           {% endif %}
           {% endif %}
         </div>
