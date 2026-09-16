@@ -29,6 +29,16 @@ os.environ.setdefault("SPOTIFY_CLIENT_SECRET", "test")
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 os.environ["DATABASE_URL"] = "postgresql://test:test@127.0.0.1:1/pytest_must_not_reach_a_real_db"
 
+# Flask-Limiter's storage is a single in-memory counter shared by the whole
+# test session (dashboard.app is created once, at first import). Without
+# this, unrelated tests hitting /search, /artist/<name> or /compare many
+# times across the suite would start tripping real rate limits depending on
+# run order. Disabled by default here; the one test that verifies
+# enforcement flips `limiter.enabled` directly at runtime instead (see
+# rate_limit.py — RATELIMIT_ENABLED is only read once, at init_app time, so
+# re-setting this env var later wouldn't have any effect on its own).
+os.environ.setdefault("RATELIMIT_ENABLED", "false")
+
 
 @pytest.fixture(autouse=True)
 def _no_real_analytics_writes(monkeypatch):

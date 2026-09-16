@@ -47,6 +47,10 @@
   .cp-verdict .t { font-size: 1rem; line-height: 1.8; color: var(--wv-ink-2); max-width: 74ch; }
   .cp-verdict .t p { margin-bottom: 12px; }
   .cp-replace { text-align: center; margin-top: var(--wv-5); }
+  .cp-signup { padding: var(--wv-7) var(--wv-6); margin-top: var(--wv-5); text-align: center; }
+  .cp-signup h3 { font-family: var(--wv-font-display); font-size: 1.1rem; font-weight: 700; margin-bottom: var(--wv-2); }
+  .cp-signup p { color: var(--wv-ink-2); max-width: 48ch; margin: 0 auto var(--wv-4); }
+  .cp-signup-cta { display: flex; gap: var(--wv-3); justify-content: center; flex-wrap: wrap; }
 </style>
 {% endblock %}
 
@@ -134,6 +138,16 @@
   </section>
 
   <p class="cp-replace">Not quite right? Edit either name above and compare again — no need to start over.</p>
+
+  {% elif missing_for_anonymous %}
+  <div class="wv-card cp-signup">
+    <h3>Create a free account to compare new artists</h3>
+    <p>We've only analysed artists that members have searched for already. Sign up (it's free) to add these to Waveline and compare them right away.</p>
+    <div class="cp-signup-cta">
+      <a class="wv-btn wv-btn-primary" href="/register">Create free account</a>
+      <a class="wv-btn wv-btn-ghost" href="/login">Log in</a>
+    </div>
+  </div>
 
   {% elif a or b %}
   <div class="wv-empty" style="margin-top:var(--wv-5);">

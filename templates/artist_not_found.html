@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ artist_name }} — Waveline{% endblock %}
+{% block description %}{{ artist_name }} hasn't been analysed on Waveline yet.{% endblock %}
+
+{% block head_extra %}
+<style>
+  .anf-wrap { max-width: 560px; margin: 0 auto; padding: var(--wv-8) var(--wv-5); }
+  .anf-wrap .wv-card { padding: var(--wv-7) var(--wv-6); text-align: center; }
+  .anf-wrap h1 { font-family: var(--wv-font-display); font-size: clamp(1.4rem, 3.4vw, 1.9rem); font-weight: 700; margin: var(--wv-2) 0 var(--wv-3); }
+  .anf-wrap p { color: var(--wv-ink-2); font-size: .98rem; line-height: 1.7; max-width: 44ch; margin: 0 auto var(--wv-5); }
+  .anf-cta { display: flex; gap: var(--wv-3); justify-content: center; flex-wrap: wrap; }
+  .anf-alt { margin-top: var(--wv-5); font-size: .85rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="anf-wrap">
+  <div class="wv-card">
+    <p class="wv-eyebrow">Not analysed yet</p>
+    <h1>{{ artist_name }} hasn't been analysed on Waveline yet</h1>
+    <p>Create a free account to run the analysis yourself — top tracks, listening data and an AI-written read, saved straight to your taste profile.</p>
+    <div class="anf-cta">
+      <a class="wv-btn wv-btn-primary" href="/register">Create free account</a>
+      <a class="wv-btn wv-btn-ghost" href="/login">Log in</a>
+    </div>
+    <p class="anf-alt"><a class="wv-link" href="/discover">Or discover artists already on Waveline →</a></p>
+  </div>
+</div>
+{% endblock %}

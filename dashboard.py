@@ -8,9 +8,10 @@ dashboard:app`` (see Procfile).
 
 import os
 
-from flask import Flask, render_template
+from flask import Flask, render_template, Response
 from flask_login import LoginManager, current_user
 from dotenv import load_dotenv
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from models import User, init_db
 from services import render_markdown, markdown_preview, artist_titlecase, timeago, avatar_color
@@ -28,6 +29,7 @@ from views_admin import admin_bp
 from social import count_unread
 from messaging import count_unread_messages
 from analytics import record_pageview, init_geoip
+from rate_limit import limiter
 
 load_dotenv()
 
@@ -39,6 +41,52 @@ app.config.update(
     # Only require HTTPS-only cookies in production (Railway sets RAILWAY_ENVIRONMENT)
     SESSION_COOKIE_SECURE=os.getenv("RAILWAY_ENVIRONMENT") is not None,
 )
+
+# Railway puts exactly one reverse proxy (its own edge/ingress) between the
+# internet and this container, so x_for=1 trusts exactly one hop — matching
+# the standard single-router PaaS architecture (same shape as Heroku's
+# routing mesh). This is based on Railway's documented network model, not
+# something empirically measured against a live production request from
+# here; if you ever put a CDN or another proxy in front of Railway too, this
+# needs to become x_for=2 (one hop per real proxy) or rate limiting will
+# silently key on the wrong address again. Cheap one-time way to confirm the
+# real hop count on live traffic: temporarily log request.headers.get(
+# "X-Forwarded-For") for one real visit and count the comma-separated
+# entries — do that before trusting this value in front of real abuse.
+#
+# WHY THIS MATTERS (do not "simplify" this away): Werkzeug's ProxyFix does
+# NOT touch the X-Forwarded-For header itself — it only overwrites
+# environ["REMOTE_ADDR"] with the (-x_for)th entry, i.e. the one added by
+# the trusted proxy closest to us, discarding everything to its left as
+# untrusted/possibly client-supplied. flask_limiter.util.get_remote_address
+# reads request.remote_addr, so once this is in place it reads the correct,
+# spoof-resistant value. analytics._client_ip() is a DIFFERENT, PRE-EXISTING
+# helper that reads the raw X-Forwarded-For header directly and takes the
+# FIRST (leftmost) entry — that value is attacker-supplied and trivially
+# spoofable (an abuser can prepend any fake IP), which is fine for
+# analytics' best-effort daily-rotating visitor hash but would be a real
+# rate-limit bypass if reused here. Do not point the limiter's key_func at
+# analytics._client_ip() or any left-most-entry parsing — keep
+# get_remote_address() backed by ProxyFix-adjusted remote_addr.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
+# ── Rate limiting ───────────────────────────────────────────────────
+# init_app() always runs with enabled=True so the storage backend actually
+# gets created — Flask-Limiter's init_app() returns early and skips setting
+# up storage entirely when RATELIMIT_ENABLED is false at call time, which
+# would leave limiter.storage unusable even if something flips
+# limiter.enabled back on afterwards. So: initialise for real, then decide
+# whether to suppress enforcement via the instance attribute instead.
+#
+# conftest.py defaults RATELIMIT_ENABLED to "false" for the whole test
+# session so 567+ unrelated tests don't go flaky sharing one IP-keyed
+# in-memory counter; the enforcement tests flip limiter.enabled back to
+# True directly (and reset limiter.storage first, since it's real).
+limiter.init_app(app)
+if os.getenv("RATELIMIT_ENABLED", "true").lower() == "false":
+    limiter.enabled = False
+# Static assets and robots.txt must always be reachable, crawlers included.
+limiter.exempt(app.view_functions["static"])
 
 # ── Login ───────────────────────────────────────────────────────────
 login_manager = LoginManager(app)
@@ -111,6 +159,46 @@ def server_error(e):
         heading="Something went wrong",
         message="This might be a temporary issue. Please try again in a moment.",
     ), 500
+
+
+@app.errorhandler(429)
+def rate_limited(e):
+    return render_template(
+        "error.html",
+        heading="Slow down a moment",
+        message="You've made a lot of requests in a short time. Please wait a bit and try again.",
+    ), 429
+
+
+# Disallows the routes that trigger real work (pipeline runs, Claude calls,
+# private/account pages); allows the pages that are safe and worth indexing.
+# A well-behaved crawler respecting this alone removes most of the abuse
+# surface — see views_artist.py / views_main.py for the actual enforcement
+# (auth gating + rate limits) for crawlers that don't.
+_ROBOTS_TXT = """User-agent: *
+Disallow: /compare
+Disallow: /artist/
+Disallow: /search
+Disallow: /api/
+Disallow: /admin/
+Disallow: /messages
+Disallow: /settings
+Disallow: /notifications
+Disallow: /u/
+Allow: /
+Allow: /about
+Allow: /news
+Allow: /discover
+Allow: /feed
+"""
+
+
+@app.route("/robots.txt")
+def robots_txt():
+    return Response(_ROBOTS_TXT, mimetype="text/plain")
+
+
+limiter.exempt(robots_txt)
 
 
 # Ensure all application tables exist (idempotent — safe on every boot/worker).
