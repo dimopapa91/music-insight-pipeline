@@ -5,6 +5,7 @@ recorder (and what it correctly skips), the daily-rotating visitor hash,
 
 import contextlib
 import datetime
+import logging
 
 from flask import Response
 
@@ -232,3 +233,91 @@ def test_init_geoip_handles_missing_file_gracefully(monkeypatch):
     analytics.init_geoip()  # must not raise
     assert analytics._geo_reader is None
     assert analytics.lookup_country("8.8.8.8") is None
+
+
+# ── GeoIP auto-download (GEOIP_LICENSE_KEY) ──
+
+def test_geoip_db_path_wins_even_when_license_key_is_also_set(monkeypatch):
+    monkeypatch.setenv("GEOIP_DB_PATH", "/no/such/file/GeoLite2-Country.mmdb")
+    monkeypatch.setenv("GEOIP_LICENSE_KEY", "fake-license-key")
+    monkeypatch.setattr(analytics, "_geo_reader", None)
+    monkeypatch.setattr(analytics, "_geo_initialised", False)
+    called = {"n": 0}
+    monkeypatch.setattr(analytics, "_download_geoip_db", lambda key: called.update(n=called["n"] + 1))
+    analytics.init_geoip()
+    assert called["n"] == 0
+
+
+def test_license_key_triggers_download_and_loads_reader(monkeypatch):
+    monkeypatch.delenv("GEOIP_DB_PATH", raising=False)
+    monkeypatch.setenv("GEOIP_LICENSE_KEY", "fake-license-key")
+    monkeypatch.setattr(analytics, "_geo_reader", None)
+    monkeypatch.setattr(analytics, "_geo_initialised", False)
+
+    calls = []
+    monkeypatch.setattr(analytics, "_download_geoip_db", lambda key: calls.append(key) or "/tmp/fake.mmdb")
+
+    class FakeReader:
+        def __init__(self, path):
+            self.path = path
+
+    class FakeGeoip2Database:
+        Reader = FakeReader
+
+    import sys
+    fake_geoip2 = type(sys)("geoip2")
+    fake_geoip2.database = FakeGeoip2Database
+    monkeypatch.setitem(sys.modules, "geoip2", fake_geoip2)
+    monkeypatch.setitem(sys.modules, "geoip2.database", FakeGeoip2Database)
+
+    analytics.init_geoip()
+    assert calls == ["fake-license-key"]
+    assert isinstance(analytics._geo_reader, FakeReader)
+    assert analytics._geo_reader.path == "/tmp/fake.mmdb"
+
+
+def test_download_failure_disables_geoip_without_raising(monkeypatch):
+    monkeypatch.delenv("GEOIP_DB_PATH", raising=False)
+    monkeypatch.setenv("GEOIP_LICENSE_KEY", "fake-license-key")
+    monkeypatch.setattr(analytics, "_geo_reader", None)
+    monkeypatch.setattr(analytics, "_geo_initialised", False)
+
+    def _boom(key):
+        raise RuntimeError("simulated download failure")
+
+    monkeypatch.setattr(analytics, "_download_geoip_db", _boom)
+    analytics.init_geoip()  # must not raise
+    assert analytics._geo_reader is None
+
+
+def test_no_geoip_env_vars_never_attempts_a_download(monkeypatch):
+    monkeypatch.delenv("GEOIP_DB_PATH", raising=False)
+    monkeypatch.delenv("GEOIP_LICENSE_KEY", raising=False)
+    monkeypatch.setattr(analytics, "_geo_reader", None)
+    monkeypatch.setattr(analytics, "_geo_initialised", False)
+    called = {"n": 0}
+    monkeypatch.setattr(analytics, "_download_geoip_db", lambda key: called.update(n=called["n"] + 1))
+    analytics.init_geoip()
+    assert called["n"] == 0
+    assert analytics._geo_reader is None
+
+
+def test_license_key_value_never_reaches_the_logs_on_download_failure(monkeypatch, caplog):
+    monkeypatch.delenv("GEOIP_DB_PATH", raising=False)
+    monkeypatch.setenv("GEOIP_LICENSE_KEY", "super-secret-license-key")
+    monkeypatch.setattr(analytics, "_geo_reader", None)
+    monkeypatch.setattr(analytics, "_geo_initialised", False)
+
+    def _boom(key):
+        # Mirrors requests.exceptions.HTTPError's real behaviour: its
+        # message embeds the full request URL, license_key included.
+        raise RuntimeError(
+            f"404 Client Error: Not Found for url: {analytics._GEOIP_DOWNLOAD_URL}?license_key={key}"
+        )
+
+    monkeypatch.setattr(analytics, "_download_geoip_db", _boom)
+    with caplog.at_level(logging.WARNING):
+        analytics.init_geoip()
+    assert "super-secret-license-key" not in caplog.text
+    assert "RuntimeError" in caplog.text
+    assert analytics._geo_reader is None

@@ -12,11 +12,14 @@ of the project.
 """
 
 import hashlib
+import io
 import logging
 import os
+import tarfile
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 
+import requests
 from flask import request, current_app
 from flask_login import current_user
 
@@ -86,20 +89,80 @@ def _sanitize_analytics_referrer(referrer):
 _geo_reader = None
 _geo_initialised = False
 
+# Where an auto-downloaded database is cached on disk. /tmp is local to the
+# container and shared by both of the Procfile's gunicorn worker processes
+# (they share one filesystem), so whichever worker downloads first leaves it
+# here for the other to reuse without a second download.
+_GEOIP_CACHE_PATH = "/tmp/GeoLite2-Country.mmdb"
+_GEOIP_DOWNLOAD_URL = "https://download.maxmind.com/app/geoip_download"
+
+
+def _download_geoip_db(license_key):
+    """Download and cache the GeoLite2-Country database, returning the local
+    path on success. Raises on any failure — never swallows exceptions here;
+    that's init_geoip()'s job, mirroring the "raise inside the helper, catch
+    in the caller" pattern pipeline.py's analyse_with_claude()/run_pipeline()
+    already use for the same reason (one place decides what's fatal)."""
+    if os.path.exists(_GEOIP_CACHE_PATH):
+        return _GEOIP_CACHE_PATH
+
+    resp = requests.get(_GEOIP_DOWNLOAD_URL, params={
+        "edition_id": "GeoLite2-Country",
+        "license_key": license_key,
+        "suffix": "tar.gz",
+    }, timeout=15)
+    resp.raise_for_status()
+
+    with tarfile.open(fileobj=io.BytesIO(resp.content), mode="r:gz") as tar:
+        member = next((m for m in tar.getmembers() if m.name.endswith("GeoLite2-Country.mmdb")), None)
+        if member is None:
+            raise RuntimeError("GeoLite2-Country.mmdb not found in downloaded archive")
+        extracted = tar.extractfile(member)
+        with open(_GEOIP_CACHE_PATH, "wb") as f:
+            f.write(extracted.read())
+
+    return _GEOIP_CACHE_PATH
+
 
 def init_geoip():
     """Load the optional GeoLite2-Country database once at startup.
 
-    Safe to call even when GEOIP_DB_PATH is unset or the file is missing —
-    country lookups just return None afterwards and every other part of
-    analytics still works normally.
+    Resolution order:
+    1. GEOIP_DB_PATH, if set — an explicit path always wins (useful for
+       local dev with a manually downloaded file).
+    2. Otherwise, GEOIP_LICENSE_KEY — if set, the database is downloaded
+       automatically (see _download_geoip_db) so production doesn't need a
+       manually-managed volume.
+    3. Otherwise, GeoIP just stays off.
+
+    Safe to call in every case: country lookups return None afterwards and
+    every other part of analytics still works normally.
     """
     global _geo_reader, _geo_initialised
     _geo_initialised = True
     path = os.getenv("GEOIP_DB_PATH")
     if not path:
-        logger.info("GEOIP_DB_PATH not set — analytics will record country as NULL.")
-        return
+        license_key = os.getenv("GEOIP_LICENSE_KEY")
+        if not license_key:
+            logger.info("GEOIP_DB_PATH not set — analytics will record country as NULL.")
+            return
+        try:
+            path = _download_geoip_db(license_key)
+        except Exception as e:
+            # Never log str(e) here: requests builds an HTTPError's message
+            # from the full request URL, which includes license_key as a
+            # query parameter (see _download_geoip_db) — logging the
+            # exception's string form would leak the secret straight into
+            # the logs. Only the exception type (and an HTTP status code,
+            # when there is one) is safe, matching pipeline.py's
+            # _log_claude_failure model of never logging a value that could
+            # carry the secret through.
+            status_code = getattr(getattr(e, "response", None), "status_code", None)
+            logger.warning(
+                "GeoIP disabled: database download failed (%s%s)",
+                type(e).__name__, f" status_code={status_code}" if status_code is not None else "",
+            )
+            return
     try:
         import geoip2.database
         _geo_reader = geoip2.database.Reader(path)
