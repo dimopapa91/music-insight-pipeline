@@ -20,7 +20,6 @@ Usage:
 """
 import json
 import os
-import re
 import sys
 from datetime import datetime, timezone
 
@@ -32,15 +31,14 @@ try:
 except ImportError:
     pass
 
-DASH_RE = re.compile(r"\s*[—–]\s*")  # em (—) or en (–) dash
-
-
-def clean(text):
-    """Replace em/en dashes with a comma, tidy spacing. Hyphens are left alone."""
-    out = DASH_RE.sub(", ", text)
-    out = re.sub(r"\s{2,}", " ", out)
-    out = re.sub(r"\s+([,.;:!?])", r"\1", out)
-    return out
+# This script lives in scripts/, one level below the repo root where
+# text_clean.py sits, so the root needs to be on sys.path before the import
+# below can resolve. New content is now cleaned at generation time by the
+# very same function (see pipeline.py, views_artist.py, views_taste.py) --
+# importing it here instead of keeping a second copy means the one-off
+# backfill and the live enforcement can never drift apart.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from text_clean import strip_em_dashes as clean
 
 
 def get_connection():

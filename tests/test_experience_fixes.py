@@ -198,6 +198,26 @@ def test_successful_result_renders(monkeypatch):
     assert "couldn&#39;t tune in" not in html and "couldn’t tune in" not in html
 
 
+def test_taste_profile_strips_em_dashes_even_if_the_model_ignores_the_prompt(monkeypatch):
+    # The prompt already asks Claude not to use em dashes, but that's a
+    # request, not a guarantee -- this proves the deterministic fallback
+    # (text_clean.strip_em_dashes) catches a slip before it's ever cached.
+    monkeypatch.setattr(views_taste, "_taste_cache", {})
+    monkeypatch.setattr(views_taste, "db_cursor", _fake_db_cursor_with_rows(_artist_rows(3)))
+    _mock_anthropic(monkeypatch, response_text="Ambient textures — sparse rhythms — hazy vocals.")
+    client = dashboard.app.test_client()
+    _login(client, monkeypatch)
+    html = client.get("/profile").data.decode()
+    # Narrow check: the page title/static chrome may legitimately contain its
+    # own em dash ("Taste profile — Waveline"); what matters is the
+    # AI-generated text itself is clean.
+    assert "Ambient textures, sparse rhythms, hazy vocals." in html
+    assert "Ambient textures — sparse" not in html
+    # And the cleaned version, not the raw one, is what got cached.
+    cache_key = f"{OWNER.id}:" + ",".join(sorted(f"Artist{i}" for i in range(3)))
+    assert views_taste._taste_cache[cache_key] == "Ambient textures, sparse rhythms, hazy vocals."
+
+
 def test_provider_failure_renders_graceful_fallback(monkeypatch):
     monkeypatch.setattr(views_taste, "_taste_cache", {})
     monkeypatch.setattr(views_taste, "db_cursor", _fake_db_cursor_with_rows(_artist_rows(3)))

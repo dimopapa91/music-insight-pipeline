@@ -9,6 +9,7 @@ from flask import Blueprint, render_template, redirect
 from flask_login import current_user, login_required
 
 from db import db_cursor
+from text_clean import strip_em_dashes
 
 taste_bp = Blueprint("taste", __name__)
 logger = logging.getLogger(__name__)
@@ -74,7 +75,10 @@ Based on this, write a 2-3 paragraph taste profile in plain prose. Cover: what g
         try:
             _client = _anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
             msg = _client.messages.create(model="claude-haiku-4-5-20251001", max_tokens=600, messages=[{"role": "user", "content": prompt}])
-            analysis = msg.content[0].text
+            # Belt and suspenders: the prompt already asks Claude not to use
+            # em dashes, but that's a request, not a guarantee. Enforce it
+            # deterministically before this is cached.
+            analysis = strip_em_dashes(msg.content[0].text)
             _taste_cache[cache_key] = analysis
         except Exception as e:
             # Never leak provider/exception detail to the user — but this

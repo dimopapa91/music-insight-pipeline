@@ -12,6 +12,7 @@ from flask_login import current_user
 from db import db_cursor
 from pipeline import run_pipeline
 from rate_limit import limiter
+from text_clean import strip_em_dashes
 from services import (
     get_similar_artists, get_spotify_artist, get_artist_db, artist_titlecase,
     clean_deezer_image, resolve_insight, LASTFM_BASE, LASTFM_API_KEY,
@@ -175,7 +176,10 @@ Write a 2-paragraph comparison in plain prose. Cover: how their sounds and appea
     try:
         _client = _anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
         msg = _client.messages.create(model="claude-haiku-4-5-20251001", max_tokens=500, messages=[{"role": "user", "content": prompt}])
-        verdict = msg.content[0].text
+        # Belt and suspenders: the prompt already asks Claude not to use em
+        # dashes, but that's a request, not a guarantee. Enforce it
+        # deterministically before this is cached.
+        verdict = strip_em_dashes(msg.content[0].text)
         _compare_cache[key] = verdict
         return verdict
     except Exception as e:
