@@ -1,22 +1,22 @@
 """
 email_digest.py — Weekly music insight email digest
-Sends a summary of the week's top artists + Claude insights via Gmail SMTP.
+Sends a summary of the week's top artists + Claude insights via the Resend
+HTTP API. Railway blocks all outbound SMTP ports (25/465/587) below its Pro
+plan, so a direct SMTP connection (e.g. to Gmail) times out in production —
+Resend's API is plain HTTPS on port 443, which is never blocked.
 
 Setup: add these to your .env file:
-  DIGEST_EMAIL_FROM=dimpapa91@gmail.com
+  DIGEST_EMAIL_FROM=onboarding@resend.dev
   DIGEST_EMAIL_TO=dimpapa91@gmail.com
-  GMAIL_APP_PASSWORD=your_gmail_app_password  (Gmail > Security > App Passwords)
+  RESEND_API_KEY=your_resend_api_key  (Resend dashboard > API Keys)
 """
 
 import os
 import json
-import smtplib
-import socket
-import ssl
 import logging
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from datetime import datetime, timedelta
+
+import requests
 from dotenv import load_dotenv
 
 from db import db_cursor
@@ -130,44 +130,17 @@ def build_text_email(rows, total_this_week):
     return "\n".join(lines)
 
 
-class _IPv4SMTP_SSL(smtplib.SMTP_SSL):
-    """smtplib.SMTP_SSL, but the connection is forced over IPv4.
-
-    Railway (and other containerised environments) can resolve
-    smtp.gmail.com to an IPv6 address with no outbound IPv6 route, which
-    fails with "[Errno 101] Network is unreachable". smtplib.SMTP_SSL has no
-    public way to hand it a pre-built socket -- neither SMTP nor SMTP_SSL's
-    __init__ accepts a sock= argument (checked via inspect.signature); the
-    socket is always created internally by _get_socket(), which is exactly
-    the method SMTP_SSL itself overrides to layer TLS on top of plain SMTP.
-    Overriding it again here is the same, officially-supported extension
-    point -- not a workaround.
-    """
-
-    def _get_socket(self, host, port, timeout):
-        # host/port are exactly what was passed to the constructor
-        # ("smtp.gmail.com", 465) -- resolve to IPv4 explicitly instead of
-        # letting socket.create_connection()'s own getaddrinfo pick
-        # whichever family comes back first.
-        ipv4_sockaddr = socket.getaddrinfo(
-            host, port, socket.AF_INET, socket.SOCK_STREAM,
-        )[0][4]
-        raw_sock = socket.create_connection(ipv4_sockaddr, timeout, self.source_address)
-        # server_hostname stays the real hostname (self._host, set by
-        # SMTP.__init__ from this same host argument) so SNI and the
-        # certificate's hostname check still validate against
-        # "smtp.gmail.com", never the raw IPv4 address.
-        return self.context.wrap_socket(raw_sock, server_hostname=self._host)
+_RESEND_API_URL = "https://api.resend.com/emails"
 
 
 def send_digest():
-    """Build and send the weekly digest email"""
+    """Build and send the weekly digest email via the Resend HTTP API."""
     from_email = os.getenv("DIGEST_EMAIL_FROM")
     to_email = os.getenv("DIGEST_EMAIL_TO")
-    app_password = os.getenv("GMAIL_APP_PASSWORD")
+    api_key = os.getenv("RESEND_API_KEY")
 
-    if not all([from_email, to_email, app_password]):
-        logging.warning("Email digest skipped — DIGEST_EMAIL_FROM, DIGEST_EMAIL_TO or GMAIL_APP_PASSWORD not set in .env")
+    if not all([from_email, to_email, api_key]):
+        logging.warning("Email digest skipped — DIGEST_EMAIL_FROM, DIGEST_EMAIL_TO or RESEND_API_KEY not set in .env")
         return
 
     rows, total_this_week = get_weekly_data()
@@ -175,24 +148,34 @@ def send_digest():
         logging.info("No searches this week — skipping digest.")
         return
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"🎵 Your Weekly Music Digest — {datetime.now().strftime('%d %b %Y')}"
-    msg["From"] = from_email
-    msg["To"] = to_email
-
-    msg.attach(MIMEText(build_text_email(rows, total_this_week), "plain"))
-    msg.attach(MIMEText(build_html_email(rows, total_this_week), "html"))
+    subject = f"🎵 Your Weekly Music Digest — {datetime.now().strftime('%d %b %Y')}"
 
     try:
-        context = ssl.create_default_context()
-        with _IPv4SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
-            server.login(from_email, app_password)
-            server.sendmail(from_email, to_email, msg.as_string())
-        logging.info(f"Weekly digest sent to {to_email}")
-    except smtplib.SMTPAuthenticationError:
-        logging.error("Gmail authentication failed. Check GMAIL_APP_PASSWORD in .env — it must be a Gmail App Password, not your regular password.")
+        resp = requests.post(
+            _RESEND_API_URL,
+            headers={"Authorization": f"Bearer {api_key}"},
+            json={
+                "from": from_email,
+                "to": [to_email],
+                "subject": subject,
+                "html": build_html_email(rows, total_this_week),
+                "text": build_text_email(rows, total_this_week),
+            },
+            timeout=30,
+        )
+        if resp.ok:
+            logging.info(f"Weekly digest sent to {to_email}")
+        else:
+            # resp.text is Resend's own small JSON error body (e.g. an
+            # invalid "from" domain or a malformed request) -- never the
+            # Authorization header, so it's safe to log as-is. The API key
+            # itself is never logged here or anywhere else in this function.
+            logging.error(f"Failed to send digest: Resend returned status_code={resp.status_code} body={resp.text}")
     except Exception as e:
-        logging.error(f"Failed to send digest: {e}")
+        # Never log str(e): a requests exception's message can embed the
+        # request (including headers) it failed on, which would leak the
+        # API key. Only the exception type is safe.
+        logging.error(f"Failed to send digest: {type(e).__name__}")
 
 
 if __name__ == "__main__":

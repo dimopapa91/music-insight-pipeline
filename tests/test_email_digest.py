@@ -1,130 +1,139 @@
-"""Tests for email_digest.py's IPv4-forced SMTP connection.
+"""Tests for email_digest.py's Resend HTTP API sending.
 
-Railway (and other containerised environments) can resolve smtp.gmail.com
-to an IPv6 address with no outbound IPv6 route, failing with "[Errno 101]
-Network is unreachable". _IPv4SMTP_SSL._get_socket() works around that by
-resolving IPv4 explicitly and wrapping the raw socket in TLS itself, while
-still validating the certificate against the real hostname.
+Railway blocks all outbound SMTP ports (25/465/587) below its Pro plan, so
+a direct SMTP connection (even one forced over IPv4) times out in
+production. send_digest() sends over HTTPS via the Resend API instead,
+which is never blocked.
 
-No real network call anywhere in this file — socket/ssl are mocked.
+No real network call anywhere in this file — requests.post is mocked.
 """
 
-import socket
-import ssl
+import logging
 
 import email_digest
 
 
-def test_get_socket_forces_af_inet_and_preserves_hostname_verification(monkeypatch):
-    getaddrinfo_calls = []
-
-    def fake_getaddrinfo(host, port, family, socktype):
-        getaddrinfo_calls.append((host, port, family, socktype))
-        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 465))]
-
-    monkeypatch.setattr(socket, "getaddrinfo", fake_getaddrinfo)
-
-    raw_sock = object()
-    create_connection_calls = []
-
-    def fake_create_connection(sockaddr, timeout=None, source_address=None):
-        create_connection_calls.append((sockaddr, timeout, source_address))
-        return raw_sock
-
-    monkeypatch.setattr(socket, "create_connection", fake_create_connection)
-
-    wrapped_sock = object()
-    wrap_calls = []
-
-    class FakeContext:
-        def wrap_socket(self, sock, server_hostname=None):
-            wrap_calls.append((sock, server_hostname))
-            return wrapped_sock
-
-    instance = email_digest._IPv4SMTP_SSL.__new__(email_digest._IPv4SMTP_SSL)
-    instance.context = FakeContext()
-    instance._host = "smtp.gmail.com"
-    instance.source_address = None
-
-    result = instance._get_socket("smtp.gmail.com", 465, 30)
-
-    # AF_INET was explicitly requested, not left to chance.
-    assert getaddrinfo_calls == [("smtp.gmail.com", 465, socket.AF_INET, socket.SOCK_STREAM)]
-    # The raw connection was opened to the resolved IPv4 address, not the hostname.
-    assert create_connection_calls[0][0] == ("93.184.216.34", 465)
-    # TLS wraps that raw IPv4 socket, but server_hostname stays the real
-    # hostname -- SNI and certificate hostname checks still validate against
-    # "smtp.gmail.com", never the raw IP.
-    assert wrap_calls == [(raw_sock, "smtp.gmail.com")]
-    # The wrapped socket -- not the raw one -- is what SMTP_SSL ends up using
-    # for every subsequent protocol read/write.
-    assert result is wrapped_sock
+def _fake_rows():
+    return (
+        [("Radiohead", "an insight", None, [{"name": "Karma Police", "playcount": 100}])],
+        5,
+    )
 
 
-def test_send_digest_connects_with_ipv4_forcing_class_and_verified_context(monkeypatch):
-    monkeypatch.setenv("DIGEST_EMAIL_FROM", "from@example.com")
+class _FakeResponse:
+    def __init__(self, status_code=200, text='{"id":"abc123"}'):
+        self.status_code = status_code
+        self.text = text
+        self.ok = 200 <= status_code < 400
+
+
+def test_send_digest_posts_to_resend_with_bearer_auth_and_full_body(monkeypatch):
+    monkeypatch.setenv("DIGEST_EMAIL_FROM", "onboarding@resend.dev")
     monkeypatch.setenv("DIGEST_EMAIL_TO", "to@example.com")
-    monkeypatch.setenv("GMAIL_APP_PASSWORD", "app-password")
+    monkeypatch.setenv("RESEND_API_KEY", "re_test_key_123")
+    monkeypatch.setattr(email_digest, "get_weekly_data", lambda: _fake_rows())
 
-    monkeypatch.setattr(email_digest, "get_weekly_data", lambda: (
-        [("Radiohead", "an insight", None, [{"name": "Karma Police", "playcount": 100}])], 5,
-    ))
+    calls = []
 
-    calls = {}
+    def fake_post(url, headers=None, json=None, timeout=None):
+        calls.append({"url": url, "headers": headers, "json": json, "timeout": timeout})
+        return _FakeResponse(200)
 
-    class FakeServer:
-        def __init__(self, host, port, context=None):
-            calls["host"] = host
-            calls["port"] = port
-            calls["context"] = context
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *exc_info):
-            return False
-
-        def login(self, user, password):
-            calls["login"] = (user, password)
-
-        def sendmail(self, from_addr, to_addrs, message):
-            calls["sendmail"] = (from_addr, to_addrs)
-
-    monkeypatch.setattr(email_digest, "_IPv4SMTP_SSL", FakeServer)
+    monkeypatch.setattr(email_digest.requests, "post", fake_post)
 
     email_digest.send_digest()
 
-    assert calls["host"] == "smtp.gmail.com"
-    assert calls["port"] == 465
-    # A real, fully-verifying context -- not smtplib's historically
-    # permissive default -- so hostname/certificate checks stay enforced.
-    assert isinstance(calls["context"], ssl.SSLContext)
-    assert calls["context"].check_hostname is True
-    assert calls["context"].verify_mode == ssl.CERT_REQUIRED
-    assert calls["login"] == ("from@example.com", "app-password")
-    assert calls["sendmail"][0] == "from@example.com"
-    assert calls["sendmail"][1] == "to@example.com"
+    assert len(calls) == 1
+    call = calls[0]
+    assert call["url"] == "https://api.resend.com/emails"
+    assert call["headers"]["Authorization"] == "Bearer re_test_key_123"
+    assert call["timeout"] == 30
+    body = call["json"]
+    assert body["from"] == "onboarding@resend.dev"
+    assert body["to"] == ["to@example.com"]
+    assert "Weekly Music Digest" in body["subject"]
+    assert "Radiohead" in body["html"]
+    assert "Radiohead" in body["text"]
 
 
-def test_send_digest_swallows_smtp_errors_without_raising(monkeypatch):
-    monkeypatch.setenv("DIGEST_EMAIL_FROM", "from@example.com")
+def test_no_rows_this_week_skips_sending(monkeypatch):
+    monkeypatch.setenv("DIGEST_EMAIL_FROM", "onboarding@resend.dev")
     monkeypatch.setenv("DIGEST_EMAIL_TO", "to@example.com")
-    monkeypatch.setenv("GMAIL_APP_PASSWORD", "app-password")
+    monkeypatch.setenv("RESEND_API_KEY", "re_test_key_123")
+    monkeypatch.setattr(email_digest, "get_weekly_data", lambda: ([], 0))
 
-    monkeypatch.setattr(email_digest, "get_weekly_data", lambda: (
-        [("Radiohead", "an insight", None, [{"name": "Karma Police", "playcount": 100}])], 5,
-    ))
+    called = {"n": 0}
+    monkeypatch.setattr(email_digest.requests, "post", lambda *a, **k: called.update(n=called["n"] + 1))
 
-    class ExplodingServer:
-        def __init__(self, host, port, context=None):
-            pass
+    email_digest.send_digest()
+    assert called["n"] == 0
 
-        def __enter__(self):
-            raise OSError("[Errno 101] Network is unreachable")
 
-        def __exit__(self, *exc_info):
-            return False
+def test_missing_api_key_skips_sending(monkeypatch):
+    monkeypatch.setenv("DIGEST_EMAIL_FROM", "onboarding@resend.dev")
+    monkeypatch.setenv("DIGEST_EMAIL_TO", "to@example.com")
+    monkeypatch.delenv("RESEND_API_KEY", raising=False)
+    monkeypatch.setattr(email_digest, "get_weekly_data", lambda: _fake_rows())
 
-    monkeypatch.setattr(email_digest, "_IPv4SMTP_SSL", ExplodingServer)
+    called = {"n": 0}
+    monkeypatch.setattr(email_digest.requests, "post", lambda *a, **k: called.update(n=called["n"] + 1))
+
+    email_digest.send_digest()
+    assert called["n"] == 0
+
+
+def test_non_200_response_does_not_raise(monkeypatch):
+    monkeypatch.setenv("DIGEST_EMAIL_FROM", "onboarding@resend.dev")
+    monkeypatch.setenv("DIGEST_EMAIL_TO", "to@example.com")
+    monkeypatch.setenv("RESEND_API_KEY", "re_test_key_123")
+    monkeypatch.setattr(email_digest, "get_weekly_data", lambda: _fake_rows())
+    monkeypatch.setattr(email_digest.requests, "post", lambda *a, **k: _FakeResponse(422, '{"message":"invalid from domain"}'))
 
     email_digest.send_digest()  # must not raise
+
+
+def test_request_exception_does_not_raise(monkeypatch):
+    monkeypatch.setenv("DIGEST_EMAIL_FROM", "onboarding@resend.dev")
+    monkeypatch.setenv("DIGEST_EMAIL_TO", "to@example.com")
+    monkeypatch.setenv("RESEND_API_KEY", "re_test_key_123")
+    monkeypatch.setattr(email_digest, "get_weekly_data", lambda: _fake_rows())
+
+    def _boom(*a, **k):
+        raise ConnectionError("simulated network failure")
+
+    monkeypatch.setattr(email_digest.requests, "post", _boom)
+
+    email_digest.send_digest()  # must not raise
+
+
+def test_api_key_never_reaches_the_logs_on_non_200_response(monkeypatch, caplog):
+    monkeypatch.setenv("DIGEST_EMAIL_FROM", "onboarding@resend.dev")
+    monkeypatch.setenv("DIGEST_EMAIL_TO", "to@example.com")
+    monkeypatch.setenv("RESEND_API_KEY", "super-secret-resend-key")
+    monkeypatch.setattr(email_digest, "get_weekly_data", lambda: _fake_rows())
+    monkeypatch.setattr(email_digest.requests, "post", lambda *a, **k: _FakeResponse(401, '{"message":"invalid API key"}'))
+
+    with caplog.at_level(logging.ERROR):
+        email_digest.send_digest()
+
+    assert "super-secret-resend-key" not in caplog.text
+
+
+def test_api_key_never_reaches_the_logs_on_request_exception(monkeypatch, caplog):
+    monkeypatch.setenv("DIGEST_EMAIL_FROM", "onboarding@resend.dev")
+    monkeypatch.setenv("DIGEST_EMAIL_TO", "to@example.com")
+    monkeypatch.setenv("RESEND_API_KEY", "super-secret-resend-key")
+    monkeypatch.setattr(email_digest, "get_weekly_data", lambda: _fake_rows())
+
+    def _boom(url, headers=None, json=None, timeout=None):
+        # Mirrors a real requests exception potentially embedding request
+        # details (e.g. headers) in its message.
+        raise ConnectionError(f"failed request with headers={headers}")
+
+    monkeypatch.setattr(email_digest.requests, "post", _boom)
+
+    with caplog.at_level(logging.ERROR):
+        email_digest.send_digest()
+
+    assert "super-secret-resend-key" not in caplog.text
+    assert "ConnectionError" in caplog.text
