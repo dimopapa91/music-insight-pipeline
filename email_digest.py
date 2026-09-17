@@ -11,6 +11,8 @@ Setup: add these to your .env file:
 import os
 import json
 import smtplib
+import socket
+import ssl
 import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -128,6 +130,36 @@ def build_text_email(rows, total_this_week):
     return "\n".join(lines)
 
 
+class _IPv4SMTP_SSL(smtplib.SMTP_SSL):
+    """smtplib.SMTP_SSL, but the connection is forced over IPv4.
+
+    Railway (and other containerised environments) can resolve
+    smtp.gmail.com to an IPv6 address with no outbound IPv6 route, which
+    fails with "[Errno 101] Network is unreachable". smtplib.SMTP_SSL has no
+    public way to hand it a pre-built socket -- neither SMTP nor SMTP_SSL's
+    __init__ accepts a sock= argument (checked via inspect.signature); the
+    socket is always created internally by _get_socket(), which is exactly
+    the method SMTP_SSL itself overrides to layer TLS on top of plain SMTP.
+    Overriding it again here is the same, officially-supported extension
+    point -- not a workaround.
+    """
+
+    def _get_socket(self, host, port, timeout):
+        # host/port are exactly what was passed to the constructor
+        # ("smtp.gmail.com", 465) -- resolve to IPv4 explicitly instead of
+        # letting socket.create_connection()'s own getaddrinfo pick
+        # whichever family comes back first.
+        ipv4_sockaddr = socket.getaddrinfo(
+            host, port, socket.AF_INET, socket.SOCK_STREAM,
+        )[0][4]
+        raw_sock = socket.create_connection(ipv4_sockaddr, timeout, self.source_address)
+        # server_hostname stays the real hostname (self._host, set by
+        # SMTP.__init__ from this same host argument) so SNI and the
+        # certificate's hostname check still validate against
+        # "smtp.gmail.com", never the raw IPv4 address.
+        return self.context.wrap_socket(raw_sock, server_hostname=self._host)
+
+
 def send_digest():
     """Build and send the weekly digest email"""
     from_email = os.getenv("DIGEST_EMAIL_FROM")
@@ -152,7 +184,8 @@ def send_digest():
     msg.attach(MIMEText(build_html_email(rows, total_this_week), "html"))
 
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        context = ssl.create_default_context()
+        with _IPv4SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
             server.login(from_email, app_password)
             server.sendmail(from_email, to_email, msg.as_string())
         logging.info(f"Weekly digest sent to {to_email}")
