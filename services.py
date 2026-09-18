@@ -398,20 +398,24 @@ def fetch_rss(feed):
         return []
 
 
-def get_deezer_new_releases(limit=12):
-    """Editorial new releases from Deezer, in the same shape the news
-    template already renders.
+def get_deezer_trending_albums(limit=12):
+    """Deezer's albums chart (trending/popular albums), in the same shape
+    the news template already renders.
 
-    Replaces the old Spotify /v1/browse/new-releases call, which returns 403
-    for this app tier permanently and can't be fixed in code. Deezer needs no
-    API key (it's already used keyless elsewhere in this module).
+    Not editorial releases: /editorial/0/releases answers HTTP 200 with
+    {"data": [], "total": 0} — it's dead — so the strip rendered blank.
+    /chart/0/albums returns real data. Chart albums carry no release_date,
+    so "date" comes back "" and the template simply omits it. Deezer needs
+    no API key (it's already used keyless elsewhere in this module), which
+    is why this replaced Spotify's /v1/browse/new-releases — permanently
+    403 for this app tier.
     """
     try:
-        resp = http_requests.get("https://api.deezer.com/editorial/0/releases",
+        resp = http_requests.get("https://api.deezer.com/chart/0/albums",
             params={"limit": limit}, timeout=5)
         if resp.status_code != 200:
             # Log for developers; never surface raw provider errors to users.
-            logger.warning("Deezer new releases HTTP %s: %s", resp.status_code, resp.text[:200])
+            logger.warning("Deezer trending albums HTTP %s: %s", resp.status_code, resp.text[:200])
             return []
         albums = resp.json().get("data", [])
         results = []
@@ -426,7 +430,7 @@ def get_deezer_new_releases(limit=12):
             })
         return results
     except Exception as e:
-        logger.warning("Deezer new releases failed: %s", e)
+        logger.warning("Deezer trending albums failed: %s", e)
         return []
 
 
@@ -446,7 +450,7 @@ def get_news_data():
     for feed in RSS_FEEDS:
         articles.extend(fetch_rss(feed))
 
-    releases = get_deezer_new_releases()
+    releases = get_deezer_trending_albums()
     if releases:
         _last_releases = releases
         releases_status = "live"
