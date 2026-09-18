@@ -18,6 +18,9 @@
   .ar-src { font-family: var(--wv-font-display); font-size: .6rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 3px 9px; border-radius: var(--wv-radius-pill); color: #fff; }
   .ar-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
   .ar-meta { font-size: .78rem; color: var(--wv-muted); margin-top: 12px; }
+  .ar-hero-teaser { display: block; font-size: .9rem; line-height: 1.6; color: var(--wv-ink-2); border-left: 2px solid var(--wv-accent); padding-left: var(--wv-3); margin-top: var(--wv-4); max-width: 52ch; text-decoration: none; transition: color var(--wv-motion) var(--wv-ease); }
+  .ar-hero-teaser:hover { color: var(--wv-ink); }
+  .ar-hero-teaser .more { display: block; margin-top: 4px; font-family: var(--wv-font-display); font-size: .68rem; letter-spacing: .6px; color: var(--wv-accent-ink); }
   .ar-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: var(--wv-3); }
   @media (max-width: 560px) { .ar-actions { justify-content: center; } }
   .ar-spotify { border-color: #1a7f4b !important; color: #3fcf7a !important; }
@@ -79,6 +82,12 @@
       <div class="ar-tags">{% for t in tags[:5] %}<span class="wv-chip wv-btn-sm" style="cursor:default;">{{ t }}</span>{% endfor %}</div>
       {% endif %}
       <div class="ar-meta">Analysed {{ search_count }} time{{ 's' if search_count != 1 }} · last on {{ last_searched }}</div>
+      {% if insight %}
+      <a href="#insight" class="ar-hero-teaser">
+        {{ insight | truncate(150) }}
+        <span class="more">Read the full AI insight →</span>
+      </a>
+      {% endif %}
       <div class="ar-actions">
         {% if spotify.spotify_url %}<a class="wv-btn wv-btn-ghost wv-btn-sm ar-spotify" href="{{ spotify.spotify_url }}" target="_blank" rel="noopener noreferrer">Open on Spotify →</a>{% endif %}
         <a class="wv-btn wv-btn-ghost wv-btn-sm" href="/compare?a={{ artist_name | urlencode }}">Compare this artist</a>
