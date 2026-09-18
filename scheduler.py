@@ -5,6 +5,16 @@ from email_digest import send_digest
 from models import init_db
 import random
 
+# NOTE: this file is NOT what runs the weekly digest in production. The
+# BlockingScheduler set up below (including its `send_digest` cron job) is
+# for local/manual use only and is not part of the deployed Procfile — it
+# has to be started as a standalone long-running process, which nothing on
+# Railway does. In production, the weekly digest runs via a dedicated
+# Railway Cron Job service ("weekly-digest-cron") that executes
+# `python email_digest.py` directly on the schedule "0 8 * * 1" (see
+# email_digest.py). If you're trying to change when/how the real weekly
+# digest fires, change that Cron Job's schedule/command, not this file.
+
 # Ensure the schema (including searches.user_id) exists before any pipeline run.
 init_db()
 
