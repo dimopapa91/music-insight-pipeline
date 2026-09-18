@@ -6,8 +6,9 @@ Two production problems, both verified against live credentials:
   page view. The fix caches by name, including negative results, so a burst
   of misses during quota exhaustion stops re-hitting Spotify.
 - /v1/browse/new-releases answers 403 permanently for this app tier, so the
-  news page's releases strip now comes from Deezer's keyless editorial
-  endpoint instead.
+  news page's strip comes from Deezer instead — specifically the keyless
+  albums chart, since Deezer's /editorial/0/releases turned out to answer
+  200 with an empty data list and rendered blank.
 
 No real network calls anywhere in this file.
 """
@@ -179,9 +180,11 @@ def test_exception_is_cached_as_a_failure(monkeypatch):
     assert len(calls) == 1
 
 
-# ── get_deezer_new_releases ──────────────────────────────────────────
+# ── get_deezer_trending_albums ───────────────────────────────────────
 
 def _deezer_payload():
+    """Shaped like a real /chart/0/albums response: no release_date field,
+    which is exactly the difference from the dead /editorial/0/releases."""
     return {
         "data": [
             {
@@ -190,7 +193,6 @@ def _deezer_payload():
                 "cover_medium": "https://cdn.deezer.com/cover/medium.jpg",
                 "link": "https://www.deezer.com/album/111",
                 "record_type": "album",
-                "release_date": "2026-09-11",
             },
             {
                 "title": "A Single",
@@ -198,13 +200,12 @@ def _deezer_payload():
                 "cover_medium": "https://cdn.deezer.com/cover/single.jpg",
                 "link": "https://www.deezer.com/album/222",
                 "record_type": "single",
-                "release_date": "2026-09-12",
             },
         ]
     }
 
 
-def test_deezer_releases_map_to_the_template_shape(monkeypatch):
+def test_deezer_albums_map_to_the_template_shape(monkeypatch):
     captured = {}
 
     def fake_get(url, params=None, timeout=None):
@@ -214,9 +215,9 @@ def test_deezer_releases_map_to_the_template_shape(monkeypatch):
 
     monkeypatch.setattr(services.http_requests, "get", fake_get)
 
-    releases = services.get_deezer_new_releases()
+    releases = services.get_deezer_trending_albums()
 
-    assert captured["url"] == "https://api.deezer.com/editorial/0/releases"
+    assert captured["url"] == "https://api.deezer.com/chart/0/albums"
     assert captured["params"] == {"limit": 12}
     assert releases == [
         {
@@ -225,7 +226,7 @@ def test_deezer_releases_map_to_the_template_shape(monkeypatch):
             "image": "https://cdn.deezer.com/cover/medium.jpg",
             "url": "https://www.deezer.com/album/111",
             "type": "Album",
-            "date": "2026-09-11",
+            "date": "",
         },
         {
             "name": "A Single",
@@ -233,30 +234,41 @@ def test_deezer_releases_map_to_the_template_shape(monkeypatch):
             "image": "https://cdn.deezer.com/cover/single.jpg",
             "url": "https://www.deezer.com/album/222",
             "type": "Single",
-            "date": "2026-09-12",
+            "date": "",
         },
     ]
+    # Chart albums carry no release_date: the missing field maps to "" rather
+    # than exploding, and the template omits an empty date.
+    assert all(r["date"] == "" for r in releases)
     # Exactly the keys templates/news.html renders — no more, no less.
     assert set(releases[0]) == {"name", "artist", "image", "url", "type", "date"}
 
 
-def test_deezer_releases_non_200_returns_empty_list(monkeypatch):
+def test_deezer_albums_non_200_returns_empty_list(monkeypatch):
     monkeypatch.setattr(services.http_requests, "get",
                         lambda *a, **k: _FakeResponse(503, text="upstream error"))
-    assert services.get_deezer_new_releases() == []
+    assert services.get_deezer_trending_albums() == []
 
 
-def test_deezer_releases_exception_returns_empty_list(monkeypatch):
+def test_deezer_albums_exception_returns_empty_list(monkeypatch):
     def _boom(*a, **k):
         raise ConnectionError("network down")
 
     monkeypatch.setattr(services.http_requests, "get", _boom)
-    assert services.get_deezer_new_releases() == []
+    assert services.get_deezer_trending_albums() == []
+
+
+def test_deezer_albums_empty_data_returns_empty_list(monkeypatch):
+    # What /editorial/0/releases actually did: HTTP 200 with no rows. The
+    # strip must read as "unavailable", not silently render nothing.
+    monkeypatch.setattr(services.http_requests, "get",
+                        lambda *a, **k: _FakeResponse(200, {"data": [], "total": 0}))
+    assert services.get_deezer_trending_albums() == []
 
 
 def test_news_data_uses_deezer_and_lists_it_as_a_source(monkeypatch):
     monkeypatch.setattr(services, "fetch_rss", lambda feed: [])
-    monkeypatch.setattr(services, "get_deezer_new_releases",
+    monkeypatch.setattr(services, "get_deezer_trending_albums",
                         lambda: [{"name": "X", "artist": "Y", "image": "",
                                    "url": "", "type": "Album", "date": ""}])
     services.clear_news_cache()

@@ -38,7 +38,7 @@
     <div>
       <p class="wv-eyebrow">Music news</p>
       <h1>What's happening in music</h1>
-      <p>Headlines from independent music press, plus new releases.</p>
+      <p>Headlines from independent music press, plus trending albums.</p>
     </div>
     <form method="POST" action="/news/refresh" class="nw-refreshbar">
       <button type="submit" class="wv-btn wv-btn-ghost wv-btn-sm">↻ Refresh</button>
@@ -71,11 +71,11 @@
     <aside>
       <section class="wv-card nw-sidecard" aria-labelledby="nw-rel">
         <div class="wv-section-head" style="margin-bottom:var(--wv-3);">
-          <h2 class="wv-h2" id="nw-rel" style="font-size:1rem;">New releases</h2>
+          <h2 class="wv-h2" id="nw-rel" style="font-size:1rem;">Trending albums</h2>
         </div>
         {% if releases %}
           {% if releases_status == 'cached' %}
-          <div class="wv-notice wv-notice-info" style="margin-bottom:var(--wv-3);font-size:.8rem;">Showing the most recent releases we loaded; live data is temporarily unavailable.</div>
+          <div class="wv-notice wv-notice-info" style="margin-bottom:var(--wv-3);font-size:.8rem;">Showing the latest chart we loaded; live data is temporarily unavailable.</div>
           {% endif %}
           <div class="nw-releases">
             {% for r in releases %}
@@ -91,7 +91,7 @@
           </div>
         {% else %}
           <div class="wv-notice wv-notice-info" style="font-size:.85rem;align-items:flex-start;">
-            <span>New releases are temporarily unavailable. Headlines above are unaffected.</span>
+            <span>Trending albums are temporarily unavailable. Headlines above are unaffected.</span>
           </div>
           <form method="POST" action="/news/refresh" style="margin-top:var(--wv-3);"><button class="wv-btn wv-btn-ghost wv-btn-sm">Retry</button></form>
         {% endif %}
