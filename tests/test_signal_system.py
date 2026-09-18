@@ -43,12 +43,14 @@ def test_desktop_nav_no_longer_shows_old_labels(monkeypatch):
     primary_nav = html[nav_start:nav_end]
     # Phase 5: Discover is now a real, intentional primary-nav destination.
     assert ">Community<" not in primary_nav
-    # Compare/News moved out of the primary nav into the desktop More menu
+    # Compare stays in the desktop More menu.
     assert ">Compare<" not in primary_nav
-    assert ">News<" not in primary_nav
+    # News was promoted back out of More to a top-level tab — it was too
+    # buried to find in a dropdown.
+    assert ">News<" in primary_nav
 
 
-def test_desktop_more_menu_contains_compare_and_news(monkeypatch):
+def test_desktop_more_menu_contains_compare(monkeypatch):
     client = _dashboard_client(monkeypatch)
     html = client.get("/").data.decode()
     assert 'id="wv-navmenu-trigger"' in html
@@ -57,9 +59,9 @@ def test_desktop_more_menu_contains_compare_and_news(monkeypatch):
     panel_end = html.index("</div>", panel_start)
     panel = html[panel_start:panel_end]
     assert 'href="/compare"' in panel
-    assert 'href="/news"' in panel
     assert ">Compare<" in panel
-    assert ">News<" in panel
+    # News is no longer here; it's a primary-nav tab.
+    assert 'href="/news"' not in panel
 
 
 # ── Mobile bottom navigation ──

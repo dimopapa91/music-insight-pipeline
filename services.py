@@ -12,6 +12,7 @@ import html
 import time
 import base64
 import logging
+import unicodedata
 import xml.etree.ElementTree as ET
 
 import requests as http_requests
@@ -21,6 +22,25 @@ from markupsafe import Markup
 from db import db_cursor
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_artist_name(s):
+    s = unicodedata.normalize("NFKD", s or "")
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]+", "", s.lower())
+
+
+def artist_names_match(query, result):
+    """Does a provider's top search result actually name the artist we asked
+    for? Spotify and Deezer both answer a miss with their nearest popular
+    match rather than nothing, so taking items[0] blindly hung some unrelated
+    star's photo and genres on a niche artist ("BlakeNor" -> "Blake Shelton").
+    Compared on letters and digits only, so case, spacing, punctuation and
+    accents don't cause false rejections ("Beyoncé" == "beyonce").
+    """
+    nq, nr = _normalize_artist_name(query), _normalize_artist_name(result)
+    return bool(nq) and nq == nr
+
 
 LASTFM_API_KEY = os.getenv("LASTFM_API_KEY")
 LASTFM_BASE = "http://ws.audioscrobbler.com/2.0/"
@@ -169,6 +189,12 @@ def get_spotify_artist(artist_name):
         if not items:
             return _remember({})
         a = items[0]
+        if not artist_names_match(artist_name, a.get("name", "")):
+            # Spotify answered with its nearest popular match, not this
+            # artist. Suppress the whole payload rather than showing someone
+            # else's popularity, genres and photo — and cache it like any
+            # other miss so we don't re-ask on every page view.
+            return _remember({})
         return _remember({
             "popularity": a.get("popularity", 0),
             "followers": a.get("followers", {}).get("total", 0),
