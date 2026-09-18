@@ -43,6 +43,10 @@ def _artist_payload():
     return {
         "artists": {
             "items": [{
+                # Must match the queried name: get_spotify_artist() now
+                # rejects a top result whose name doesn't (see
+                # tests/test_artist_image_matching.py).
+                "name": "Radiohead",
                 "popularity": 82,
                 "followers": {"total": 1234},
                 "genres": ["art rock", "alternative", "indie", "britpop", "extra"],

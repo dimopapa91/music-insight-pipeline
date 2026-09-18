@@ -15,7 +15,8 @@ from rate_limit import limiter
 from text_clean import strip_em_dashes
 from services import (
     get_similar_artists, get_spotify_artist, get_artist_db, artist_titlecase,
-    clean_deezer_image, resolve_insight, LASTFM_BASE, LASTFM_API_KEY,
+    clean_deezer_image, resolve_insight, artist_names_match,
+    LASTFM_BASE, LASTFM_API_KEY,
 )
 
 artist_bp = Blueprint("artist", __name__)
@@ -98,7 +99,11 @@ def artist_profile(artist_name):
             resp = http_requests.get("https://api.deezer.com/search/artist",
                 params={"q": name, "limit": 1}, timeout=4)
             d = resp.json()
-            if d.get("total", 0) > 0:
+            # Deezer answers a miss with its nearest popular match, so an
+            # unverified items[0] hung the wrong artist's photo and fan count
+            # on niche names. On a mismatch leave both empty and let the
+            # template fall back to the letter-avatar placeholder.
+            if d.get("total", 0) > 0 and artist_names_match(name, d["data"][0].get("name", "")):
                 deezer_image = clean_deezer_image(d["data"][0].get("picture_medium", ""))
                 deezer_fans = d["data"][0].get("nb_fan", 0)
         except Exception:

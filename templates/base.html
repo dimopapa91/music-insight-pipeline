@@ -33,6 +33,7 @@
                 <a href="/discover" {% if path.startswith('/discover') %}aria-current="page"{% endif %}>Discover</a>
                 <a href="/feed"     {% if path.startswith('/feed') %}aria-current="page"{% endif %}>Feed</a>
                 <a href="/profile"  {% if path.startswith('/profile') %}aria-current="page"{% endif %}>Taste</a>
+                <a href="/news" {% if path.startswith('/news') %}aria-current="page"{% endif %}>News</a>
             </nav>
 
             <div class="wv-header-actions">
@@ -106,13 +107,12 @@
                 <a class="wv-btn wv-btn-primary wv-btn-sm wv-desktop-only" href="/register">Sign up</a>
                 {% endif %}
                 <div class="wv-navmenu wv-desktop-only">
-                    <button type="button" class="wv-navmenu-trigger{{ ' is-active' if path.startswith('/compare') or path.startswith('/news') }}" id="wv-navmenu-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="wv-navmenu-panel">
+                    <button type="button" class="wv-navmenu-trigger{{ ' is-active' if path.startswith('/compare') }}" id="wv-navmenu-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="wv-navmenu-panel">
                         <span>More</span>
                         <span class="wv-navmenu-caret" aria-hidden="true">▾</span>
                     </button>
                     <div class="wv-navmenu-panel" id="wv-navmenu-panel" role="menu" aria-label="More" hidden>
                         <a role="menuitem" href="/compare" {% if path.startswith('/compare') %}aria-current="page"{% endif %}>Compare</a>
-                        <a role="menuitem" href="/news" {% if path.startswith('/news') %}aria-current="page"{% endif %}>News</a>
                     </div>
                 </div>
                 <button class="wv-iconbtn wv-theme-btn wv-desktop-only" id="wv-theme-btn" type="button" aria-label="Switch to light theme" title="Switch to light theme">

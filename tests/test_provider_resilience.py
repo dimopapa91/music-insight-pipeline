@@ -43,27 +43,28 @@ def _dashboard_client(monkeypatch, **overrides):
 
 # ── /search: full success, partial (AI-only) success, core failure ────
 
-def test_search_full_success_gives_normal_success_message(monkeypatch):
+def test_search_full_success_goes_straight_to_the_artist_page(monkeypatch):
     monkeypatch.setattr(views_main, "run_pipeline", lambda artist, user_id=None: "A generated insight.")
     client = dashboard.app.test_client()
     resp = client.post("/search", data={"artist": "Radiohead"})
     assert resp.status_code == 302
     location = resp.headers["Location"]
+    assert location.endswith("/artist/Radiohead")
     assert "error" not in location
-    assert "Radiohead" in location
-    assert "successfully" in location
 
 
-def test_search_ai_only_failure_gives_partial_success_not_error(monkeypatch):
+def test_search_ai_only_failure_also_goes_to_the_artist_page(monkeypatch):
     # run_pipeline succeeded (no exception) but returned a falsey insight —
     # exactly what happens when Last.fm+DB succeed and only Claude failed.
+    # That's still a successful search, so it lands on the artist page too;
+    # the page states the AI-unavailable case itself.
     monkeypatch.setattr(views_main, "run_pipeline", lambda artist, user_id=None: "")
     client = dashboard.app.test_client()
     resp = client.post("/search", data={"artist": "Radiohead"})
     assert resp.status_code == 302
     location = resp.headers["Location"]
+    assert location.endswith("/artist/Radiohead")
     assert "error=True" not in location
-    assert "temporarily+unavailable" in location or "temporarily unavailable" in location
     assert "❌" not in location
 
 
@@ -95,7 +96,8 @@ def test_search_with_missing_anthropic_key_gives_partial_success_end_to_end(monk
     # The real run_pipeline() (not mocked) with a genuinely missing key —
     # confirms the whole chain (lazy client -> analyse_with_claude raises ->
     # run_pipeline catches -> "" insight -> /search treats it as partial
-    # success, not an error) actually holds together end to end.
+    # success, not an error) actually holds together end to end, landing on
+    # the artist page rather than a dashboard error.
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.setattr(views_main, "run_pipeline", pipeline.run_pipeline)
     monkeypatch.setattr(pipeline, "get_top_tracks", lambda artist_name: [{"name": "Track", "playcount": "1"}])
@@ -107,7 +109,7 @@ def test_search_with_missing_anthropic_key_gives_partial_success_end_to_end(monk
     location = resp.headers["Location"]
     assert "error=True" not in location
     assert "Anthropic API key is not configured" not in location
-    assert "temporarily+unavailable" in location or "temporarily unavailable" in location
+    assert location.endswith("/artist/Radiohead")
 
 
 def test_search_never_leaks_raw_exception_text_anywhere_in_the_response(monkeypatch):

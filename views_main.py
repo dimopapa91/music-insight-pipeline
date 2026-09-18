@@ -50,11 +50,13 @@ def search():
         return redirect(url_for("main.dashboard", message="Please enter an artist name.", error=True))
     uid = current_user.id if current_user.is_authenticated else None
     try:
-        insight = run_pipeline(artist, user_id=uid)
-        # The search is saved by this point (both branches below are
-        # successes), so drop the cached homepage payload — otherwise the
-        # artist the user just added wouldn't appear for up to
-        # _DASHBOARD_TTL. Not on the failure path: nothing was saved there.
+        # The return value (the AI insight, or "" when only Claude failed)
+        # isn't needed here: either way the search itself succeeded and the
+        # artist page reads the saved row for itself.
+        run_pipeline(artist, user_id=uid)
+        # Saved by this point, so drop the cached homepage payload —
+        # otherwise the artist the user just added wouldn't appear for up
+        # to _DASHBOARD_TTL. Not on the failure path: nothing was saved.
         clear_dashboard_cache()
     except Exception:
         # Never leak the raw provider/DB exception text to a public message —
@@ -62,12 +64,12 @@ def search():
         return redirect(url_for("main.dashboard",
             message=f"Could not load {artist_titlecase(artist)} just now. Check the spelling, or try again.",
             error=True))
-    if insight:
-        return redirect(url_for("main.dashboard", message=f"✅ {artist_titlecase(artist)} analysed and saved successfully!"))
-    # Core search (Last.fm + DB save) succeeded; only the optional Claude
-    # enrichment failed — still a successful search, so no error styling.
-    return redirect(url_for("main.dashboard",
-        message=f"{artist_titlecase(artist)} data is ready. AI insight is temporarily unavailable."))
+    # The search succeeded either way here — with or without the optional
+    # Claude enrichment — so go straight to what the user actually asked
+    # for. Landing back on the dashboard meant hunting for the artist they
+    # just searched; the artist page already states its own AI-unavailable
+    # case, so no flash message is needed to carry that.
+    return redirect(url_for("artist.artist_profile", artist_name=artist))
 
 
 @main_bp.route("/about")
