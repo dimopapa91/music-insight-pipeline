@@ -11,7 +11,7 @@ from db import db_cursor
 from pipeline import run_pipeline
 from rate_limit import limiter
 from services import (
-    get_dashboard_data, artist_titlecase,
+    get_dashboard_data, clear_dashboard_cache, artist_titlecase,
     SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET,
 )
 from social import get_feed
@@ -51,6 +51,11 @@ def search():
     uid = current_user.id if current_user.is_authenticated else None
     try:
         insight = run_pipeline(artist, user_id=uid)
+        # The search is saved by this point (both branches below are
+        # successes), so drop the cached homepage payload — otherwise the
+        # artist the user just added wouldn't appear for up to
+        # _DASHBOARD_TTL. Not on the failure path: nothing was saved there.
+        clear_dashboard_cache()
     except Exception:
         # Never leak the raw provider/DB exception text to a public message —
         # detailed diagnostics belong only in the pipeline's own logs.
