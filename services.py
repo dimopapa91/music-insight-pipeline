@@ -194,7 +194,36 @@ def clean_deezer_image(url):
     return url
 
 
+# The homepage fired ~17 sequential external calls per render with no
+# caching (a Last.fm getSimilar per latest-insight row, more inside
+# discovery, then a Deezer lookup per discovered artist at 4s timeout each),
+# which is where the ~5s TTFB came from. It's the same data every load, so
+# both legs are cached below on the same TTL pattern as
+# _spotify_artist_cache: successes held long, failures held briefly so a
+# provider outage doesn't get pinned in for a whole day.
+_similar_cache = {}            # name_lower -> {"data": list, "at": float}
+_SIMILAR_TTL = 86400           # 24h — similar artists change slowly
+_SIMILAR_NEG_TTL = 3600        # 1h for empty/failed
+
+_deezer_card_cache = {}        # name_lower -> {"data": dict, "at": float}
+_DEEZER_CARD_TTL = 86400
+_DEEZER_CARD_NEG_TTL = 3600
+
+
 def get_similar_artists(artist_name):
+    """Last.fm similar artists, cached by lowercased name (see
+    _similar_cache). Used by both the homepage and every artist page."""
+    key = artist_name.strip().lower()
+    entry = _similar_cache.get(key)
+    if entry:
+        ttl = _SIMILAR_TTL if entry["data"] else _SIMILAR_NEG_TTL
+        if time.time() - entry["at"] < ttl:
+            return entry["data"]
+
+    def _remember(data):
+        _similar_cache[key] = {"data": data, "at": time.time()}
+        return data
+
     try:
         resp = http_requests.get(LASTFM_BASE, params={
             "method": "artist.getSimilar",
@@ -205,10 +234,52 @@ def get_similar_artists(artist_name):
         }, timeout=5)
         data = resp.json()
         if "similarartists" in data and "artist" in data["similarartists"]:
-            return [a["name"] for a in data["similarartists"]["artist"][:5]]
+            return _remember([a["name"] for a in data["similarartists"]["artist"][:5]])
     except Exception:
         pass
-    return []
+    return _remember([])
+
+
+def _deezer_artist_card(name):
+    """Deezer artist card for the discovery strip, cached by lowercased name.
+
+    An artist Deezer simply has no photo for still returns a real answer, so
+    the empty-image card is cached under the success TTL; only a transport
+    failure (non-200 body/exception) is treated as negative and retried
+    sooner.
+    """
+    key = name.strip().lower()
+    entry = _deezer_card_cache.get(key)
+    if entry:
+        # "ok" rides on the entry, not the card, so the returned dict stays
+        # exactly {name, image, nb_fan} for the template.
+        ttl = _DEEZER_CARD_TTL if entry["ok"] else _DEEZER_CARD_NEG_TTL
+        if time.time() - entry["at"] < ttl:
+            return entry["data"]
+
+    def _remember(card, ok):
+        _deezer_card_cache[key] = {"data": card, "at": time.time(), "ok": ok}
+        return card
+
+    try:
+        resp = http_requests.get(
+            "https://api.deezer.com/search/artist",
+            params={"q": name, "limit": 1},
+            timeout=4
+        )
+        data = resp.json()
+        if data.get("total", 0) > 0:
+            d = data["data"][0]
+            return _remember({
+                "name": d.get("name", name),
+                "image": clean_deezer_image(d.get("picture_medium", "")),
+                "nb_fan": d.get("nb_fan", 0)
+            }, True)
+        # A genuine "Deezer knows nothing about this artist" — a real answer,
+        # not a failure, so it keeps the long TTL.
+        return _remember({"name": name, "image": "", "nb_fan": 0}, True)
+    except Exception:
+        return _remember({"name": name, "image": "", "nb_fan": 0}, False)
 
 
 def get_discovery_artists(searched_artists):
@@ -223,27 +294,7 @@ def get_discovery_artists(searched_artists):
     already = set(a.lower() for a in searched_artists)
     new_artists = [a for a in similar if a.lower() not in already][:8]
 
-    discovery = []
-    for artist in new_artists:
-        try:
-            resp = http_requests.get(
-                "https://api.deezer.com/search/artist",
-                params={"q": artist, "limit": 1},
-                timeout=4
-            )
-            data = resp.json()
-            if data.get("total", 0) > 0:
-                d = data["data"][0]
-                discovery.append({
-                    "name": d.get("name", artist),
-                    "image": clean_deezer_image(d.get("picture_medium", "")),
-                    "nb_fan": d.get("nb_fan", 0)
-                })
-            else:
-                discovery.append({"name": artist, "image": "", "nb_fan": 0})
-        except Exception:
-            discovery.append({"name": artist, "image": "", "nb_fan": 0})
-    return discovery
+    return [_deezer_artist_card(artist) for artist in new_artists]
 
 
 # ── Dashboard + compare data builders ───────────────────────────────
@@ -283,7 +334,23 @@ def resolve_insight(artist_name, current_insight):
     return fallback, bool(fallback)
 
 
+# The homepage's whole payload is global, not per-user, so every visitor
+# rebuilds the identical thing — several DB aggregates plus the external
+# discovery calls above. A short TTL is the single biggest lever on the ~5s
+# TTFB; it's deliberately brief so a new search still surfaces quickly.
+_dashboard_cache = {"data": None, "at": 0}
+_DASHBOARD_TTL = 180           # 3 minutes
+
+
+def clear_dashboard_cache():
+    _dashboard_cache["data"] = None
+    _dashboard_cache["at"] = 0
+
+
 def get_dashboard_data():
+    if _dashboard_cache["data"] is not None and time.time() - _dashboard_cache["at"] < _DASHBOARD_TTL:
+        return _dashboard_cache["data"]
+
     with db_cursor() as cur:
         cur.execute("SELECT COUNT(*) FROM searches")
         total_searches = cur.fetchone()[0]
@@ -335,7 +402,10 @@ def get_dashboard_data():
     # DB connection released before the (slower) external discovery calls
     discovery = get_discovery_artists(all_artists)
 
-    return total_searches, unique_artists, searches_today, artist_plays, latest_insights, discovery
+    data = total_searches, unique_artists, searches_today, artist_plays, latest_insights, discovery
+    _dashboard_cache["data"] = data
+    _dashboard_cache["at"] = time.time()
+    return data
 
 
 def get_artist_db(name):
