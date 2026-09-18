@@ -29,6 +29,17 @@ SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 _spotify_token_cache = {}
 
+# get_spotify_artist() runs on every artist page view. The app is in
+# Spotify's Development Mode, whose per-account quota normal traffic can
+# exhaust outright (/v1/search then answers 429 QUOTA_EXCEEDED and artist
+# Spotify data silently disappears), so results are cached by name here.
+# Failures are cached too, for a shorter window: without that, a burst of
+# misses during quota exhaustion keeps hammering Spotify and pins the quota
+# open instead of letting it recover. The negative cache is the real saver.
+_spotify_artist_cache = {}         # name_lower -> {"data": dict, "at": float}
+_SPOTIFY_ARTIST_TTL = 86400        # cache SUCCESS for 24h
+_SPOTIFY_ARTIST_NEG_TTL = 900      # cache FAILURE/empty for 15m
+
 
 # ── Jinja display filters ───────────────────────────────────────────
 
@@ -120,28 +131,53 @@ def get_spotify_token():
 
 
 def get_spotify_artist(artist_name):
-    """Returns dict with genres, popularity, followers — or empty dict on failure."""
+    """Returns dict with genres, popularity, followers — or empty dict on failure.
+
+    Cached by lowercased name (see _spotify_artist_cache): successes for 24h,
+    failures for 15m, so repeat page views don't re-spend the Development
+    Mode quota.
+    """
+    key = artist_name.strip().lower()
+    entry = _spotify_artist_cache.get(key)
+    if entry:
+        ttl = _SPOTIFY_ARTIST_TTL if entry["data"] else _SPOTIFY_ARTIST_NEG_TTL
+        if time.time() - entry["at"] < ttl:
+            return entry["data"]
+
+    def _remember(data):
+        _spotify_artist_cache[key] = {"data": data, "at": time.time()}
+        return data
+
     token = get_spotify_token()
     if not token:
-        return {}
+        return _remember({})
     try:
         resp = http_requests.get("https://api.spotify.com/v1/search",
             headers={"Authorization": f"Bearer {token}"},
             params={"q": artist_name, "type": "artist", "limit": 1}, timeout=5)
+        if resp.status_code != 200:
+            # 429 is the Development Mode quota running out, which is a
+            # different operational problem from a generic API error — worth
+            # telling apart in the logs. Never log the token or headers.
+            if resp.status_code == 429:
+                logger.warning("Spotify search quota exceeded (429) for %r", artist_name)
+            else:
+                logger.warning("Spotify search HTTP %s for %r", resp.status_code, artist_name)
+            return _remember({})
         data = resp.json()
         items = data.get("artists", {}).get("items", [])
         if not items:
-            return {}
+            return _remember({})
         a = items[0]
-        return {
+        return _remember({
             "popularity": a.get("popularity", 0),
             "followers": a.get("followers", {}).get("total", 0),
             "genres": a.get("genres", [])[:4],
             "spotify_url": a.get("external_urls", {}).get("spotify", ""),
             "image": a["images"][1]["url"] if len(a.get("images", [])) > 1 else (a["images"][0]["url"] if a.get("images") else ""),
-        }
+        })
     except Exception:
-        return {}
+        return _remember({})
 
 
 # ── Last.fm / Deezer discovery ──────────────────────────────────────
@@ -328,7 +364,7 @@ def get_artist_db(name):
         return None
 
 
-# ── Music news (RSS + Spotify new releases) ─────────────────────────
+# ── Music news (RSS + Deezer new releases) ──────────────────────────
 
 _news_cache = {"data": None, "fetched_at": 0}
 
@@ -362,37 +398,39 @@ def fetch_rss(feed):
         return []
 
 
-def get_spotify_new_releases(limit=12):
-    token = get_spotify_token()
-    if not token:
-        logger.warning("Spotify new releases skipped: no access token")
-        return []
+def get_deezer_new_releases(limit=12):
+    """Editorial new releases from Deezer, in the same shape the news
+    template already renders.
+
+    Replaces the old Spotify /v1/browse/new-releases call, which returns 403
+    for this app tier permanently and can't be fixed in code. Deezer needs no
+    API key (it's already used keyless elsewhere in this module).
+    """
     try:
-        resp = http_requests.get("https://api.spotify.com/v1/browse/new-releases",
-            headers={"Authorization": f"Bearer {token}"},
-            params={"limit": limit, "country": "GB"}, timeout=5)
+        resp = http_requests.get("https://api.deezer.com/editorial/0/releases",
+            params={"limit": limit}, timeout=5)
         if resp.status_code != 200:
             # Log for developers; never surface raw provider errors to users.
-            logger.warning("Spotify new releases HTTP %s: %s", resp.status_code, resp.text[:200])
+            logger.warning("Deezer new releases HTTP %s: %s", resp.status_code, resp.text[:200])
             return []
-        albums = resp.json().get("albums", {}).get("items", [])
+        albums = resp.json().get("data", [])
         results = []
         for a in albums:
             results.append({
-                "name":    a.get("name", ""),
-                "artist":  ", ".join(ar["name"] for ar in a.get("artists", [])[:2]),
-                "image":   a["images"][1]["url"] if len(a.get("images", [])) > 1 else (a["images"][0]["url"] if a.get("images") else ""),
-                "url":     a.get("external_urls", {}).get("spotify", ""),
-                "type":    a.get("album_type", "album").capitalize(),
+                "name":    a.get("title", ""),
+                "artist":  a.get("artist", {}).get("name", ""),
+                "image":   a.get("cover_medium", ""),
+                "url":     a.get("link", ""),
+                "type":    a.get("record_type", "album").capitalize(),
                 "date":    a.get("release_date", ""),
             })
         return results
     except Exception as e:
-        logger.warning("Spotify new releases failed: %s", e)
+        logger.warning("Deezer new releases failed: %s", e)
         return []
 
 
-# Last successful releases, so a transient Spotify failure doesn't blank the section.
+# Last successful releases, so a transient provider failure doesn't blank the section.
 _last_releases = []
 
 
@@ -408,7 +446,7 @@ def get_news_data():
     for feed in RSS_FEEDS:
         articles.extend(fetch_rss(feed))
 
-    releases = get_spotify_new_releases()
+    releases = get_deezer_new_releases()
     if releases:
         _last_releases = releases
         releases_status = "live"
@@ -422,7 +460,7 @@ def get_news_data():
         "articles": articles,
         "releases": releases,
         "releases_status": releases_status,
-        "sources": [f["name"] for f in RSS_FEEDS] + ["Spotify"],
+        "sources": [f["name"] for f in RSS_FEEDS] + ["Deezer"],
     }
     _news_cache["data"] = data
     _news_cache["fetched_at"] = time.time()
