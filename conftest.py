@@ -29,6 +29,16 @@ os.environ.setdefault("SPOTIFY_CLIENT_SECRET", "test")
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 os.environ["DATABASE_URL"] = "postgresql://test:test@127.0.0.1:1/pytest_must_not_reach_a_real_db"
 
+# artist_profile() calls services.get_artist_events() on every render, and
+# the ~dozen artist-page tests don't mock it — so with a real key present
+# the suite would make live Ticketmaster calls at 8s timeouts each. An
+# empty key makes get_artist_events() return [] before any HTTP. Pinned,
+# not setdefault, for exactly the reason spelled out for DATABASE_URL
+# above: load_dotenv() only leaves a variable alone when it's already
+# present, so merely omitting it would let the real .env key repopulate it
+# during collection.
+os.environ["TICKETMASTER_API_KEY"] = ""   # tests never call Ticketmaster
+
 # Flask-Limiter's storage is a single in-memory counter shared by the whole
 # test session (dashboard.app is created once, at first import). Without
 # this, unrelated tests hitting /search, /artist/<name> or /compare many
