@@ -323,6 +323,206 @@ def get_discovery_artists(searched_artists):
     return [_deezer_artist_card(artist) for artist in new_artists]
 
 
+# ── MBID-anchored artist media ──────────────────────────────────────
+#
+# Searching a provider by name and taking the top result can't survive a
+# name collision: two different artists genuinely share a name and the
+# search returns whichever is more popular. artist_names_match() catches a
+# wrong *name*, but both candidates here have the right one. MusicBrainz
+# solves it properly — Last.fm hands us the artist's MBID, MusicBrainz maps
+# that MBID to the artist's own official Spotify/Deezer URLs, and we fetch
+# those exact ids. Name search stays only as the fallback for artists with
+# no MBID or no linked URLs.
+
+# MusicBrainz rejects requests without a descriptive User-Agent (403), so
+# this identifies the app and a contact point, as their policy requires.
+MUSICBRAINZ_USER_AGENT = "Waveline/1.0 ( https://wearewaveline.com )"
+
+_SPOTIFY_ARTIST_URL_RE = re.compile(r"open\.spotify\.com/artist/([A-Za-z0-9]+)")
+_DEEZER_ARTIST_URL_RE = re.compile(r"deezer\.com/(?:[a-z]{2}/)?artist/(\d+)")
+
+_mb_links_cache = {}           # mbid -> {"data": dict, "at": float}
+_MB_LINKS_TTL = 604800         # 7d — an artist's official links rarely move
+_MB_LINKS_NEG_TTL = 86400      # 1d for a failed lookup
+
+_spotify_by_id_cache = {}      # spotify_id -> {"data": dict, "at": float}
+_deezer_by_id_cache = {}       # deezer_id -> {"data": dict, "at": float, "ok": bool}
+
+
+def get_musicbrainz_links(mbid):
+    """Map a MusicBrainz artist id to that artist's own Spotify/Deezer ids.
+
+    Returns {"spotify_id": str|None, "deezer_id": str|None} — a real answer
+    even when the artist has neither link — or {} when the lookup itself
+    failed, which is the only case retried on the short TTL.
+    """
+    if not mbid:
+        return {}
+
+    entry = _mb_links_cache.get(mbid)
+    if entry:
+        ttl = _MB_LINKS_TTL if entry["data"] else _MB_LINKS_NEG_TTL
+        if time.time() - entry["at"] < ttl:
+            return entry["data"]
+
+    def _remember(data):
+        _mb_links_cache[mbid] = {"data": data, "at": time.time()}
+        return data
+
+    try:
+        resp = http_requests.get(
+            f"https://musicbrainz.org/ws/2/artist/{mbid}",
+            params={"inc": "url-rels", "fmt": "json"},
+            headers={"User-Agent": MUSICBRAINZ_USER_AGENT},
+            timeout=6,
+        )
+        if resp.status_code != 200:
+            logger.warning("MusicBrainz HTTP %s for mbid %r", resp.status_code, mbid)
+            return _remember({})
+
+        spotify_id = deezer_id = None
+        # Scan every relation's URL rather than trusting the relation-type
+        # label: the same streaming link shows up under "free streaming",
+        # "streaming", or "purchase for download" depending on the artist.
+        for relation in resp.json().get("relations", []):
+            resource = (relation.get("url") or {}).get("resource", "")
+            if not spotify_id:
+                m = _SPOTIFY_ARTIST_URL_RE.search(resource)
+                if m:
+                    spotify_id = m.group(1)
+            if not deezer_id:
+                m = _DEEZER_ARTIST_URL_RE.search(resource)
+                if m:
+                    deezer_id = m.group(1)
+        return _remember({"spotify_id": spotify_id, "deezer_id": deezer_id})
+    except Exception as e:
+        logger.warning("MusicBrainz lookup failed for mbid %r (%s)", mbid, type(e).__name__)
+        return _remember({})
+
+
+def get_spotify_artist_by_id(spotify_id):
+    """Exact Spotify artist fetch — no search, so no name guard is needed.
+    Same dict shape as get_spotify_artist(), or {} on failure."""
+    if not spotify_id:
+        return {}
+
+    entry = _spotify_by_id_cache.get(spotify_id)
+    if entry:
+        ttl = _SPOTIFY_ARTIST_TTL if entry["data"] else _SPOTIFY_ARTIST_NEG_TTL
+        if time.time() - entry["at"] < ttl:
+            return entry["data"]
+
+    def _remember(data):
+        _spotify_by_id_cache[spotify_id] = {"data": data, "at": time.time()}
+        return data
+
+    token = get_spotify_token()
+    if not token:
+        return _remember({})
+    try:
+        resp = http_requests.get(
+            f"https://api.spotify.com/v1/artists/{spotify_id}",
+            headers={"Authorization": f"Bearer {token}"}, timeout=5)
+        if resp.status_code != 200:
+            # Never log the token. 429 is the Development Mode quota, which
+            # is a different problem from a generic API error.
+            if resp.status_code == 429:
+                logger.warning("Spotify quota exceeded (429) for artist id %r", spotify_id)
+            else:
+                logger.warning("Spotify artist HTTP %s for id %r", resp.status_code, spotify_id)
+            return _remember({})
+        a = resp.json()
+        images = a.get("images", [])
+        return _remember({
+            "popularity": a.get("popularity", 0),
+            "followers": a.get("followers", {}).get("total", 0),
+            "genres": a.get("genres", [])[:4],
+            "spotify_url": a.get("external_urls", {}).get("spotify", ""),
+            "image": images[1]["url"] if len(images) > 1 else (images[0]["url"] if images else ""),
+        })
+    except Exception:
+        return _remember({})
+
+
+def get_deezer_artist_by_id(deezer_id):
+    """Exact Deezer artist fetch. Returns {"image": str, "nb_fan": int} —
+    empty/zero on failure."""
+    empty = {"image": "", "nb_fan": 0}
+    if not deezer_id:
+        return empty
+
+    entry = _deezer_by_id_cache.get(deezer_id)
+    if entry:
+        ttl = _DEEZER_CARD_TTL if entry["ok"] else _DEEZER_CARD_NEG_TTL
+        if time.time() - entry["at"] < ttl:
+            return entry["data"]
+
+    def _remember(data, ok):
+        _deezer_by_id_cache[deezer_id] = {"data": data, "at": time.time(), "ok": ok}
+        return data
+
+    try:
+        resp = http_requests.get(f"https://api.deezer.com/artist/{deezer_id}", timeout=5)
+        if resp.status_code != 200:
+            logger.warning("Deezer artist HTTP %s for id %r", resp.status_code, deezer_id)
+            return _remember(empty, False)
+        data = resp.json()
+        # Deezer reports a bad id in the body with HTTP 200, so the status
+        # code alone isn't enough to tell success from failure here.
+        if data.get("error"):
+            logger.warning("Deezer artist id %r returned an error body", deezer_id)
+            return _remember(empty, False)
+        return _remember({
+            "image": clean_deezer_image(data.get("picture_medium", "")),
+            "nb_fan": data.get("nb_fan", 0),
+        }, True)
+    except Exception:
+        return _remember(empty, False)
+
+
+def get_deezer_artist_by_name(name):
+    """Name-search fallback for Deezer media, guarded by artist_names_match
+    so a near-miss can't hand over the wrong artist's photo."""
+    try:
+        resp = http_requests.get("https://api.deezer.com/search/artist",
+            params={"q": name, "limit": 1}, timeout=4)
+        d = resp.json()
+        if d.get("total", 0) > 0 and artist_names_match(name, d["data"][0].get("name", "")):
+            return {
+                "image": clean_deezer_image(d["data"][0].get("picture_medium", "")),
+                "nb_fan": d["data"][0].get("nb_fan", 0),
+            }
+    except Exception:
+        pass
+    return {"image": "", "nb_fan": 0}
+
+
+def get_artist_media(name, mbid=None):
+    """Resolve an artist's Spotify/Deezer media, anchored on their MBID when
+    one is available. Returns
+    {"spotify": dict, "deezer_image": str, "deezer_fans": int}.
+
+    Linked-id results are trusted outright: if MusicBrainz says this is the
+    artist's Spotify page, a name search can't second-guess it. Name search
+    only fills a genuine gap (no MBID, no link, or the linked fetch failed).
+    """
+    links = get_musicbrainz_links(mbid) if mbid else {}
+
+    spotify = get_spotify_artist_by_id(links["spotify_id"]) if links.get("spotify_id") else {}
+    if not spotify:
+        spotify = get_spotify_artist(name)
+
+    dz = get_deezer_artist_by_id(links["deezer_id"]) if links.get("deezer_id") else {}
+    if not dz.get("image"):
+        dz = get_deezer_artist_by_name(name)
+
+    return {
+        "spotify": spotify,
+        "deezer_image": dz.get("image", ""),
+        "deezer_fans": dz.get("nb_fan", 0),
+    }
+
+
 # ── Dashboard + compare data builders ───────────────────────────────
 
 def _latest_nonempty_insight(artist_name):
