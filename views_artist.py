@@ -14,8 +14,8 @@ from pipeline import run_pipeline
 from rate_limit import limiter
 from text_clean import strip_em_dashes
 from services import (
-    get_similar_artists, get_artist_media, get_artist_db, artist_titlecase,
-    resolve_insight, LASTFM_BASE, LASTFM_API_KEY,
+    get_similar_artists, get_artist_media, get_artist_events, get_artist_db,
+    artist_titlecase, resolve_insight, LASTFM_BASE, LASTFM_API_KEY,
 )
 
 artist_bp = Blueprint("artist", __name__)
@@ -124,12 +124,15 @@ def artist_profile(artist_name):
         if not spotify:
             logging.warning(f"no spotify media for '{name}'")
 
+        events = get_artist_events(name)
+
         return render_template("artist_profile.html",
             artist_name=name,
             insight=insight,
             insight_is_reused=insight_is_reused,
             tracks=tracks,
             similar_artists=similar,
+            events=events,
             search_count=search_count,
             last_searched=last_searched.strftime("%d %b %Y") if hasattr(last_searched, 'strftime') else str(last_searched),
             top_playcount=top_playcount,

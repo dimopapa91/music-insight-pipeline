@@ -55,6 +55,20 @@
   .ar-track .nm:hover { color: var(--wv-amb-ink); }
   .ar-track .pl { font-size: .75rem; color: var(--wv-muted); flex-shrink: 0; }
 
+  /* Event rows mirror .ar-track's single-instrument strip, with room for
+     the venue line to wrap on narrow screens. */
+  .ar-event { display: flex; align-items: center; justify-content: space-between; gap: var(--wv-3); padding: 12px 0; border-bottom: 1px solid var(--wv-border); font-size: .92rem; }
+  .ar-event:last-child { border-bottom: none; }
+  .ar-event-when { font-family: var(--wv-font-display); font-weight: 700; font-size: .84rem; color: var(--wv-amb-ink); flex-shrink: 0; min-width: 92px; }
+  .ar-event-where { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .ar-event-venue { overflow-wrap: anywhere; }
+  .ar-event-place { font-size: .78rem; color: var(--wv-muted); margin-top: 2px; overflow-wrap: anywhere; }
+  .ar-event .wv-btn { flex-shrink: 0; }
+  @media (max-width: 560px) {
+    .ar-event { flex-wrap: wrap; }
+    .ar-event-where { flex-basis: 100%; order: 3; }
+  }
+
   .ar-similar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--wv-3); }
   .ar-similar-card { padding: var(--wv-4); text-align: center; text-decoration: none; color: inherit; }
   .ar-similar-card .ph2 { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto var(--wv-2); background: var(--wv-surface-2); border: 1px solid var(--wv-border); display: flex; align-items: center; justify-content: center; font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-muted); }
@@ -100,6 +114,7 @@
     <div class="wv-subnav-inner">
       <a href="#overview">Overview</a>
       {% if tracks %}<a href="#tracks">Top Tracks</a>{% endif %}
+      {% if events %}<a href="#events">Events</a>{% endif %}
       <a href="#insight">AI Insight</a>
       {% if similar_artists %}<a href="#similar">Similar Artists</a>{% endif %}
       <a href="#compare">Compare</a>
@@ -122,6 +137,24 @@
       <div class="ar-track">
         <button type="button" class="nm" onclick='wvPlay({{ artist_name|tojson }}, {{ track.name|tojson }}, this)'>▶ {{ track.name }}</button>
         <span class="pl">{{ "{:,}".format(track.plays) }} plays</span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if events %}
+  <section class="ar-section" id="events">
+    <div class="ar-section-head"><h2>Upcoming events</h2><span class="n">via Ticketmaster</span></div>
+    <div class="wv-card wv-card-pad">
+      {% for e in events %}
+      <div class="ar-event">
+        <span class="ar-event-when">{{ e.date }}</span>
+        <span class="ar-event-where">
+          <span class="ar-event-venue">{{ e.venue }}</span>
+          <span class="ar-event-place">{{ e.city }}{% if e.country %} · {{ e.country }}{% endif %}</span>
+        </span>
+        <a class="wv-btn wv-btn-ghost wv-btn-sm" href="{{ e.url }}" target="_blank" rel="noopener noreferrer">Get tickets →</a>
       </div>
       {% endfor %}
     </div>

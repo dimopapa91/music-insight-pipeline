@@ -1,8 +1,9 @@
 """Shared services and helpers for Waveline.
 
-Data-source clients (Spotify, Last.fm, Deezer, RSS), the dashboard/compare data
-builders, and the Jinja display filters all live here so the view blueprints
-stay thin. No Flask app or routes in this module.
+Data-source clients (Spotify, Last.fm, Deezer, MusicBrainz, Ticketmaster,
+RSS), the dashboard/compare data builders, and the Jinja display filters all
+live here so the view blueprints stay thin. No Flask app or routes in this
+module.
 """
 
 import os
@@ -14,6 +15,7 @@ import base64
 import logging
 import unicodedata
 import xml.etree.ElementTree as ET
+from datetime import datetime
 
 import requests as http_requests
 import markdown as markdown_lib
@@ -48,6 +50,8 @@ LASTFM_BASE = "http://ws.audioscrobbler.com/2.0/"
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 _spotify_token_cache = {}
+
+TICKETMASTER_API_KEY = os.getenv("TICKETMASTER_API_KEY")
 
 # get_spotify_artist() runs on every artist page view. The app is in
 # Spotify's Development Mode, whose per-account quota normal traffic can
@@ -521,6 +525,96 @@ def get_artist_media(name, mbid=None):
         "deezer_image": dz.get("image", ""),
         "deezer_fans": dz.get("nb_fan", 0),
     }
+
+
+# ── Live events (Ticketmaster) ──────────────────────────────────────
+
+_TICKETMASTER_ATTRACTIONS_URL = "https://app.ticketmaster.com/discovery/v2/attractions.json"
+_TICKETMASTER_EVENTS_URL = "https://app.ticketmaster.com/discovery/v2/events.json"
+
+_events_cache = {}             # name_lower -> {"data": list, "at": float}
+_EVENTS_TTL = 21600            # 6h — tour dates move, but not by the minute
+_EVENTS_NEG_TTL = 3600         # 1h for empty/failed
+
+
+def get_artist_events(name, limit=6):
+    """Upcoming Ticketmaster events for an artist, soonest first, or [].
+
+    Anchored on the attraction whose name actually matches: a keyword search
+    for "Coldplay" returns tribute acts ("Ultimate Coldplay", "Talk tribute
+    Coldplay") ABOVE the real artist, so taking the top hit would advertise
+    a tribute band's dates as the artist's own. Same artist_names_match()
+    guard used for artwork; no match means no events rather than wrong ones.
+    """
+    key = name.strip().lower()
+    entry = _events_cache.get(key)
+    if entry:
+        ttl = _EVENTS_TTL if entry["data"] else _EVENTS_NEG_TTL
+        if time.time() - entry["at"] < ttl:
+            return entry["data"]
+
+    def _remember(data):
+        _events_cache[key] = {"data": data, "at": time.time()}
+        return data
+
+    if not TICKETMASTER_API_KEY:
+        # Same contract as the optional GeoIP database: the feature simply
+        # doesn't appear rather than breaking the page.
+        logger.info("TICKETMASTER_API_KEY not set — artist events are disabled.")
+        return _remember([])
+
+    try:
+        resp = http_requests.get(_TICKETMASTER_ATTRACTIONS_URL, params={
+            "keyword": name,
+            "classificationName": "Music",
+            "size": 20,
+            "apikey": TICKETMASTER_API_KEY,
+        }, timeout=8)
+        if resp.status_code != 200:
+            # Never log the params: they carry the API key.
+            logger.warning("Ticketmaster attractions HTTP %s for %r", resp.status_code, name)
+            return _remember([])
+
+        attractions = resp.json().get("_embedded", {}).get("attractions", [])
+        match = next((a for a in attractions if artist_names_match(name, a.get("name", ""))), None)
+        if not match:
+            return _remember([])
+
+        # The attraction already carries its upcoming-event count, so a
+        # zero here saves the second request entirely.
+        if (match.get("upcomingEvents") or {}).get("_total") == 0:
+            return _remember([])
+
+        resp = http_requests.get(_TICKETMASTER_EVENTS_URL, params={
+            "attractionId": match.get("id"),
+            "sort": "date,asc",
+            "size": limit,
+            "apikey": TICKETMASTER_API_KEY,
+        }, timeout=8)
+        if resp.status_code != 200:
+            logger.warning("Ticketmaster events HTTP %s for %r", resp.status_code, name)
+            return _remember([])
+
+        events = []
+        for ev in resp.json().get("_embedded", {}).get("events", []):
+            venue = (ev.get("_embedded", {}).get("venues") or [{}])[0]
+            date_raw = ev.get("dates", {}).get("start", {}).get("localDate", "")
+            try:
+                display_date = datetime.strptime(date_raw, "%Y-%m-%d").strftime("%d %b %Y")
+            except Exception:
+                display_date = date_raw
+            events.append({
+                "date": display_date,
+                "venue": venue.get("name", ""),
+                "city": (venue.get("city") or {}).get("name", ""),
+                "country": (venue.get("country") or {}).get("name", ""),
+                "url": ev.get("url", ""),
+                "title": ev.get("name", ""),
+            })
+        return _remember(events)
+    except Exception as e:
+        logger.warning("Ticketmaster lookup failed for %r (%s)", name, type(e).__name__)
+        return _remember([])
 
 
 # ── Dashboard + compare data builders ───────────────────────────────
