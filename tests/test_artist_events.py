@@ -325,3 +325,79 @@ def test_cache_key_is_normalised(monkeypatch):
     services.get_artist_events("Coldplay")
     services.get_artist_events("  coldplay  ")
     assert len(calls) == 2
+
+
+# ── hero badge (template) ────────────────────────────────────────────
+
+def _render_artist_page(monkeypatch, events):
+    """Render /artist/<name> with everything external stubbed, so only the
+    template's handling of `events` is under test."""
+    import contextlib
+    import datetime
+    import json
+
+    import dashboard
+    import views_artist
+
+    row = ("Coldplay", "An insight.", datetime.datetime(2026, 9, 1),
+           json.dumps([{"name": "Yellow", "playcount": "500"}]))
+
+    class FakeCur:
+        def __init__(self):
+            self.n = 0
+
+        def execute(self, sql, params=None):
+            self.n += 1
+
+        def fetchone(self):
+            return row if self.n == 1 else (3,)
+
+    @contextlib.contextmanager
+    def fake_cm(commit=False):
+        yield FakeCur()
+
+    monkeypatch.setattr(views_artist, "db_cursor", fake_cm)
+    monkeypatch.setattr(views_artist, "resolve_insight", lambda n, i: (i, False))
+    monkeypatch.setattr(views_artist, "get_similar_artists", lambda n: [])
+    monkeypatch.setattr(views_artist, "get_artist_media",
+                         lambda n, m=None: {"spotify": {}, "deezer_image": "", "deezer_fans": 0})
+    monkeypatch.setattr(views_artist, "get_artist_events", lambda n: events)
+
+    class _LastfmResponse:
+        status_code = 200
+
+        def json(self):
+            return {"artist": {"stats": {}, "tags": {"tag": []}, "mbid": ""}}
+
+    monkeypatch.setattr(views_artist.http_requests, "get", lambda *a, **k: _LastfmResponse())
+
+    return dashboard.app.test_client().get("/artist/Coldplay").data.decode()
+
+
+def _badge_event(**over):
+    base = {"date": "05 Dec 2026", "venue": "Wembley Stadium", "city": "London",
+            "country": "United Kingdom", "url": "https://tm.com/e/1", "title": "X"}
+    base.update(over)
+    return base
+
+
+def test_hero_badge_renders_when_there_are_events(monkeypatch):
+    html = _render_artist_page(monkeypatch, [_badge_event(), _badge_event()])
+    # Match the markup, not the bare class name: the CSS rule for
+    # .ar-events-badge sits in the page's <style> block either way.
+    assert 'class="ar-events-badge"' in html
+    assert "2 upcoming events" in html
+    # It's a jump link to the section further down the page.
+    assert 'href="#events"' in html
+
+
+def test_hero_badge_is_absent_without_events(monkeypatch):
+    html = _render_artist_page(monkeypatch, [])
+    assert 'class="ar-events-badge"' not in html
+    assert "upcoming event" not in html
+
+
+def test_hero_badge_singular_for_one_event(monkeypatch):
+    html = _render_artist_page(monkeypatch, [_badge_event()])
+    assert "1 upcoming event" in html
+    assert "1 upcoming events" not in html
