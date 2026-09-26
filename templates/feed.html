@@ -1,109 +1,227 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}Community — Waveline{% endblock %}
 
 {% block head_extra %}
 <style>
-  .cm-wrap { max-width: 640px; margin: 0 auto; padding: var(--wv-6) var(--wv-5) var(--wv-8); }
-  .cm-head h1 { font-family: var(--wv-font-display); font-weight: 600; font-size: 1.5rem; }
-  .cm-head p { color: var(--wv-muted); font-size: .9rem; margin: 4px 0 var(--wv-5); }
+  /* ── Community feed (2026 redesign): a calm writing room ──
+     Editorial header, a composer that reads like a blank page, underline
+     tabs, and a quiet side column. Post/comment styles are shared in
+     waveline.css via _post_card.html. */
+  .cm-head { border-bottom: 1px solid var(--wv-border); }
+  .cm-head-inner { max-width: 1120px; margin: 0 auto; padding: var(--wv-7) var(--wv-5) var(--wv-5); }
+  .cm-head h1 { font-size: clamp(2.4rem, 6vw, 4.4rem); font-weight: 700; margin-top: var(--wv-3); }
+  .cm-head p.sub { color: var(--wv-ink-2); font-size: 1.05rem; margin-top: var(--wv-3); max-width: 52ch; }
 
-  .cm-intro { padding: var(--wv-5); margin-bottom: var(--wv-5); }
-  .cm-intro h2 { font-family: var(--wv-font-display); font-weight: 600; font-size: 1.05rem; margin-bottom: var(--wv-2); }
-  .cm-intro ul { list-style: none; margin: var(--wv-3) 0; display: grid; gap: 6px; }
-  .cm-intro li { font-size: .9rem; color: var(--wv-ink-2); padding-left: 20px; position: relative; }
-  .cm-intro li::before { content: "♪"; position: absolute; left: 0; color: var(--wv-accent); }
-  .cm-intro .row { display: flex; gap: var(--wv-3); margin-top: var(--wv-4); flex-wrap: wrap; }
+  .cm-layout { max-width: 1120px; margin: 0 auto; padding: var(--wv-6) var(--wv-5) var(--wv-8); display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: var(--wv-7); align-items: start; }
+  @media (max-width: 960px) { .cm-layout { grid-template-columns: 1fr; gap: var(--wv-6); } .cm-aside { order: 2; } }
 
-  .cm-compose { padding: var(--wv-4); margin-bottom: var(--wv-5); }
-  .cm-compose textarea { width: 100%; min-height: 72px; font-family: var(--wv-font-body); font-size: .95rem; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 12px; background: var(--wv-surface-2); color: var(--wv-ink); resize: vertical; }
-  .cm-compose textarea:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); }
-  .cm-compose .row { display: flex; gap: var(--wv-2); margin-top: var(--wv-3); }
-  .cm-compose input { flex: 1; min-width: 0; font-family: var(--wv-font-body); font-size: .88rem; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 0 12px; height: 44px; background: var(--wv-surface-2); color: var(--wv-ink); }
-  .cm-compose input:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); }
+  /* Composer */
+  .cm-compose { border: 1px solid var(--wv-border-2); background: var(--wv-bg-raised); margin-bottom: var(--wv-6); transition: border-color var(--wv-motion) var(--wv-ease); }
+  .cm-compose:focus-within { border-color: var(--wv-accent); }
+  .cm-compose-top { display: flex; gap: 14px; padding: var(--wv-4) var(--wv-4) 0; }
+  .cm-compose-top .who { flex-shrink: 0; padding-top: 4px; }
+  .cm-compose textarea { flex: 1; min-width: 0; min-height: 96px; border: 0; background: transparent; color: var(--wv-ink); resize: vertical; font-family: var(--wv-font-body); font-size: 1.08rem; line-height: 1.6; padding: 4px 0 var(--wv-3); }
+  .cm-compose textarea::placeholder { color: var(--wv-muted); }
+  .cm-compose textarea:focus { outline: none; }
+  .cm-compose-bar { display: flex; align-items: center; gap: var(--wv-3); padding: 10px var(--wv-4); border-top: 1px solid var(--wv-border); flex-wrap: wrap; }
+  .cm-tag { flex: 1; min-width: 180px; display: flex; align-items: center; gap: 8px; color: var(--wv-muted); }
+  .cm-tag .wv-i { width: 16px; height: 16px; color: var(--wv-accent-ink); }
+  .cm-tag input { flex: 1; min-width: 0; border: 0; border-bottom: 1px solid transparent; background: transparent; color: var(--wv-ink); font-family: var(--wv-font-body); font-size: .95rem; height: 38px; padding: 0 2px; }
+  .cm-tag input:focus { outline: none; border-bottom-color: var(--wv-accent); }
+  .cm-tag input::placeholder { color: var(--wv-muted); }
+  .cm-count { font-family: var(--wv-font-mono, monospace); font-size: .76rem; color: var(--wv-muted); min-width: 64px; text-align: right; }
+  .cm-count.is-near { color: var(--wv-accent-ink); }
+  .cm-compose-bar .wv-btn { min-height: 40px; padding: 0 22px; }
+  .cm-suggest { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 0 var(--wv-4) var(--wv-3); }
+  .cm-suggest .lbl { font-family: var(--wv-font-display); font-weight: 700; font-size: .74rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); margin-right: 4px; }
+  .cm-suggest button { font-family: var(--wv-font-display); font-weight: 700; font-size: .76rem; letter-spacing: .6px; text-transform: uppercase; color: var(--wv-ink-2); background: transparent; border: 1px solid var(--wv-border-2); padding: 4px 10px; min-height: 30px; cursor: pointer; }
+  .cm-suggest button:hover { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
 
-  .cm-tabs { display: flex; gap: 6px; margin-bottom: var(--wv-4); }
-  .cm-tab { font-family: var(--wv-font-display); font-weight: 600; font-size: .86rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); text-decoration: none; padding: 8px 16px; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill); background: var(--wv-surface); min-height: 40px; display: inline-flex; align-items: center; }
-  .cm-tab[aria-current="page"] { background: var(--wv-accent); color: #fff; border-color: var(--wv-accent); }
+  /* Guest invitation */
+  .cm-intro { border: 1px solid var(--wv-border-2); padding: var(--wv-6) var(--wv-5); margin-bottom: var(--wv-6); background: var(--wv-bg-raised); }
+  .cm-intro h2 { font-family: var(--wv-font-display); font-weight: 700; font-size: 1.8rem; line-height: 1; text-transform: uppercase; }
+  .cm-intro p { color: var(--wv-ink-2); margin-top: var(--wv-3); max-width: 50ch; }
+  .cm-intro ul { list-style: none; margin: var(--wv-4) 0 0; display: grid; gap: 8px; }
+  .cm-intro li { font-size: .95rem; color: var(--wv-ink-2); display: flex; gap: 10px; align-items: center; }
+  .cm-intro li .wv-i { color: var(--wv-accent-ink); }
+  .cm-intro .row { display: flex; gap: var(--wv-3); margin-top: var(--wv-5); flex-wrap: wrap; }
 
-  /* Post/comment card styling itself (.wv-post, .wv-post-head, .wv-act-btn,
-     .wv-comment, etc.) lives in waveline.css — shared with public profiles'
-     Activity section and the post-detail page via _post_card.html. */
+  /* Underline tabs */
+  .cm-tabs { display: flex; gap: var(--wv-5); border-bottom: 1px solid var(--wv-border); margin-bottom: var(--wv-2); }
+  .cm-tab { font-family: var(--wv-font-display); font-weight: 700; font-size: .95rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); text-decoration: none; padding: 12px 0; margin-bottom: -1px; border-bottom: 2px solid transparent; min-height: 44px; display: inline-flex; align-items: center; }
+  .cm-tab:hover { color: var(--wv-ink); }
+  .cm-tab[aria-current="page"] { color: var(--wv-ink); border-bottom-color: var(--wv-accent); }
+
+  .cm-tabs + .wv-post { border-top: none; }
   .inline { display: inline; }
+  .cm-pager { display: flex; align-items: center; justify-content: space-between; margin-top: var(--wv-5); padding-top: var(--wv-4); border-top: 1px solid var(--wv-border); }
+  .cm-pager .pg { font-family: var(--wv-font-display); font-weight: 600; font-size: .8rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); }
 
-  .cm-pager { display: flex; align-items: center; justify-content: space-between; margin-top: var(--wv-5); }
+  /* Side column */
+  .cm-aside { display: grid; gap: var(--wv-5); position: sticky; top: calc(var(--wv-header-h) + var(--wv-4)); }
+  @media (max-width: 960px) { .cm-aside { position: static; } }
+  .cm-box { border: 1px solid var(--wv-border); padding: var(--wv-4) var(--wv-4) var(--wv-5); }
+  .cm-box h3 { font-family: var(--wv-font-display); font-weight: 700; font-size: .82rem; letter-spacing: 1.2px; text-transform: uppercase; color: var(--wv-muted); margin-bottom: var(--wv-3); }
+  .cm-box p { font-size: .9rem; color: var(--wv-ink-2); line-height: 1.6; }
+  .cm-box ol { margin: 0; padding: 0; list-style: none; counter-reset: g; display: grid; gap: 10px; }
+  .cm-box ol li { counter-increment: g; display: grid; grid-template-columns: 26px 1fr; gap: 8px; font-size: .9rem; color: var(--wv-ink-2); line-height: 1.5; }
+  .cm-box ol li::before { content: counter(g, decimal-leading-zero); font-family: var(--wv-font-mono, monospace); font-size: .74rem; color: var(--wv-accent-ink); padding-top: 3px; }
+  .cm-box .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cm-box .chips .wv-chip { font-family: var(--wv-font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: .78rem; background: transparent; min-height: 32px; }
+  .cm-me { display: flex; align-items: center; gap: 12px; }
+  .cm-me .nm { font-family: var(--wv-font-display); font-weight: 700; font-size: 1.05rem; text-transform: uppercase; }
+  .cm-me .links { display: flex; gap: 14px; margin-top: 4px; }
+  .cm-me .links a { font-family: var(--wv-font-display); font-weight: 600; font-size: .78rem; letter-spacing: .8px; text-transform: uppercase; color: var(--wv-accent-ink); text-decoration: none; }
+  .cm-me .links a:hover { text-decoration: underline; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="cm-wrap">
-  <div class="cm-head">
-    <p class="wv-eyebrow">Community</p>
+<section class="cm-head">
+  <div class="cm-head-inner">
+    <p class="wv-coord">Community</p>
     <h1>What listeners are finding</h1>
-    <p>Share discoveries, follow people with interesting taste, and join the conversation.</p>
+    <p class="sub">Share discoveries, follow people with interesting taste, and join the conversation.</p>
   </div>
+</section>
 
-  {% if current_user.is_authenticated %}
-  <form method="POST" action="/post" class="wv-card cm-compose">
-    <label class="wv-sr-only" for="cm-body">Write a post</label>
-    <textarea id="cm-body" name="body" placeholder="Share a thought or a new discovery…" maxlength="1000" required></textarea>
-    <div class="row">
-      <label class="wv-sr-only" for="cm-artist">Tag an artist (optional)</label>
-      <input id="cm-artist" type="text" name="artist" placeholder="Tag an artist (optional)" maxlength="255">
-      <button type="submit" class="wv-btn wv-btn-primary">Post</button>
-    </div>
-  </form>
-  {% else %}
-  <section class="wv-card cm-intro">
-    <h2>Join the conversation</h2>
-    <p style="color:var(--wv-muted);font-size:.9rem;">The Waveline community is where listeners share discoveries and follow each other's taste.</p>
-    <ul>
-      <li>Post thoughts and new finds, and tag the artist</li>
-      <li>Follow people whose taste you like</li>
-      <li>Like and comment on posts</li>
-    </ul>
-    <p style="font-size:.88rem;color:var(--wv-ink-2);">You can browse the public <strong>Latest</strong> feed below without an account.</p>
-    <div class="row">
-      <a class="wv-btn wv-btn-primary" href="/register">Create account</a>
-      <a class="wv-btn wv-btn-ghost" href="/login">Log in</a>
-    </div>
-  </section>
-  {% endif %}
-
-  <div class="cm-tabs" role="tablist" aria-label="Feed">
+<div class="cm-layout">
+  <div class="cm-main">
     {% if current_user.is_authenticated %}
-    <a class="cm-tab" href="/feed?tab=following" {% if tab == 'following' %}aria-current="page"{% endif %}>Following</a>
+    <form method="POST" action="/post" class="cm-compose" id="cm-compose">
+      <div class="cm-compose-top">
+        <span class="who" aria-hidden="true">
+          {% set avatar_url = current_user.profile_image_url %}
+          {% set avatar_username = current_user.username %}
+          {% set avatar_size = 'wv-avatar-xs' %}
+          {% set avatar_fallback_id = 'compose-avatar-fallback' %}
+          {% include "_avatar.html" %}
+        </span>
+        <label class="wv-sr-only" for="cm-body">Write a post</label>
+        <textarea id="cm-body" name="body" placeholder="Share a thought or a new discovery…" maxlength="1000" required></textarea>
+      </div>
+      {% if site_pulse and site_pulse.recent %}
+      <div class="cm-suggest">
+        <span class="lbl">Talk about</span>
+        {% for r in site_pulse.recent %}<button type="button" data-tag="{{ r.artist | titlecase }}">{{ r.artist | titlecase }}</button>{% endfor %}
+      </div>
+      {% endif %}
+      <div class="cm-compose-bar">
+        <label class="cm-tag" for="cm-artist">{{ icon("note") }}<span class="wv-sr-only">Tag an artist (optional)</span>
+          <input id="cm-artist" type="text" name="artist" placeholder="Tag an artist (optional)" maxlength="255">
+        </label>
+        <span class="cm-count" id="cm-count" aria-live="polite">0 / 1000</span>
+        <button type="submit" class="wv-btn wv-btn-primary">Post</button>
+      </div>
+    </form>
+    {% else %}
+    <section class="cm-intro">
+      <h2>Join the conversation</h2>
+      <p>The Waveline community is where listeners share discoveries and follow each other's taste.</p>
+      <ul>
+        <li>{{ icon("note") }}Post thoughts and new finds, and tag the artist</li>
+        <li>{{ icon("heart") }}Follow people whose taste you like</li>
+        <li>{{ icon("comment") }}Like and comment on posts</li>
+      </ul>
+      <p style="font-size:.9rem;">You can browse the public <strong>Latest</strong> feed below without an account.</p>
+      <div class="row">
+        <a class="wv-btn wv-btn-primary" href="/register">Create account</a>
+        <a class="wv-btn wv-btn-ghost" href="/login">Log in</a>
+      </div>
+    </section>
     {% endif %}
-    <a class="cm-tab" href="/feed?tab=latest" {% if tab == 'latest' %}aria-current="page"{% endif %}>Latest</a>
+
+    <div class="cm-tabs" role="tablist" aria-label="Feed">
+      {% if current_user.is_authenticated %}
+      <a class="cm-tab" href="/feed?tab=following" {% if tab == 'following' %}aria-current="page"{% endif %}>Following</a>
+      {% endif %}
+      <a class="cm-tab" href="/feed?tab=latest" {% if tab == 'latest' %}aria-current="page"{% endif %}>Latest</a>
+    </div>
+
+    {% set next = '/feed?tab=' ~ tab ~ '&page=' ~ page %}
+    {% if posts %}
+      {% for post in posts %}{% include "_post_card.html" %}{% endfor %}
+      {% if page > 1 or has_next %}
+      <nav class="cm-pager" aria-label="Feed pages">
+        {% if page > 1 %}<a class="wv-btn wv-btn-ghost wv-btn-sm" href="/feed?tab={{ tab }}&page={{ page - 1 }}">← Newer</a>{% else %}<span></span>{% endif %}
+        <span class="pg">Page {{ page }}</span>
+        {% if has_next %}<a class="wv-btn wv-btn-ghost wv-btn-sm" href="/feed?tab={{ tab }}&page={{ page + 1 }}">Older →</a>{% else %}<span></span>{% endif %}
+      </nav>
+      {% endif %}
+    {% else %}
+      <div class="wv-empty" style="margin-top:var(--wv-5);">
+      {% if tab == 'following' %}
+        <h3>Your Following feed is quiet</h3>
+        <p>Follow people to see their posts here.</p>
+        <a class="wv-btn wv-btn-primary" style="margin-top:var(--wv-4);" href="/discover">Discover people</a>
+      {% elif page > 1 %}
+        <h3>No more posts</h3>
+        <p><a href="/feed?tab={{ tab }}">Back to the top →</a></p>
+      {% else %}
+        <h3>No posts yet</h3>
+        {% if current_user.is_authenticated %}
+        <p>Be the first to share something. Tag an artist you've been listening to, or <a href="/">analyse an artist</a> and post what you find.</p>
+        {% else %}
+        <p><a href="/register">Create an account</a> to start the conversation, or <a href="/">explore an artist</a> first.</p>
+        {% endif %}
+      {% endif %}
+      </div>
+    {% endif %}
   </div>
 
-  {% set next = '/feed?tab=' ~ tab ~ '&page=' ~ page %}
-  {% if posts %}
-    {% for post in posts %}{% include "_post_card.html" %}{% endfor %}
-    {% if page > 1 or has_next %}
-    <nav class="cm-pager" aria-label="Feed pages">
-      {% if page > 1 %}<a class="wv-btn wv-btn-ghost wv-btn-sm" href="/feed?tab={{ tab }}&page={{ page - 1 }}">← Newer</a>{% else %}<span></span>{% endif %}
-      <span style="font-size:.72rem;color:var(--wv-muted);">Page {{ page }}</span>
-      {% if has_next %}<a class="wv-btn wv-btn-ghost wv-btn-sm" href="/feed?tab={{ tab }}&page={{ page + 1 }}">Older →</a>{% else %}<span></span>{% endif %}
-    </nav>
-    {% endif %}
-  {% else %}
-    <div class="wv-empty">
-    {% if tab == 'following' %}
-      <h3>Your Following feed is quiet</h3>
-      <p>Follow people to see their posts here.</p>
-      <a class="wv-btn wv-btn-primary" style="margin-top:var(--wv-4);" href="/discover">Discover people</a>
-    {% elif page > 1 %}
-      <h3>No more posts</h3>
-      <p><a href="/feed?tab={{ tab }}">Back to the top →</a></p>
-    {% else %}
-      <h3>No posts yet</h3>
-      {% if current_user.is_authenticated %}
-      <p>Be the first to share something. Tag an artist you've been listening to, or <a href="/">analyse an artist</a> and post what you find.</p>
-      {% else %}
-      <p><a href="/register">Create an account</a> to start the conversation, or <a href="/">explore an artist</a> first.</p>
-      {% endif %}
-    {% endif %}
+  <aside class="cm-aside" aria-label="About the community">
+    {% if current_user.is_authenticated %}
+    <div class="cm-box">
+      <div class="cm-me">
+        {% set avatar_url = current_user.profile_image_url %}
+        {% set avatar_username = current_user.username %}
+        {% set avatar_size = 'wv-avatar-sm' %}
+        {% set avatar_fallback_id = 'aside-avatar-fallback' %}
+        {% include "_avatar.html" %}
+        <div>
+          <div class="nm">@{{ current_user.username }}</div>
+          <div class="links"><a href="/me">Profile</a><a href="/discover">Find people</a></div>
+        </div>
+      </div>
     </div>
-  {% endif %}
+    {% endif %}
+    <div class="cm-box">
+      <h3>House rules</h3>
+      <ol>
+        <li>Share what you are actually listening to.</li>
+        <li>Tag the artist so others can follow the thread.</li>
+        <li>Disagree about music, never about people.</li>
+      </ol>
+    </div>
+    {% if genres %}
+    <div class="cm-box">
+      <h3>Browse by sound</h3>
+      <div class="chips">{% for g in genres %}<a class="wv-chip" href="/genre/{{ g.slug }}">{{ g.label }}</a>{% endfor %}</div>
+    </div>
+    {% endif %}
+  </aside>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Composer: live character count and one-tap artist tags.
+  (function () {
+    var body = document.getElementById('cm-body');
+    var count = document.getElementById('cm-count');
+    var tag = document.getElementById('cm-artist');
+    if (body && count) {
+      var max = parseInt(body.getAttribute('maxlength'), 10) || 1000;
+      var update = function () {
+        count.textContent = body.value.length + ' / ' + max;
+        count.classList.toggle('is-near', body.value.length > max * 0.9);
+      };
+      body.addEventListener('input', update); update();
+    }
+    document.querySelectorAll('.cm-suggest [data-tag]').forEach(function (b) {
+      b.addEventListener('click', function () { if (tag) { tag.value = b.getAttribute('data-tag'); tag.focus(); } });
+    });
+  })();
+</script>
 {% endblock %}
