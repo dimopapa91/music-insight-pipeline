@@ -184,13 +184,12 @@ img { max-width: 100%; display: block; }
   flex-shrink: 0; height: 100%; padding: 0 var(--wv-4);
   border-right: 1px solid var(--wv-border);
 }
-/* The wave-W mark (same drawing as favicon.svg / static/brand). Gradient
-   stops come from CSS so the light theme gets the deeper violet. */
-.wv-brand-mark { width: 26px; height: 26px; flex-shrink: 0; }
-.wv-bm-top { stop-color: #f3eeff; }
-.wv-bm-bot { stop-color: #9d8ae6; }
-body.light .wv-bm-top { stop-color: #7b63e6; }
-body.light .wv-bm-bot { stop-color: #4a33b8; }
+/* Wordmark: Barlow Condensed Black Italic with a violet extrusion, the
+   same type as the WAVELINE title on dimospapageorgiou.com (static/brand). */
+.wv-brand-word { height: 24px; width: auto; display: block; }
+.wv-brand-word-light { display: none; }
+body.light .wv-brand-word-dark { display: none; }
+body.light .wv-brand-word-light { display: block; }
 .wv-brand .wv-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--wv-accent); box-shadow: 0 0 0 3px var(--wv-accent-soft); }
 /* One-shot "coming online" pulse on load only — not a forever-looping decoration. */
 .wv-brand .wv-dot.wv-pulse { animation: wv-pulse-once 1.8s var(--wv-ease) 1; }
