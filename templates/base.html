@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#000000">
     <title>{% block title %}Waveline{% endblock %}</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/waveline.css') }}">
@@ -27,7 +28,7 @@
     <!-- ═══ DESKTOP DOCK NAVIGATION ═══ -->
     <header class="wv-header" id="wv-header">
         <div class="wv-dock">
-            <a class="wv-brand" href="/"><span class="wv-dot wv-pulse" aria-hidden="true"></span>Waveline</a>
+            <a class="wv-brand" href="/" aria-label="Waveline home"><img class="wv-brand-word wv-brand-word-dark" src="{{ url_for('static', filename='brand/waveline-wordmark-header-dark.svg') }}" alt="Waveline" width="115" height="24"><img class="wv-brand-word wv-brand-word-light" src="{{ url_for('static', filename='brand/waveline-wordmark-header-light.svg') }}" alt="" aria-hidden="true" width="115" height="24"></a>
 
             <nav class="wv-nav" aria-label="Primary">
                 <a href="/"         {% if path == '/' %}aria-current="page"{% endif %}>Home</a>
