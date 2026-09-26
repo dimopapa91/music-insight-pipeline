@@ -323,3 +323,112 @@ def test_latest_insight_query_skips_empty_insights(monkeypatch):
     assert "claude_insight <> ''" in seen["sql"]
     assert "LOWER(artist_name) = LOWER(%s)" in seen["sql"]
     assert seen["params"] == ("Radiohead",)
+
+
+# ── Phase 2: CDP facilitator + Bazaar discovery ─────────────────────
+
+def _served_bazaar(monkeypatch):
+    app, _ = _make_app(monkeypatch)
+    resp = app.test_client().get("/api/insight?artist=Radiohead")
+    assert resp.status_code == 402
+    return resp.get_json()
+
+
+def test_served_bazaar_extension_validates_with_zero_errors(monkeypatch, no_db):
+    """Nikos: run the library's validator on the bazaar extension and require
+    0 errors (the library only warns). Validate what we actually SERVE: the
+    middleware enriches the declaration (e.g. adds the HTTP method)."""
+    from pydantic import TypeAdapter
+    from x402.extensions.bazaar import (
+        DiscoveryExtension, validate_discovery_extension, validate_discovery_extension_spec,
+    )
+    served = _served_bazaar(monkeypatch)["extensions"]["bazaar"]
+    typed = validate_discovery_extension(TypeAdapter(DiscoveryExtension).validate_python(served))
+    spec = validate_discovery_extension_spec(served)
+    assert (typed.valid, typed.errors) == (True, [])
+    assert (spec.valid, spec.errors) == (True, [])
+    assert served["info"]["input"] == {"type": "http", "queryParams": {"artist": "Radiohead"}, "method": "GET"}
+
+
+def test_bazaar_crawler_request_gets_402(monkeypatch, no_db):
+    """CDP's crawler calls the route with bazaar.info.input and only indexes
+    it on a 402. Our 400-before-402 gate must not catch that request."""
+    from urllib.parse import urlencode
+    body = _served_bazaar(monkeypatch)
+    query = urlencode(body["extensions"]["bazaar"]["info"]["input"]["queryParams"])
+    app, _ = _make_app(monkeypatch)
+    assert app.test_client().get(f"/api/insight?{query}").status_code == 402
+
+
+def test_bazaar_output_example_is_the_real_response_shape():
+    example = agent_api.BAZAAR_OUTPUT_EXAMPLE
+    real = agent_api._insight_body(("Massive Attack", "x", datetime.datetime(2026, 8, 3, 5, 17, 7, 102127)))
+    assert set(example) == set(real) == set(agent_api.BAZAAR_OUTPUT_SCHEMA["required"])
+    assert example["generated_at"] == real["generated_at"]  # the real preview timestamp
+    assert example["source"] == agent_api.SOURCE
+    assert all(isinstance(v, str) and v for v in example.values())
+
+
+def test_listing_metadata_within_cdp_and_bazaar_limits(monkeypatch, no_db):
+    assert len(agent_api.DESCRIPTION) <= 500          # CDP rejects verify/settle above this
+    assert len(agent_api.SERVICE_NAME) <= 32
+    assert len(agent_api.SERVICE_TAGS) <= 5 and all(len(t) <= 32 for t in agent_api.SERVICE_TAGS)
+    resource = _served_bazaar(monkeypatch)["resource"]
+    assert resource["serviceName"] == "Waveline" and resource["tags"] == agent_api.SERVICE_TAGS
+
+
+def _ed25519_secret():
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ed25519
+    key = ed25519.Ed25519PrivateKey.generate()
+    seed = key.private_bytes(serialization.Encoding.Raw, serialization.PrivateFormat.Raw,
+                             serialization.NoEncryption())
+    pub = key.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+    return base64.b64encode(seed + pub).decode()
+
+
+def test_cdp_facilitator_uses_jwt_auth_without_network(monkeypatch):
+    """Offline: builds the CDP client and signs per-endpoint JWTs with a
+    throwaway key. Proves the wiring; real keys are only checked live."""
+    monkeypatch.setenv("CDP_API_KEY_ID", "test-key-id")
+    monkeypatch.setenv("CDP_API_KEY_SECRET", _ed25519_secret())
+    client = agent_api._build_facilitator("cdp", "ignored")
+    assert client._url == "https://api.cdp.coinbase.com/platform/v2/x402"
+    headers = client._auth_provider.get_auth_headers()
+    for part in ("verify", "settle", "supported"):
+        token = getattr(headers, part)["Authorization"]
+        assert token.startswith("Bearer ")
+        claims = json.loads(base64.urlsafe_b64decode(token.split(".")[1] + "=="))
+        assert claims["uris"][0].endswith(f"/platform/v2/x402/{part}")
+
+
+@pytest.mark.parametrize("key_id,secret", [("", ""), ("id", ""), ("", "secret")])
+def test_cdp_without_both_keys_fails_closed(monkeypatch, no_db, key_id, secret):
+    monkeypatch.setenv("CDP_API_KEY_ID", key_id)
+    monkeypatch.setenv("CDP_API_KEY_SECRET", secret)
+    monkeypatch.setenv("X402_PAY_TO", PAY_TO)
+    monkeypatch.setenv("X402_FACILITATOR", "cdp")
+    app = Flask(__name__)
+    app.register_blueprint(agent_api.agent_api_bp)
+    assert agent_api.init_x402(app) is False       # no injected facilitator: real selection path
+    assert app.test_client().get("/api/insight?artist=Radiohead").status_code == 404
+
+
+def test_unknown_facilitator_kind_fails_closed(monkeypatch, no_db):
+    monkeypatch.setenv("X402_PAY_TO", PAY_TO)
+    monkeypatch.setenv("X402_FACILITATOR", "somethingelse")
+    app = Flask(__name__)
+    app.register_blueprint(agent_api.agent_api_bp)
+    assert agent_api.init_x402(app) is False
+
+
+def test_mainnet_network_is_advertised_when_configured(monkeypatch, no_db):
+    monkeypatch.setenv("X402_NETWORK", "eip155:8453")
+    monkeypatch.setenv("X402_PAY_TO", PAY_TO)
+    app = Flask(__name__)
+    app.register_blueprint(agent_api.agent_api_bp)
+    assert agent_api.init_x402(app, facilitator=FakeFacilitator(network="eip155:8453")) is True
+    accept = app.test_client().get("/api/insight?artist=Radiohead").get_json()["accepts"][0]
+    assert accept["network"] == "eip155:8453"
+    assert accept["asset"].lower() == "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"  # USDC on Base
+    assert accept["amount"] == "5000"

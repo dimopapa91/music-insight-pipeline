@@ -23,9 +23,17 @@ Deliberate constraints (agreed 26 Sep 2026, see the Notion Work Log):
 
 Everything is off unless X402_PAY_TO holds a valid 0x address. When it's
 off, the route answers 404 so the content can never be served for free.
-Phase 1 defaults to Base Sepolia (testnet) and the public x402.org
-facilitator; mainnet + the Coinbase CDP facilitator (for Bazaar listing) is
-phase 2 and only needs the X402_* env vars changed.
+Defaults: Base Sepolia (testnet) + the public x402.org facilitator.
+Configuration (env):
+  X402_PAY_TO        public receiving address (required to enable)
+  X402_NETWORK       eip155:84532 (default, testnet) or eip155:8453 (Base mainnet)
+  X402_FACILITATOR   x402org (default, testnet only) or cdp (Coinbase; mainnet + Bazaar)
+  CDP_API_KEY_ID / CDP_API_KEY_SECRET   required when X402_FACILITATOR=cdp
+  X402_PRICE         default $0.005
+A misconfiguration (e.g. mainnet on the testnet-only facilitator, or cdp
+without keys) leaves the endpoint off; it never takes the site down.
+With the CDP facilitator, the route advertises Bazaar discovery metadata
+(see _bazaar_extension) and gets listed after its first CDP-settled payment.
 """
 
 import base64
@@ -51,13 +59,73 @@ PREVIEW_PATH = "/api/insight/preview"
 PREVIEW_ARTIST = "Massive Attack"
 
 DEFAULT_NETWORK = "eip155:84532"  # Base Sepolia (testnet)
-DEFAULT_FACILITATOR_URL = "https://x402.org/facilitator"
+MAINNET_NETWORK = "eip155:8453"   # Base mainnet
+DEFAULT_FACILITATOR_URL = "https://x402.org/facilitator"  # public, testnet-only
 DEFAULT_PRICE = "$0.005"
+
+# Bazaar (Coinbase's x402 discovery catalog) indexes a route after the CDP
+# facilitator settles a payment for it, and its crawler calls the route with
+# `input` below expecting a 402. The output example is a REAL response
+# (the free preview for PREVIEW_ARTIST, 26 Sep 2026) with the insight text
+# shortened to its first two sentences; every field the paid response has is
+# present (Nikos: listings get dropped when required fields are missing).
+BAZAAR_INPUT = {"artist": "Radiohead"}
+BAZAAR_OUTPUT_EXAMPLE = {
+    "artist": "Massive Attack",
+    "insight": (
+        "These five tracks reveal that Massive Attack's broad appeal stems from their "
+        "ability to create atmospheric, emotionally resonant music that bridges underground "
+        "credibility with mainstream accessibility. Teardrop and Angel dominate the play "
+        "counts, and both are relatively immersive yet digestible pieces that work equally "
+        "well in focused listening and as background accompaniment."
+    ),
+    "generated_at": "2026-08-03T05:17:07.102127Z",
+    "source": "Waveline (https://wearewaveline.com), AI-written analysis generated with Anthropic Claude",
+}
+BAZAAR_OUTPUT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "artist": {"type": "string", "description": "Canonical artist name"},
+        "insight": {"type": "string", "description": "AI-written analysis of the artist's sound and appeal"},
+        "generated_at": {"type": "string", "description": "When the insight was generated (ISO-8601, UTC)"},
+        "source": {"type": "string", "description": "Attribution"},
+    },
+    "required": ["artist", "insight", "generated_at", "source"],
+}
+SERVICE_NAME = "Waveline"
+SERVICE_TAGS = ["music", "artists", "ai-insights"]
 
 _EVM_ADDRESS_RE = re.compile(r"0x[0-9a-fA-F]{40}")
 _MAX_ARTIST_LEN = 200
 
 SOURCE = "Waveline (https://wearewaveline.com), AI-written analysis generated with Anthropic Claude"
+
+
+DESCRIPTION = (
+    "Waveline artist insight: an AI-written analysis of an artist's "
+    "sound and appeal, from Waveline's database of ~10,900 artists. "
+    "Query: ?artist=<name>. Unknown artists return 404 and are not charged. "
+    f"Free preview: GET {PREVIEW_PATH}"
+)  # CDP's facilitator rejects verify/settle for descriptions over 500 chars.
+
+
+def _bazaar_extension():
+    """Discovery metadata for Bazaar, or {} if the extensions extra is missing."""
+    try:
+        from x402.extensions.bazaar import OutputConfig, declare_discovery_extension
+    except ImportError:
+        logging.warning("x402: bazaar extension unavailable (install x402[extensions]); not advertising")
+        return {}
+    return declare_discovery_extension(
+        input=dict(BAZAAR_INPUT),
+        input_schema={
+            "type": "object",
+            "properties": {"artist": {"type": "string", "description": "Artist name, e.g. Radiohead",
+                                      "minLength": 1, "maxLength": _MAX_ARTIST_LEN}},
+            "required": ["artist"],
+        },
+        output=OutputConfig(example=dict(BAZAAR_OUTPUT_EXAMPLE), schema=dict(BAZAAR_OUTPUT_SCHEMA)),
+    )
 
 
 def _build_routes(pay_to, network, price):
@@ -66,15 +134,42 @@ def _build_routes(pay_to, network, price):
     return {
         f"GET {INSIGHT_PATH}": RouteConfig(
             accepts=PaymentOption(scheme="exact", pay_to=pay_to, price=price, network=network),
-            description=(
-                "Waveline artist insight: an AI-written analysis of an artist's "
-                "sound and appeal, from Waveline's database of ~10,900 artists. "
-                "Query: ?artist=<name>. Unknown artists return 404 and are not charged. "
-                f"Free preview: GET {PREVIEW_PATH}"
-            ),
+            description=DESCRIPTION,
             mime_type="application/json",
+            service_name=SERVICE_NAME,
+            tags=list(SERVICE_TAGS),
+            extensions=_bazaar_extension() or None,
         )
     }
+
+
+def _build_facilitator(kind, url):
+    """HTTP facilitator client for X402_FACILITATOR (`x402org` default, or `cdp`).
+
+    `cdp` = Coinbase's hosted facilitator (needed for Base mainnet and for
+    Bazaar listing). It authenticates with CDP_API_KEY_ID/CDP_API_KEY_SECRET,
+    which the official cdp-sdk turns into per-request JWT headers. Fails
+    closed: without both keys the paid endpoint stays off. The key values are
+    never logged.
+    """
+    from x402.http import HTTPFacilitatorClientSync
+
+    if kind == "cdp":
+        key_id = (os.getenv("CDP_API_KEY_ID") or "").strip()
+        key_secret = (os.getenv("CDP_API_KEY_SECRET") or "").strip()
+        if not (key_id and key_secret):
+            logging.error("x402 disabled: X402_FACILITATOR=cdp but CDP_API_KEY_ID/CDP_API_KEY_SECRET are not set")
+            return None
+        try:
+            from cdp.x402 import create_facilitator_config
+        except ImportError:
+            logging.exception("x402 disabled: X402_FACILITATOR=cdp but cdp-sdk is not installed")
+            return None
+        return HTTPFacilitatorClientSync(create_facilitator_config(key_id, key_secret))
+    if kind not in ("", "x402org"):
+        logging.error("x402 disabled: unknown X402_FACILITATOR %r (use 'x402org' or 'cdp')", kind)
+        return None
+    return HTTPFacilitatorClientSync({"url": url})
 
 
 def init_x402(app, facilitator=None):
@@ -96,12 +191,13 @@ def init_x402(app, facilitator=None):
         return False
 
     network = (os.getenv("X402_NETWORK") or DEFAULT_NETWORK).strip()
+    facilitator_kind = (os.getenv("X402_FACILITATOR") or "x402org").strip().lower()
     facilitator_url = (os.getenv("X402_FACILITATOR_URL") or DEFAULT_FACILITATOR_URL).strip()
     price = (os.getenv("X402_PRICE") or DEFAULT_PRICE).strip()
 
     try:
         from x402 import x402ResourceServerSync
-        from x402.http import HTTPFacilitatorClientSync, is_fatal_startup_init_error, x402HTTPResourceServerSync
+        from x402.http import is_fatal_startup_init_error, x402HTTPResourceServerSync
         from x402.http.middleware.flask import payment_middleware
         from x402.mechanisms.evm.exact import ExactEvmServerScheme
     except ImportError:
@@ -109,7 +205,9 @@ def init_x402(app, facilitator=None):
         return False
 
     if facilitator is None:
-        facilitator = HTTPFacilitatorClientSync({"url": facilitator_url})
+        facilitator = _build_facilitator(facilitator_kind, facilitator_url)
+        if facilitator is None:
+            return False
 
     server = x402ResourceServerSync(facilitator)
     server.register(network, ExactEvmServerScheme())
@@ -135,8 +233,9 @@ def init_x402(app, facilitator=None):
     app.wsgi_app = PaymentRequiredBodyFill(app.wsgi_app)
     app.config["X402_ENABLED"] = True
     app.config["X402_NETWORK"] = network
+    app.config["X402_FACILITATOR"] = facilitator_kind
     app.config["X402_PRICE"] = price
-    logging.info("x402 enabled on %s (network=%s, price=%s)", INSIGHT_PATH, network, price)
+    logging.info("x402 enabled on %s (network=%s, price=%s, facilitator=%s)", INSIGHT_PATH, network, price, facilitator_kind)
     return True
 
 

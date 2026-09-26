@@ -71,3 +71,33 @@ def test_key_never_hardcoded_in_script():
     import re
     source = _path.read_text()
     assert not re.search(r"0x[0-9a-fA-F]{64}", source)
+
+
+MAINNET = dict(GOOD, network="eip155:8453", asset="0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913")
+
+
+def test_mainnet_mode_accepts_base_usdc_only():
+    chosen = pay.select_requirement([GOOD, MAINNET], network=pay.MAINNET_NETWORK, asset=pay.MAINNET_ASSET)
+    assert chosen["network"] == "eip155:8453"
+    with pytest.raises(pay.Abort):   # testnet option alone is refused in mainnet mode
+        pay.select_requirement([GOOD], network=pay.MAINNET_NETWORK, asset=pay.MAINNET_ASSET)
+
+
+def test_mainnet_cap_still_applies():
+    with pytest.raises(pay.Abort):
+        pay.select_requirement([dict(MAINNET, amount="10001")], network=pay.MAINNET_NETWORK,
+                               asset=pay.MAINNET_ASSET)
+
+
+def test_mainnet_pay_requires_explicit_real_money_confirmation(monkeypatch):
+    # Must abort before any network request is made.
+    import builtins
+    real_import = builtins.__import__
+
+    def no_requests(name, *args, **kwargs):
+        if name == "requests":
+            raise AssertionError("network code reached before the confirmation check")
+        return real_import(name, *args, **kwargs)
+    monkeypatch.setattr(builtins, "__import__", no_requests)
+    with pytest.raises(pay.Abort):
+        pay.main(["--mainnet", "--artist", "Radiohead", "--pay"])
