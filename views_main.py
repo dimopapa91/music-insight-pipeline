@@ -143,3 +143,12 @@ def debug_spotify():
         })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
+
+
+@main_bp.route("/debug/sentry")
+def debug_sentry():
+    """Deliberately raise so we can confirm errors reach Sentry after a
+    deploy. Auth-gated so a crawler can't spam Sentry with 500s."""
+    if not current_user.is_authenticated:
+        return ("Not found", 404)
+    raise RuntimeError("Sentry test error from /debug/sentry — safe to ignore.")

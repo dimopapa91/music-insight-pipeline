@@ -39,6 +39,13 @@ os.environ["DATABASE_URL"] = "postgresql://test:test@127.0.0.1:1/pytest_must_not
 # during collection.
 os.environ["TICKETMASTER_API_KEY"] = ""   # tests never call Ticketmaster
 
+# dashboard.py calls _init_sentry() at import time; an empty DSN makes it a
+# no-op so the suite never initialises Sentry or sends events. Pinned (not
+# setdefault) for the same load_dotenv() reason as DATABASE_URL above: a
+# real SENTRY_DSN in a keyed CI environment would otherwise repopulate it
+# during collection and wire up live error reporting mid-test.
+os.environ["SENTRY_DSN"] = ""   # tests never initialise Sentry
+
 # Flask-Limiter's storage is a single in-memory counter shared by the whole
 # test session (dashboard.app is created once, at first import). Without
 # this, unrelated tests hitting /search, /artist/<name> or /compare many
