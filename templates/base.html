@@ -128,7 +128,7 @@
     <!-- "Just analysed" strip (NTS-style live bar): the latest artists
          analysed on Waveline, straight from the searches table. -->
     <nav class="wv-pulse" aria-label="Just analysed">
-        <span class="wv-pulse-tag"><span class="wv-pulse-dot" aria-hidden="true"></span>Just analysed</span>
+        <span class="wv-pulse-tag"><span class="wv-pulse-dot" aria-hidden="true"></span><span class="wv-pulse-lbl">Just analysed</span></span>
         {% for r in site_pulse.recent %}
         <a class="wv-pulse-ch" href="/artist/{{ r.artist | urlencode }}"><span class="n" aria-hidden="true">{{ loop.index }}</span><span class="nm">{{ r.artist | titlecase }}</span><span class="t">{{ r.at | timeago }}</span></a>
         {% endfor %}

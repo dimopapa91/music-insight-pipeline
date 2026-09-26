@@ -51,12 +51,18 @@
   a.wv-kpi:hover { background: var(--wv-surface-2); }
   a.wv-kpi:hover b { color: var(--wv-accent-ink); }
 
+  /* Mobile order: search first, then the photo, then the numbers */
   @media (max-width: 900px) {
     .wv-hero { grid-template-columns: 1fr; min-height: 0; }
-    .wv-hero-side { order: -1; }
-    .wv-feature { border-right: 0; border-top: 1px solid var(--wv-border); min-height: 360px; }
-    .wv-hero-inner { padding: var(--wv-6) var(--wv-5) var(--wv-5); }
-    .wv-kpi { padding: var(--wv-4) var(--wv-5); }
+    .wv-hero-side { display: contents; }
+    .wv-hero-inner { order: 1; padding: var(--wv-6) var(--wv-4) var(--wv-5); }
+    .wv-feature { order: 2; border-right: 0; min-height: 0; aspect-ratio: 4 / 3.4; border-bottom: 1px solid var(--wv-border); }
+    .wv-kpis { order: 3; }
+    .wv-kpi { padding: var(--wv-4); }
+    .wv-kpi b { font-size: 2rem; }
+    .wv-boxlbl { left: var(--wv-3); right: var(--wv-3); bottom: var(--wv-3); padding: 12px 14px; }
+    .wv-hero-searchrow .wv-btn { padding: 0 16px; }
+    .wv-hero-examples .wv-chip { min-height: 38px; }
   }
 
   /* ── Chapter 01: freshly analysed, as a photo row ── */
@@ -67,13 +73,20 @@
   .wv-fresh-ph img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--wv-motion-slow) var(--wv-ease); }
   .wv-fresh-card:hover .wv-fresh-ph img { transform: scale(1.04); }
   .wv-fresh-ph .ini { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--wv-font-display); font-weight: 700; font-size: 4rem; color: var(--wv-border-2); }
-  .wv-fresh-when { position: absolute; left: 8px; top: 8px; background: var(--wv-bg); padding: 3px 7px; font-family: var(--wv-font-display); font-weight: 700; font-size: .72rem; letter-spacing: .8px; text-transform: uppercase; }
+  .wv-fresh-when { position: absolute; left: 8px; top: 8px; background: var(--wv-bg); padding: 3px 7px; font-family: var(--wv-font-display); font-weight: 700; font-size: .78rem; letter-spacing: .8px; text-transform: uppercase; }
   .wv-fresh-m { padding: 12px 14px 14px; }
   .wv-fresh-m .nm { font-family: var(--wv-font-display); font-weight: 700; font-size: 1.05rem; line-height: 1.1; text-transform: uppercase; overflow-wrap: anywhere; }
   .wv-fresh-m .ctx { color: var(--wv-muted); font-size: .8rem; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .wv-fresh-card:hover .nm { color: var(--wv-accent-ink); }
   @media (max-width: 900px) { .wv-fresh { grid-template-columns: repeat(3, 1fr); } .wv-fresh-card:nth-child(3n) { border-right: 0; } .wv-fresh-card:nth-child(n+4) { border-top: 1px solid var(--wv-border); } }
-  @media (max-width: 560px) { .wv-fresh { grid-template-columns: repeat(2, 1fr); } .wv-fresh-card:nth-child(3n) { border-right: 1px solid var(--wv-border); } .wv-fresh-card:nth-child(2n) { border-right: 0; } .wv-fresh-card:nth-child(n+3) { border-top: 1px solid var(--wv-border); } }
+  /* Phones: the newest card runs full width, the rest pair up below */
+  @media (max-width: 560px) {
+    .wv-fresh { grid-template-columns: repeat(2, 1fr); }
+    .wv-fresh-card { border-right: 0; border-top: 1px solid var(--wv-border); }
+    .wv-fresh-card:first-child { grid-column: 1 / -1; border-top: 0; }
+    .wv-fresh-card:first-child .wv-fresh-ph { aspect-ratio: 16 / 10; }
+    .wv-fresh-card:nth-child(2n) { border-right: 1px solid var(--wv-border); }
+  }
   .wv-mysearches { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--wv-3); }
 
   /* ── Chapter 02: featured analysis ── */
@@ -104,7 +117,7 @@
   .wv-tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(.85) brightness(.55); transition: transform var(--wv-motion-slow) var(--wv-ease), filter var(--wv-motion) var(--wv-ease); }
   .wv-tile:hover img { filter: saturate(1) brightness(.75); transform: scale(1.03); }
   .wv-tile .t { position: absolute; inset: 0; display: grid; place-items: center; padding: 0 12px; text-align: center; font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1rem, 1.8vw, 1.3rem); letter-spacing: .6px; text-transform: uppercase; text-shadow: 0 1px 12px rgba(0,0,0,.6); }
-  .wv-tile .f { position: absolute; right: 8px; bottom: 6px; font-size: .72rem; color: #ddd; }
+  .wv-tile .f { position: absolute; right: 8px; bottom: 6px; font-size: .78rem; color: #ddd; }
 
   /* ── Browse by sound ── */
   .wv-genre-strip { display: flex; align-items: center; gap: var(--wv-5); flex-wrap: wrap; padding: var(--wv-5) 0; border-top: 1px solid var(--wv-border); }
@@ -112,6 +125,7 @@
   .wv-genre-strip .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .wv-genre-strip .wv-chip { font-family: var(--wv-font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .6px; background: transparent; }
   .wv-genre-strip .wv-link { margin-left: var(--wv-2); }
+  @media (max-width: 560px) { .wv-genre-strip { gap: var(--wv-3); } .wv-genre-strip .row { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; margin: 0 calc(-1 * var(--wv-4)); padding: 0 var(--wv-4); } .wv-genre-strip .row::-webkit-scrollbar { display: none; } .wv-genre-strip .wv-chip, .wv-genre-strip .wv-link { flex-shrink: 0; } }
 
   /* ── Chapter 04: community ── */
   .wv-community-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--wv-6); align-items: start; }

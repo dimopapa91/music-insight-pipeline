@@ -14,7 +14,8 @@
   .gn-tile:hover img, .gn-tile:focus-visible img { filter: saturate(1) brightness(.7); transform: scale(1.03); }
   .gn-tile .t { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.4rem, 2.6vw, 2.2rem); letter-spacing: .6px; text-transform: uppercase; text-shadow: 0 1px 14px rgba(0,0,0,.6); }
   .gn-tile:not(:has(img)) .t { color: var(--wv-ink); text-shadow: none; }
-  .gn-tile .lead { position: absolute; left: 10px; bottom: 8px; font-size: .74rem; color: #ddd; }
+  .gn-tile .lead { position: absolute; left: 10px; bottom: 8px; font-size: .78rem; color: #ddd; }
+  @media (max-width: 560px) { .gn-head { padding: var(--wv-5) var(--wv-4) var(--wv-4); } .gn-tile { aspect-ratio: 1; } .gn-tile .lead { display: none; } }
   .gn-note { padding: var(--wv-4) var(--wv-5); color: var(--wv-muted); font-size: .84rem; }
 </style>
 {% endblock %}
