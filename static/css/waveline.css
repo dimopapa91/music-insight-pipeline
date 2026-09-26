@@ -199,6 +199,22 @@ img { max-width: 100%; display: block; }
 .wv-nav a:hover { color: var(--wv-ink); background: var(--wv-surface-2); }
 .wv-nav a[aria-current="page"] { color: var(--wv-on-accent); background: var(--wv-accent); }
 
+/* "Just analysed" strip under the header (NTS-style live bar) */
+.wv-pulse { display: flex; align-items: stretch; height: 40px; border-bottom: 1px solid var(--wv-border); background: var(--wv-bg); position: relative; z-index: 2; }
+.wv-pulse-tag { display: flex; align-items: center; gap: 8px; padding: 0 var(--wv-4); border-right: 1px solid var(--wv-border); font-family: var(--wv-font-display); font-weight: 700; font-size: .82rem; letter-spacing: .6px; text-transform: uppercase; color: var(--wv-ink); white-space: nowrap; }
+.wv-pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--wv-accent); box-shadow: 0 0 10px var(--wv-accent); animation: wv-pulse-blink 1.8s ease-in-out infinite; }
+@keyframes wv-pulse-blink { 50% { opacity: .35; } }
+.wv-pulse-ch { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 0 var(--wv-4); border-right: 1px solid var(--wv-border); text-decoration: none; color: var(--wv-ink); font-family: var(--wv-font-display); font-weight: 700; font-size: .9rem; letter-spacing: .4px; text-transform: uppercase; white-space: nowrap; transition: background var(--wv-motion) var(--wv-ease); }
+.wv-pulse-ch:last-child { border-right: 0; }
+.wv-pulse-ch:hover { background: var(--wv-surface-2); }
+.wv-pulse-ch .n { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid var(--wv-ink); font-size: .78rem; flex-shrink: 0; }
+.wv-pulse-ch .nm { overflow: hidden; text-overflow: ellipsis; }
+.wv-pulse-ch .t { margin-left: auto; color: var(--wv-muted); font-weight: 600; font-size: .8rem; }
+@media (max-width: 700px) {
+  .wv-pulse-ch:nth-of-type(n+2) { display: none; }
+  .wv-pulse-tag { padding: 0 var(--wv-3); }
+}
+
 /* margin-left:auto is the real fix here, not just belt-and-suspenders with
    .wv-nav's margin-right:auto: on mobile .wv-nav is display:none (removed
    from flex layout entirely), so without its own margin this block used to
@@ -656,7 +672,7 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
   font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(2.6rem, 7vw, 4.2rem); line-height: .85;
   color: transparent; -webkit-text-stroke: 1px var(--wv-border-2);
 }
-.wv-chapter-title h2 { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.3rem, 3vw, 1.7rem); letter-spacing: -.2px; }
+.wv-chapter-title h2 { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.6rem, 3.4vw, 2.2rem); line-height: 1; letter-spacing: .2px; text-transform: uppercase; }
 .wv-chapter-title p { color: var(--wv-muted); font-size: .92rem; margin-top: 6px; max-width: 60ch; }
 .wv-chapter { padding: var(--wv-8) 0; border-top: 1px solid var(--wv-border); }
 .wv-chapter:first-of-type { border-top: none; }
@@ -664,7 +680,6 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
 /* ── Cards ─────────────────────────────────────────────── */
 .wv-card {
   background: var(--wv-surface); border: 1px solid var(--wv-border); border-radius: var(--wv-radius-lg);
-  box-shadow: var(--wv-shadow-sm);
 }
 .wv-card-pad { padding: var(--wv-5); }
 .wv-grid { display: grid; gap: var(--wv-4); }
@@ -675,7 +690,7 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
 @media (max-width: 560px) { .wv-grid-2, .wv-grid-3, .wv-grid-4 { grid-template-columns: 1fr; } }
 
 /* ── Footer ────────────────────────────────────────────── */
-.wv-footer { border-top: 1px solid var(--wv-border); background: var(--wv-surface); margin-top: var(--wv-8); }
+.wv-footer { border-top: 1px solid var(--wv-border); background: var(--wv-bg); margin-top: var(--wv-8); }
 .wv-footer-inner { max-width: var(--wv-maxw-wide); margin: 0 auto; padding: var(--wv-6) var(--wv-5); display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: var(--wv-5); }
 @media (max-width: 860px) { .wv-footer-inner { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 560px) { .wv-footer-inner { grid-template-columns: 1fr; } }
