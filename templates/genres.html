@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Genres — Waveline{% endblock %}
+{% block description %}Browse Waveline by sound: trip-hop, electronic, jazz, hip-hop, R&B, indie, ambient and soul, with the artists that define each one.{% endblock %}
+
+{% block head_extra %}
+<style>
+  .gn-head { padding: var(--wv-7) var(--wv-5) var(--wv-5); border-bottom: 1px solid var(--wv-border); }
+  .gn-head h1 { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(3rem, 8vw, 6.5rem); line-height: .86; text-transform: uppercase; letter-spacing: -1px; margin-top: var(--wv-3); }
+  .gn-head p { color: var(--wv-ink-2); max-width: 56ch; margin-top: var(--wv-4); font-size: 1.05rem; }
+  .gn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px; }
+  @media (max-width: 900px) { .gn-grid { grid-template-columns: repeat(2, 1fr); } }
+  .gn-tile { position: relative; display: block; aspect-ratio: 4 / 3; overflow: hidden; background: var(--wv-surface-2); color: #fff; text-decoration: none; }
+  .gn-tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(.85) brightness(.5); transition: transform var(--wv-motion-slow) var(--wv-ease), filter var(--wv-motion) var(--wv-ease); }
+  .gn-tile:hover img, .gn-tile:focus-visible img { filter: saturate(1) brightness(.7); transform: scale(1.03); }
+  .gn-tile .t { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.4rem, 2.6vw, 2.2rem); letter-spacing: .6px; text-transform: uppercase; text-shadow: 0 1px 14px rgba(0,0,0,.6); }
+  .gn-tile:not(:has(img)) .t { color: var(--wv-ink); text-shadow: none; }
+  .gn-tile .lead { position: absolute; left: 10px; bottom: 8px; font-size: .74rem; color: #ddd; }
+  .gn-note { padding: var(--wv-4) var(--wv-5); color: var(--wv-muted); font-size: .84rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="gn-head">
+  <p class="wv-coord">Explore · via Last.fm tags</p>
+  <h1>Browse by sound</h1>
+  <p>Eight genres, each led by the artists Last.fm listeners tag it with most. Open one to see who shapes it and who's already been analysed on Waveline.</p>
+</section>
+
+<div class="gn-grid">
+  {% for c in covers %}
+  <a class="gn-tile" href="/genre/{{ c.slug }}">
+    {% if c.image %}<img src="{{ c.image | dz_size(500) }}" alt="" {% if loop.index > 4 %}loading="lazy" {% endif %}width="500" height="500">{% endif %}
+    <span class="t">{{ c.label }}</span>
+    {% if c.artist %}<span class="lead">Led by {{ c.artist }}</span>{% endif %}
+  </a>
+  {% endfor %}
+</div>
+<p class="gn-note">Genre data and descriptions from Last.fm. Photos from Deezer.</p>
+{% endblock %}

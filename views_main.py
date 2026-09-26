@@ -11,7 +11,7 @@ from db import db_cursor
 from pipeline import run_pipeline
 from rate_limit import limiter
 from services import (
-    get_dashboard_data, clear_dashboard_cache, artist_titlecase, get_plays_analysed,
+    get_dashboard_data, clear_dashboard_cache, artist_titlecase, get_plays_analysed, GENRES,
     SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET,
 )
 from social import get_feed
@@ -37,6 +37,7 @@ def dashboard():
         discovery=discovery,
         community_posts=community_posts,
         plays_analysed=get_plays_analysed(),
+        genres=GENRES,
         message=message,
         error=error,
         urlencode=quote,

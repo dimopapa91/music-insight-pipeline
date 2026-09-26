@@ -78,7 +78,7 @@ flowchart LR
 **Music data.** Artist search with Last.fm top tracks and a Claude-written insight ·
 artist pages with photo, listeners, scrobbles, Deezer fans, tags, similar artists and
 upcoming events with ticket links · 30-second previews in a floating player ·
-head-to-head artist comparison with an AI verdict · a personal taste profile written by
+head-to-head artist comparison with an AI verdict · curated genre pages built from Last.fm tags · a personal taste profile written by
 Claude · music news (RSS: Pitchfork, NME, The Guardian, Resident Advisor) and a Deezer
 albums chart.
 
@@ -110,7 +110,7 @@ dashboard.py         App entry point: config, login, filters, blueprint wiring (
 pipeline.py          ETL: Last.fm fetch → Claude analysis → PostgreSQL
 services.py          Shared data clients (Last.fm, MusicBrainz, Spotify, Deezer, Ticketmaster, RSS) + caches
 agent_api.py         x402 paid API for agents (/api/insight, /api/insight/preview)
-views_*.py           Blueprints: main, artist, taste, news, feed, discover, messages, notifications, admin
+views_*.py           Blueprints: main, artist, genres, taste, news, feed, discover, messages, notifications, admin
 auth.py, profiles.py Accounts, public profiles, settings, follows
 social.py            Posts, likes, comments, follows, notifications (data layer)
 messaging.py         Private messaging (data layer)
@@ -191,6 +191,7 @@ separate Railway cron service (`python email_digest.py`, Mondays 08:00 UTC).
 | `/` | Dashboard: search, stats, recent insights, community |
 | `/artist/<name>` | Artist page (multi-source data, AI insight, events) |
 | `/compare?a=X&b=Y` | Head-to-head comparison |
+| `/genres`, `/genre/<slug>` | Genre index and genre pages (Last.fm tags, curated slugs only) |
 | `/profile` | Your taste profile |
 | `/news` | Music news and albums chart |
 | `/feed`, `/discover`, `/messages`, `/notifications` | Community (login required for posting/messaging) |
