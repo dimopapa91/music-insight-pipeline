@@ -115,7 +115,7 @@ def test_site_pulse_refreshes_when_a_new_search_lands(monkeypatch):
             calls.append(1)
 
         def fetchall(self):
-            return [("Artist %d" % len(calls), None)]
+            return [("Artist %d" % len(calls), "insight", None, [])]
 
     @contextlib.contextmanager
     def cm(commit=False):

@@ -15,7 +15,7 @@ from rate_limit import limiter
 from text_clean import strip_em_dashes
 from services import (
     get_similar_artists, get_artist_media, get_artist_events, get_artist_db,
-    get_artist_photos,
+    get_artist_photos, record_artist_open,
     artist_titlecase, resolve_insight, LASTFM_BASE, LASTFM_API_KEY,
 )
 
@@ -89,6 +89,11 @@ def artist_profile(artist_name):
                     message="We couldn't fetch this artist from our data sources just now. Check the spelling, or try again in a moment."), 500
 
         name, insight, last_searched, top_tracks_raw = row
+        # Opened from a search (⌘K palette / homepage suggestions): count it
+        # as this artist's latest search for the homepage, without paying for
+        # a fresh pipeline run. Only ever for artists already in the table.
+        if request.args.get("from") == "search":
+            record_artist_open(name, current_user.id if current_user.is_authenticated else None)
         # If the newest search's Claude call failed (empty insight), fall
         # back to the most recent older non-empty insight for this artist
         # rather than showing a broken/blank AI section — see pipeline.py's

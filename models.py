@@ -99,6 +99,18 @@ SCHEMA = [
     )
     """,
     "CREATE INDEX IF NOT EXISTS idx_analytics_created_at ON analytics_events (created_at)",
+    # Opening an already-analysed artist from a search (the ⌘K palette or the
+    # homepage suggestions) counts as that artist's latest search for the
+    # homepage and the "Just analysed" strip, without re-running the paid
+    # pipeline. Same TIMESTAMP type as searches.searched_at so they compare.
+    """
+    CREATE TABLE IF NOT EXISTS artist_opens (
+        id          SERIAL PRIMARY KEY,
+        artist_name VARCHAR(255) NOT NULL,
+        user_id     INTEGER REFERENCES users(id),
+        opened_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """,
     "CREATE INDEX IF NOT EXISTS idx_analytics_country ON analytics_events (country)",
     "CREATE INDEX IF NOT EXISTS idx_analytics_path ON analytics_events (path)",
     # Phase 6: private one-to-one messaging. A conversation is the canonical,

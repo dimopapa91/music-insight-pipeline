@@ -567,14 +567,51 @@ def analysed_artist_names(names):
 # one tiny query per check, and it works across workers.
 
 def latest_search_id():
-    """Newest searches.id, or None if the DB can't be asked (callers then
-    fall back to their plain TTL)."""
+    """(newest searches.id, newest artist_opens.id), or None if the DB can't
+    be asked (callers then fall back to their plain TTL). Both are primary
+    key lookups."""
     try:
         with db_cursor() as cur:
-            cur.execute("SELECT MAX(id) FROM searches")
-            return cur.fetchone()[0]
+            cur.execute("SELECT (SELECT MAX(id) FROM searches), (SELECT MAX(id) FROM artist_opens)")
+            row = cur.fetchone()
+            return tuple(row) if row else None
     except Exception:
         return None
+
+
+def record_artist_open(artist_name, user_id=None):
+    """Note that someone opened an already-analysed artist from a search.
+    Never raises: a failed insert just means the homepage doesn't move."""
+    try:
+        with db_cursor(commit=True) as cur:
+            cur.execute("INSERT INTO artist_opens (artist_name, user_id) VALUES (%s, %s)",
+                        (artist_name, user_id))
+        return True
+    except Exception:
+        return False
+
+
+# The most recent activity per artist: a fresh analysis (searches) or an
+# opened-from-search (artist_opens), whichever is newer. Used by the homepage
+# hero/rows and the "Just analysed" strip so both follow the latest search.
+_LATEST_ACTIVITY_SQL = """
+    WITH activity AS (
+        SELECT LOWER(artist_name) AS k, MAX(last_at) AS last_at FROM (
+            SELECT artist_name, searched_at AS last_at FROM searches
+            UNION ALL
+            SELECT artist_name, opened_at AS last_at FROM artist_opens
+        ) a
+        GROUP BY LOWER(artist_name)
+    ), latest AS (
+        SELECT DISTINCT ON (LOWER(artist_name)) artist_name, claude_insight, top_tracks
+        FROM searches
+        ORDER BY LOWER(artist_name), searched_at DESC
+    )
+    SELECT l.artist_name, l.claude_insight, a.last_at, l.top_tracks
+    FROM latest l JOIN activity a ON a.k = LOWER(l.artist_name)
+    ORDER BY a.last_at DESC
+    LIMIT %s
+"""
 
 
 # ── Site pulse: the "Just analysed" strip ───────────────────────────
@@ -601,15 +638,8 @@ def get_site_pulse():
     data = {"recent": []}
     try:
         with db_cursor() as cur:
-            cur.execute("""
-                SELECT artist_name, searched_at FROM (
-                    SELECT DISTINCT ON (LOWER(artist_name)) artist_name, searched_at
-                    FROM searches
-                    ORDER BY LOWER(artist_name), searched_at DESC
-                ) sub
-                ORDER BY searched_at DESC LIMIT 2
-            """)
-            data["recent"] = [{"artist": r[0], "at": r[1]} for r in cur.fetchall()]
+            cur.execute(_LATEST_ACTIVITY_SQL, (2,))
+            data["recent"] = [{"artist": r[0], "at": r[2]} for r in cur.fetchall()]
     except Exception:
         pass
     _site_pulse_cache["data"] = data
@@ -994,14 +1024,7 @@ def get_dashboard_data():
         max_avg = sorted_avgs[0][1] if sorted_avgs else 1
         artist_plays = [(a, avg, max_avg) for a, avg in sorted_avgs]
 
-        cur.execute("""
-            SELECT * FROM (
-                SELECT DISTINCT ON (artist_name) artist_name, claude_insight, searched_at, top_tracks
-                FROM searches
-                ORDER BY artist_name, searched_at DESC
-            ) sub
-            ORDER BY searched_at DESC LIMIT 6
-        """)
+        cur.execute(_LATEST_ACTIVITY_SQL, (6,))
 
         class Row:
             def __init__(self, r):
