@@ -4,11 +4,11 @@
 {% block head_extra %}
 <style>
   .cm-wrap { max-width: 640px; margin: 0 auto; padding: var(--wv-6) var(--wv-5) var(--wv-8); }
-  .cm-head h1 { font-family: var(--wv-font-display); font-size: 1.5rem; }
+  .cm-head h1 { font-family: var(--wv-font-display); font-weight: 600; font-size: 1.5rem; }
   .cm-head p { color: var(--wv-muted); font-size: .9rem; margin: 4px 0 var(--wv-5); }
 
   .cm-intro { padding: var(--wv-5); margin-bottom: var(--wv-5); }
-  .cm-intro h2 { font-family: var(--wv-font-display); font-size: 1.05rem; margin-bottom: var(--wv-2); }
+  .cm-intro h2 { font-family: var(--wv-font-display); font-weight: 600; font-size: 1.05rem; margin-bottom: var(--wv-2); }
   .cm-intro ul { list-style: none; margin: var(--wv-3) 0; display: grid; gap: 6px; }
   .cm-intro li { font-size: .9rem; color: var(--wv-ink-2); padding-left: 20px; position: relative; }
   .cm-intro li::before { content: "♪"; position: absolute; left: 0; color: var(--wv-accent); }
@@ -22,7 +22,7 @@
   .cm-compose input:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); }
 
   .cm-tabs { display: flex; gap: 6px; margin-bottom: var(--wv-4); }
-  .cm-tab { font-family: var(--wv-font-display); font-size: .72rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); text-decoration: none; padding: 8px 16px; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill); background: var(--wv-surface); min-height: 40px; display: inline-flex; align-items: center; }
+  .cm-tab { font-family: var(--wv-font-display); font-weight: 600; font-size: .86rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); text-decoration: none; padding: 8px 16px; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill); background: var(--wv-surface); min-height: 40px; display: inline-flex; align-items: center; }
   .cm-tab[aria-current="page"] { background: var(--wv-accent); color: #fff; border-color: var(--wv-accent); }
 
   /* Post/comment card styling itself (.wv-post, .wv-post-head, .wv-act-btn,

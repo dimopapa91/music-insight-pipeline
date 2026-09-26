@@ -24,7 +24,7 @@
 
   .cp-cats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--wv-5); justify-content: center; }
   .cp-examples { display: flex; flex-wrap: wrap; gap: var(--wv-2); align-items: center; margin-top: var(--wv-4); justify-content: center; }
-  .cp-examples .lbl { font-family: var(--wv-font-display); font-size: .72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--wv-muted); }
+  .cp-examples .lbl { font-family: var(--wv-font-display); font-weight: 600; font-size: .86rem; text-transform: uppercase; letter-spacing: 1px; color: var(--wv-muted); }
 
   .cp-results { display: grid; grid-template-columns: 1fr auto 1fr; gap: var(--wv-4); margin-top: var(--wv-6); align-items: start; }
   @media (max-width: 820px) { .cp-results { grid-template-columns: 1fr; } }
@@ -33,17 +33,17 @@
   .cp-artist { padding: var(--wv-5); }
   .cp-artist .top { display: flex; gap: var(--wv-3); align-items: center; margin-bottom: var(--wv-4); }
   .cp-artist img, .cp-artist .ph { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: var(--wv-surface-2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--wv-font-display); font-weight: 700; border: 1px solid var(--wv-border); }
-  .cp-artist .lbl { font-family: var(--wv-font-display); font-size: .64rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); }
+  .cp-artist .lbl { font-family: var(--wv-font-display); font-weight: 600; font-size: .77rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); }
   .cp-artist .nm { font-family: var(--wv-font-display); font-weight: 700; font-size: 1.15rem; }
   .cp-catrow { border-top: 1px solid var(--wv-border); padding-top: var(--wv-3); margin-top: var(--wv-3); }
-  .cp-catrow .h { font-family: var(--wv-font-display); font-size: .64rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-accent-ink); margin-bottom: 8px; }
+  .cp-catrow .h { font-family: var(--wv-font-display); font-weight: 600; font-size: .77rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-accent-ink); margin-bottom: 8px; }
   .cp-track { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: .88rem; padding: 5px 0; }
   /* Only 5 tracks are ever rendered per artist (see services.py), so a full
      44px target here doesn't push the card to an awkward height. */
   .cp-track button { font-size: .68rem; color: var(--wv-accent-ink); background: none; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 3px 8px; min-height: 44px; min-width: 44px; cursor: pointer; }
   .cp-track button:hover { border-color: var(--wv-accent); }
   .cp-verdict { padding: var(--wv-6); margin-top: var(--wv-5); }
-  .cp-verdict h2 { font-family: var(--wv-font-display); font-size: .95rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-accent-ink); margin-bottom: var(--wv-3); }
+  .cp-verdict h2 { font-family: var(--wv-font-display); font-weight: 600; font-size: .95rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-accent-ink); margin-bottom: var(--wv-3); }
   .cp-verdict .t { font-size: 1rem; line-height: 1.8; color: var(--wv-ink-2); max-width: 74ch; }
   .cp-verdict .t p { margin-bottom: 12px; }
   .cp-replace { text-align: center; margin-top: var(--wv-5); }
