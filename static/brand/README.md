@@ -11,7 +11,7 @@ SVGs need no font. All files have transparent backgrounds except the app icon.
 | `waveline-logo-on-light.svg` / `.png` | wordmark for light backgrounds (near-black face, lavender extrusion) |
 | `waveline-mark.svg` / `.png` | the W alone, dark backgrounds |
 | `waveline-mark-on-light.svg` / `.png` | the W alone, light backgrounds |
-| `waveline-app-icon.svg` / `.png` | the W on a black rounded tile (same as the favicon) |
+| `waveline-app-icon.svg` / `.png` / `-1024.png` | **primary logo**: the W on a black rounded tile (same as the favicon); corners outside the tile are transparent |
 | `waveline-wordmark-header-*.svg` | the site header (lighter extrusion for small sizes) |
 
 Colours: face `#ffffff` / `#0d0d0f`; W gradient `#f1ebff` → `#b3a0ff`;
