@@ -27,6 +27,7 @@ from views_discover import discover_bp
 from views_notifications import notifications_bp
 from views_messages import messages_bp
 from views_admin import admin_bp
+from agent_api import agent_api_bp, init_x402
 from social import count_unread
 from messaging import count_unread_messages
 from analytics import record_pageview, init_geoip
@@ -91,6 +92,11 @@ app.config.update(
 # rate-limit bypass if reused here. Do not point the limiter's key_func at
 # analytics._client_ip() or any left-most-entry parsing — keep
 # get_remote_address() backed by ProxyFix-adjusted remote_addr.
+# x402 pay-per-request agent API (see agent_api.py). Installed BEFORE ProxyFix
+# so ProxyFix stays the outermost WSGI layer and x402 sees the real https
+# scheme/host. No-op unless X402_PAY_TO is set.
+init_x402(app)
+
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 # ── Rate limiting ───────────────────────────────────────────────────
@@ -143,6 +149,7 @@ app.register_blueprint(discover_bp)
 app.register_blueprint(notifications_bp)
 app.register_blueprint(messages_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(agent_api_bp)
 
 # Self-hosted, privacy-respecting analytics: one row per real HTML page view.
 # Never raises into the request/response cycle (see analytics.py).
