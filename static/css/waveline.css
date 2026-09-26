@@ -648,8 +648,8 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
 .wv-btn-ghost { background: transparent; color: var(--wv-ink); border-color: var(--wv-border-2); }
 .wv-btn-ghost:hover { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
 .wv-btn:disabled { opacity: .6; cursor: not-allowed; }
-.wv-btn-sm { min-height: 36px; padding: 0 14px; font-size: .68rem; }
-.wv-btn-lg { min-height: 54px; padding: 0 28px; font-size: .82rem; }
+.wv-btn-sm { min-height: 38px; padding: 0 14px; font-size: .8rem; }
+.wv-btn-lg { min-height: 54px; padding: 0 28px; font-size: .94rem; }
 
 /* Magnetic-eligible marker; JS adds subtle pointer-following transform on fine-pointer devices */
 .wv-magnetic { will-change: transform; }
@@ -835,4 +835,39 @@ button.wv-del-btn:hover { border-color: var(--wv-danger); color: var(--wv-danger
 @media (max-width: 480px) {
   .wv-post-list { padding: var(--wv-2) var(--wv-4); }
   .wv-comments, .wv-comment-form, .wv-post-viewall { margin-left: 6px; padding-left: 10px; }
+}
+
+
+/* ── Mobile polish (2026 redesign) ──────────────────────────────
+   Measured at 390px on every page: no horizontal overflow anywhere, but
+   chips/text links were 21-34px tall and several inputs used <16px text
+   (iOS zooms the page on focus). This block fixes both site-wide. */
+@media (max-width: 860px) {
+  /* Touch targets: ~40px minimum for anything tappable */
+  .wv-chip { min-height: 40px; padding: 0 14px; }
+  .wv-btn-sm { min-height: 42px; }
+  .wv-link, .ar-back, .gp-back { display: inline-flex; align-items: center; min-height: 40px; }
+  .wv-footer a { padding: 9px 0; }
+  .wv-footer-inner { gap: var(--wv-4); }
+  .wv-subnav { scrollbar-width: none; scroll-snap-type: x proximity; }
+  .wv-subnav::-webkit-scrollbar { display: none; }
+  .wv-subnav a { padding: 11px 14px; scroll-snap-align: start; }
+
+  /* iOS Safari zooms into any field under 16px on focus */
+  html body input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
+  html body select, html body textarea { font-size: 16px; }
+
+  /* "Just analysed" strip: drop the label, keep the dot, so the artist
+     name gets the width */
+  .wv-pulse-lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .wv-pulse-tag { padding: 0 var(--wv-4); }
+  .wv-pulse-ch { padding: 0 var(--wv-3); }
+
+  /* Inline text links inside feed/discover cards: taller hit area without
+     changing the line's look */
+  .wv-post-author, .wv-post-artist, .wv-post-time, .wv-post-viewall, .wv-c-author, .dc-name { display: inline-flex; align-items: center; min-height: 36px; }
+
+  .wv-chapter { padding: var(--wv-7) 0; }
+  .wv-chapter-num { font-size: 2.4rem; }
+  .wv-container { padding: 0 var(--wv-4); }
 }
