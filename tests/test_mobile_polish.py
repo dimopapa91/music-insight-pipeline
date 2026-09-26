@@ -48,3 +48,16 @@ def test_homepage_phone_order_is_search_then_photo_then_numbers():
     orders = {name: int(re.search(rf"\.{name} \{{ order: (\d)", block).group(1))
               for name in ("wv-hero-inner", "wv-feature", "wv-kpis")}
     assert orders["wv-hero-inner"] < orders["wv-feature"] < orders["wv-kpis"]
+
+
+def test_textareas_beat_page_level_font_sizes_on_phones():
+    # ".cm-compose textarea" (0,1,1) used to beat a bare "html body textarea"
+    # (0,0,3), leaving the feed composer at 15.2px (iOS focus zoom).
+    block = _mobile_block(_read("static/css/waveline.css"))
+    assert "html body textarea:not([hidden])" in block
+
+
+def test_track_play_buttons_are_finger_sized():
+    html = _read("templates/artist_profile.html")
+    rule = re.search(r"\.ar-track \.nm \{([^}]*)\}", html).group(1)
+    assert "min-height: 44px" in rule

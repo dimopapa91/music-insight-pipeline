@@ -854,8 +854,10 @@ button.wv-del-btn:hover { border-color: var(--wv-danger); color: var(--wv-danger
   .wv-subnav a { padding: 11px 14px; scroll-snap-align: start; }
 
   /* iOS Safari zooms into any field under 16px on focus */
+  /* :not([hidden]) only lifts specificity above page rules like
+     ".cm-compose textarea", which otherwise won at 15.2px */
   html body input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
-  html body select, html body textarea { font-size: 16px; }
+  html body select:not([hidden]), html body textarea:not([hidden]) { font-size: 16px; }
 
   /* "Just analysed" strip: drop the label, keep the dot, so the artist
      name gets the width */
