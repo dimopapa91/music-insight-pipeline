@@ -1,0 +1,21 @@
+{#- Waveline icon set (2026 redesign).
+    One inline SVG sprite, drawn on a 24px grid with 1.5px square-capped,
+    mitred strokes so every icon matches the sharp, editorial type. Pages use
+    the icon() macro; the sprite itself is emitted once, in base.html. -#}
+
+{% macro icon(name, cls="") -%}
+<svg class="wv-i wv-i-{{ name }}{% if name in ('play', 'pause') %} wv-i-fill{% endif %}{% if cls %} {{ cls }}{% endif %}" aria-hidden="true" focusable="false"><use href="#wv-i-{{ name }}"></use></svg>
+{%- endmacro %}
+
+{% macro sprite() -%}
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+  <symbol id="wv-i-play" viewBox="0 0 24 24"><path d="M7 4.6v14.8L19.2 12z"/></symbol>
+  <symbol id="wv-i-pause" viewBox="0 0 24 24"><path d="M6.8 5h3.4v14H6.8zM13.8 5h3.4v14h-3.4z"/></symbol>
+  <symbol id="wv-i-bell" viewBox="0 0 24 24"><path d="M12 3.2v1.6"/><path d="M6.4 16.6V11a5.6 5.6 0 0 1 11.2 0v5.6l1.6 1.9H4.8z"/><path d="M9.8 21h4.4"/></symbol>
+  <symbol id="wv-i-mail" viewBox="0 0 24 24"><path d="M3.5 5.5h17v13h-17z"/><path d="M3.8 6.2 12 12.6l8.2-6.4"/></symbol>
+  <symbol id="wv-i-external" viewBox="0 0 24 24"><path d="M7 17 17 7"/><path d="M9 7h8v8"/></symbol>
+  <symbol id="wv-i-arrow" viewBox="0 0 24 24"><path d="M4 12h15"/><path d="m13.5 6.5 5.5 5.5-5.5 5.5"/></symbol>
+  <symbol id="wv-i-ticket" viewBox="0 0 24 24"><path d="M3.5 7h17v3.2a1.8 1.8 0 0 0 0 3.6V17h-17v-3.2a1.8 1.8 0 0 0 0-3.6z"/><path d="M14.5 7v2.2M14.5 11v2M14.5 14.8V17"/></symbol>
+  <symbol id="wv-i-close" viewBox="0 0 24 24"><path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/></symbol>
+</svg>
+{%- endmacro %}

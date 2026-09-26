@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}{{ genre.label }} — Waveline{% endblock %}
 {% block description %}{{ genre.label }} on Waveline: the artists that define it, with listening data and AI-written analysis.{% endblock %}
 
@@ -53,7 +54,7 @@
     <p class="wv-coord" style="margin-bottom:12px;">About the sound</p>
     {% if genre.summary %}
     <p class="gp-sum">{{ genre.summary | truncate(700) }}</p>
-    <p class="src">Description from <a class="wv-link" href="https://www.last.fm/tag/{{ genre.tag | urlencode }}" target="_blank" rel="noopener noreferrer">Last.fm ↗</a></p>
+    <p class="src">Description from <a class="wv-link" href="https://www.last.fm/tag/{{ genre.tag | urlencode }}" target="_blank" rel="noopener noreferrer">Last.fm {{ icon("external") }}</a></p>
     {% else %}
     <p>Last.fm's description of this genre isn't available right now.</p>
     {% endif %}

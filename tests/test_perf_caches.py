@@ -215,7 +215,7 @@ def test_discovery_excludes_already_searched_artists(monkeypatch):
 
 # ── get_dashboard_data ───────────────────────────────────────────────
 
-def _stub_dashboard_db(monkeypatch):
+def _stub_dashboard_db(monkeypatch, marker=1):
     """Minimal fake cursor covering get_dashboard_data's six queries in order."""
     results = [
         [(7,)],                                        # COUNT(*)
@@ -242,6 +242,10 @@ def _stub_dashboard_db(monkeypatch):
         yield FakeCur()
 
     monkeypatch.setattr(services, "db_cursor", fake_cm)
+    # The freshness marker (newest searches.id) is its own query; pin it so
+    # these canned rows stay in order. Photos never hit Deezer here.
+    monkeypatch.setattr(services, "latest_search_id", lambda: marker)
+    monkeypatch.setattr(services, "get_artist_photos", lambda names: {})
 
 
 def test_dashboard_data_is_cached_within_the_ttl(monkeypatch):
@@ -291,6 +295,37 @@ def test_dashboard_cache_expires_after_its_ttl(monkeypatch):
     _stub_dashboard_db(monkeypatch)
     services.get_dashboard_data()
     assert len(discovery_calls) == 2
+
+
+def test_a_new_search_on_any_worker_rebuilds_the_homepage(monkeypatch):
+    # clear_dashboard_cache() only reaches the worker that served /search;
+    # the other gunicorn worker notices via the newest searches.id instead.
+    _stub_dashboard_db(monkeypatch, marker=41)
+    monkeypatch.setattr(services, "resolve_insight", lambda a, i: (i, False))
+    discovery_calls = []
+    monkeypatch.setattr(services, "get_discovery_artists",
+                        lambda artists: discovery_calls.append(1) or [])
+    monkeypatch.setattr(services, "get_similar_artists", lambda name: [])
+
+    services.get_dashboard_data()
+    services.get_dashboard_data()          # same marker: served from cache
+    assert len(discovery_calls) == 1
+
+    _stub_dashboard_db(monkeypatch, marker=42)   # someone searched
+    services.get_dashboard_data()
+    assert len(discovery_calls) == 2
+
+
+def test_dashboard_falls_back_to_ttl_when_marker_unavailable(monkeypatch):
+    _stub_dashboard_db(monkeypatch, marker=None)
+    monkeypatch.setattr(services, "resolve_insight", lambda a, i: (i, False))
+    discovery_calls = []
+    monkeypatch.setattr(services, "get_discovery_artists",
+                        lambda artists: discovery_calls.append(1) or [])
+    monkeypatch.setattr(services, "get_similar_artists", lambda name: [])
+    services.get_dashboard_data()
+    services.get_dashboard_data()
+    assert len(discovery_calls) == 1
 
 
 def test_successful_search_invalidates_the_dashboard_cache(monkeypatch):

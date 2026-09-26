@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}Compare artists — Waveline{% endblock %}
 {% block description %}Compare two artists side by side: top tracks, listening data and an AI-written read on how their sounds differ and overlap.{% endblock %}
 
@@ -106,10 +107,10 @@
       </div>
       {% if a_data.tracks %}
       <div class="cp-catrow"><div class="h">Top tracks</div>
-        {% for t in a_data.tracks %}<div class="cp-track"><span>{{ t }}</span><button type="button" aria-label="Play {{ t }}" onclick='wvPlay({{ a_data.name|tojson }}, {{ t|tojson }}, this)'>▶</button></div>{% endfor %}
+        {% for t in a_data.tracks %}<div class="cp-track"><span>{{ t }}</span><button type="button" aria-label="Play {{ t }}" onclick='wvPlay({{ a_data.name|tojson }}, {{ t|tojson }}, this)'>{{ icon("play") }}</button></div>{% endfor %}
       </div>
       {% endif %}
-      {% if a_data.spotify_url %}<div class="cp-catrow"><div class="h">Listen</div><a class="wv-link" href="{{ a_data.spotify_url }}" target="_blank" rel="noopener noreferrer">Open on Spotify →</a></div>{% endif %}
+      {% if a_data.spotify_url %}<div class="cp-catrow"><div class="h">Listen</div><a class="wv-link" href="{{ a_data.spotify_url }}" target="_blank" rel="noopener noreferrer">Open on Spotify {{ icon("external") }}</a></div>{% endif %}
     </article>
 
     <div class="cp-results-vs" aria-hidden="true">VS</div>
@@ -121,10 +122,10 @@
       </div>
       {% if b_data.tracks %}
       <div class="cp-catrow"><div class="h">Top tracks</div>
-        {% for t in b_data.tracks %}<div class="cp-track"><span>{{ t }}</span><button type="button" aria-label="Play {{ t }}" onclick='wvPlay({{ b_data.name|tojson }}, {{ t|tojson }}, this)'>▶</button></div>{% endfor %}
+        {% for t in b_data.tracks %}<div class="cp-track"><span>{{ t }}</span><button type="button" aria-label="Play {{ t }}" onclick='wvPlay({{ b_data.name|tojson }}, {{ t|tojson }}, this)'>{{ icon("play") }}</button></div>{% endfor %}
       </div>
       {% endif %}
-      {% if b_data.spotify_url %}<div class="cp-catrow"><div class="h">Listen</div><a class="wv-link" href="{{ b_data.spotify_url }}" target="_blank" rel="noopener noreferrer">Open on Spotify →</a></div>{% endif %}
+      {% if b_data.spotify_url %}<div class="cp-catrow"><div class="h">Listen</div><a class="wv-link" href="{{ b_data.spotify_url }}" target="_blank" rel="noopener noreferrer">Open on Spotify {{ icon("external") }}</a></div>{% endif %}
     </article>
   </div>
 

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}Waveline — Follow the sound{% endblock %}
 {% block description %}Explore artists, discover connections and shape your music taste with Waveline.{% endblock %}
 
@@ -207,7 +208,7 @@
       <div class="wv-kpi"><span class="k">Artists analysed</span><b>{{ "{:,}".format(unique_artists or 0) }}</b><small>all time</small></div>
       <div class="wv-kpi"><span class="k">Data sources</span><b>4</b><small>matched by MusicBrainz ID</small></div>
       <div class="wv-kpi"><span class="k">Plays analysed</span><b>{{ plays_analysed | compact if plays_analysed else "—" }}</b><small>Last.fm plays across top tracks</small></div>
-      <a class="wv-kpi" href="https://github.com/dimopapa91/music-insight-pipeline/blob/main/docs/x402.md" target="_blank" rel="noopener noreferrer"><span class="k">For AI agents</span><b>$0.005</b><small>per insight · x402 on Base ↗</small></a>
+      <a class="wv-kpi" href="https://github.com/dimopapa91/music-insight-pipeline/blob/main/docs/x402.md" target="_blank" rel="noopener noreferrer"><span class="k">For AI agents</span><b>$0.005</b><small>per insight · x402 on Base {{ icon("external") }}</small></a>
     </div>
   </div>
 </section>
@@ -271,7 +272,7 @@
           {% if featured.top_tracks %}
           <div class="wv-featured-tracks">
             {% for t in featured.top_tracks[:4] %}
-            <button type="button" class="wv-chip" onclick='wvPlay({{ featured.artist|tojson }}, {{ t|tojson }}, this)'>▶ {{ t }}</button>
+            <button type="button" class="wv-chip" onclick='wvPlay({{ featured.artist|tojson }}, {{ t|tojson }}, this)'>{{ icon("play") }}<span>{{ t }}</span></button>
             {% endfor %}
           </div>
           {% endif %}

@@ -629,11 +629,27 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
 .wv-player-info { min-width: 0; flex: 1; }
 .wv-player-title { font-weight: 600; font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wv-player-artist { font-size: .74rem; color: var(--wv-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.wv-player-btn { background: none; border: none; color: var(--wv-ink-2); cursor: pointer; font-size: 1.1rem; width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.wv-player-btn { background: none; border: 1px solid var(--wv-border-2); color: var(--wv-ink-2); cursor: pointer; font-size: 1.1rem; width: 36px; height: 36px; border-radius: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .wv-player-btn:hover { background: var(--wv-surface-2); color: var(--wv-accent-ink); }
 .wv-player-progress { position: absolute; left: 10px; right: 10px; bottom: 3px; height: 2px; background: var(--wv-border); border-radius: 2px; overflow: hidden; }
 .wv-player-progress-fill { height: 100%; width: 0%; background: var(--wv-accent); }
 .wv-player-src { font-size: .74rem; color: var(--wv-muted); font-family: var(--wv-font-display); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+/* ── Icons (sprite in templates/_icons.html) ───────────────
+   Line icons: 1.5px square caps, mitred joins, to match the sharp type.
+   Play/pause are solid. Sized in em so they follow the text around them. */
+.wv-i { width: 1.1em; height: 1.1em; display: inline-block; flex-shrink: 0; vertical-align: -0.18em;
+  fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: square; stroke-linejoin: miter; }
+.wv-i-fill { fill: currentColor; stroke: none; }
+.wv-iconbtn .wv-i { width: 18px; height: 18px; }
+.wv-player-btn .wv-i { width: 16px; height: 16px; }
+.wv-more-quick-ic .wv-i { width: 22px; height: 22px; }
+a .wv-i, button .wv-i { transition: transform var(--wv-motion) var(--wv-ease); }
+a:hover .wv-i-external { transform: translate(1px, -1px); }
+a:hover .wv-i-arrow { transform: translateX(2px); }
+.is-loading { cursor: progress; }
+.is-loading .wv-i { animation: wv-pulse-blink 1s ease-in-out infinite; }
+.wv-chip .wv-i-fill { width: .8em; height: .8em; }
 
 /* ── Buttons ───────────────────────────────────────────── */
 .wv-btn {

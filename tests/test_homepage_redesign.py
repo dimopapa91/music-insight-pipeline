@@ -14,11 +14,11 @@ import views_main
 @pytest.fixture(autouse=True)
 def _clear_caches():
     services._artist_photo_cache.clear()
-    services._site_pulse_cache.update(data=None, at=0.0)
+    services._site_pulse_cache.update(data=None, at=0.0, marker=None, checked=0)
     services._plays_total_cache.update(data=None, at=0.0)
     yield
     services._artist_photo_cache.clear()
-    services._site_pulse_cache.update(data=None, at=0.0)
+    services._site_pulse_cache.update(data=None, at=0.0, marker=None, checked=0)
     services._plays_total_cache.update(data=None, at=0.0)
 
 
@@ -102,6 +102,33 @@ def test_deezer_image_size_passes_other_urls_through():
 
 
 # ── get_site_pulse ───────────────────────────────────────────────────
+
+def test_site_pulse_refreshes_when_a_new_search_lands(monkeypatch):
+    marker = {"v": 10}
+    calls = []
+    monkeypatch.setattr(services, "latest_search_id", lambda: marker["v"])
+
+    import contextlib
+
+    class Cur:
+        def execute(self, sql, params=None):
+            calls.append(1)
+
+        def fetchall(self):
+            return [("Artist %d" % len(calls), None)]
+
+    @contextlib.contextmanager
+    def cm(commit=False):
+        yield Cur()
+    monkeypatch.setattr(services, "db_cursor", cm)
+
+    first = services.get_site_pulse()
+    services._site_pulse_cache["checked"] = 0      # past the 5s check window
+    assert services.get_site_pulse() is first      # same newest search: cached
+    marker["v"] = 11                               # someone searched
+    services._site_pulse_cache["checked"] = 0
+    assert services.get_site_pulse() is not first
+
 
 def test_site_pulse_never_raises_without_a_database():
     # conftest pins DATABASE_URL to an unreachable address.
