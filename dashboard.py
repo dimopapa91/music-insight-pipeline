@@ -8,6 +8,7 @@ dashboard:app`` (see Procfile).
 
 import os
 
+import sentry_sdk
 from flask import Flask, render_template, Response
 from flask_login import LoginManager, current_user
 from dotenv import load_dotenv
@@ -32,6 +33,28 @@ from analytics import record_pageview, init_geoip
 from rate_limit import limiter
 
 load_dotenv()
+
+
+def _init_sentry():
+    """Wire up Sentry error monitoring, but only when a DSN is configured
+    (so local dev and the test suite never send events). Railway provides
+    the environment name and the deployed commit SHA, which tag every event
+    so an error can be traced back to the exact release that introduced it.
+    The Flask integration auto-enables because Flask is installed."""
+    dsn = os.getenv("SENTRY_DSN")
+    if not dsn:
+        return False
+    sentry_sdk.init(
+        dsn=dsn,
+        environment=os.getenv("RAILWAY_ENVIRONMENT", "development"),
+        release=os.getenv("RAILWAY_GIT_COMMIT_SHA"),
+        traces_sample_rate=0.1,
+        send_default_pii=False,
+    )
+    return True
+
+
+_init_sentry()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-insecure-secret-change-me")
