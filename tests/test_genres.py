@@ -137,3 +137,14 @@ def test_genres_link_in_primary_nav_and_homepage(monkeypatch):
     nav = html[html.index('<nav class="wv-nav"'):html.index("</nav>", html.index('<nav class="wv-nav"'))]
     assert 'href="/genres"' in nav
     assert 'href="/genre/trip-hop"' in html
+
+
+def test_genre_covers_use_a_different_lead_artist_for_each_genre(monkeypatch):
+    ranked = {"electronic": ["The Weeknd", "Daft Punk"], "rnb": ["The Weeknd", "Frank Ocean"]}
+    monkeypatch.setattr(services, "get_genre", lambda slug: dict(
+        services.GENRES_BY_SLUG[slug], summary="", artists=ranked.get(slug, [f"{slug} artist"])))
+    monkeypatch.setattr(services, "get_artist_photos", lambda names: {})
+    leads = {c["slug"]: c["artist"] for c in services.get_genre_covers()}
+    assert leads["electronic"] == "The Weeknd"
+    assert leads["rnb"] == "Frank Ocean"
+    assert len(set(leads.values())) == len(leads)
