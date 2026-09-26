@@ -151,14 +151,14 @@
 <!-- HERO: the latest analysed artist on the left, search on the right -->
 <section class="wv-hero{{ '' if featured else ' no-feature' }}" id="top" data-wv-hero aria-labelledby="wv-title">
   {% if featured %}
-  <a class="wv-feature" href="/artist/{{ featured.artist | urlencode }}" aria-label="Just analysed: {{ featured.artist | titlecase }}">
+  <a class="wv-feature" href="/artist/{{ featured.artist | urlencode }}" aria-label="Latest search: {{ featured.artist | titlecase }}">
     {% if featured.photo %}
     <img class="wv-feature-img" src="{{ featured.photo | dz_size(1000) }}" alt="" width="1000" height="1000" fetchpriority="high">
     {% else %}
     <span class="wv-feature-noimg" aria-hidden="true">{{ featured.artist[0] | upper }}</span>
     {% endif %}
     <div class="wv-boxlbl">
-      <span class="k">Just analysed · {{ featured.searched_at | timeago }}</span>
+      <span class="k">Latest search · {{ featured.searched_at | timeago }}</span>
       <h2>{{ featured.artist | titlecase }}</h2>
       {% if featured.top_tracks %}<p>Top track · {{ featured.top_tracks[0] }}</p>{% endif %}
       <span class="go">Open the analysis →</span>
@@ -268,7 +268,7 @@
         {% if featured.photo %}<img src="{{ featured.photo | dz_size(1000) }}" alt="" loading="lazy" width="1000" height="1000">{% endif %}
         <div class="wv-boxlbl">
           <h3>{{ featured.artist | titlecase }}</h3>
-          <p class="wv-featured-date">Analysed {{ featured.searched_at.strftime('%d %b %Y') }} · Last.fm · Spotify · Deezer</p>
+          <p class="wv-featured-date">Latest search {{ featured.searched_at.strftime('%d %b %Y') }} · Last.fm · Spotify · Deezer</p>
           {% if featured.top_tracks %}
           <div class="wv-featured-tracks">
             {% for t in featured.top_tracks[:4] %}
@@ -461,7 +461,9 @@
         var div = document.createElement('div');
         div.className = 'wv-suggestion'; div.setAttribute('role', 'option');
         div.innerHTML = '<span>' + name + '</span><span class="tag">Analysed</span>';
-        div.addEventListener('mousedown', function (e) { e.preventDefault(); input.value = name; box.style.display = 'none'; form.submit(); });
+        // Already analysed: open it (counts as the latest search) instead of
+        // re-running the paid pipeline for data we already have.
+        div.addEventListener('mousedown', function (e) { e.preventDefault(); input.value = name; box.style.display = 'none'; window.location.href = '/artist/' + encodeURIComponent(name) + '?from=search'; });
         box.appendChild(div);
       });
       box.style.display = 'block'; input.setAttribute('aria-expanded', 'true');

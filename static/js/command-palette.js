@@ -76,7 +76,10 @@
     if (artistMatches.length) {
       addGroup("Artists");
       artistMatches.forEach(function (name) {
-        addItem(name, "/artist/" + encodeURIComponent(name), "Artist", function () { navigate("/artist/" + encodeURIComponent(name)); });
+        // ?from=search: an opened search result counts as the latest search
+        // on the homepage (see views_artist / services.record_artist_open).
+        var href = "/artist/" + encodeURIComponent(name) + "?from=search";
+        addItem(name, href, "Artist", function () { navigate(href); });
       });
     }
     if (q) {
