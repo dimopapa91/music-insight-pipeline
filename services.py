@@ -523,11 +523,18 @@ def get_genre_covers():
     from concurrent.futures import ThreadPoolExecutor
     with ThreadPoolExecutor(max_workers=len(GENRES)) as pool:
         genres = list(pool.map(lambda g: get_genre(g["slug"]), GENRES))
-    leads = [g["artists"][0] for g in genres if g and g["artists"]]
-    photos = get_artist_photos(leads)
-    covers = []
+    # Each genre is fronted by its highest-ranked artist not already fronting
+    # an earlier genre (Last.fm ranks The Weeknd first for both "electronic"
+    # and "rnb"; two identical covers side by side read as a bug).
+    used, leads = set(), []
     for g in genres:
-        lead = g["artists"][0] if g and g["artists"] else ""
+        lead = next((a for a in (g["artists"] if g else []) if a.lower() not in used), "")
+        if lead:
+            used.add(lead.lower())
+        leads.append(lead)
+    photos = get_artist_photos([l for l in leads if l])
+    covers = []
+    for g, lead in zip(genres, leads):
         covers.append({"slug": g["slug"], "label": g["label"], "artist": lead,
                        "image": photos.get(lead, {}).get("image", "") if lead else ""})
     return covers
