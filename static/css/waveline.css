@@ -792,65 +792,72 @@ img.wv-avatar-hero { object-fit: cover; display: block; }
    the same whether wrapped in a .wv-card (profile) or laid directly on
    the page (feed). ── */
 .wv-post-list { padding: var(--wv-2) var(--wv-5); }
-.wv-post { padding: var(--wv-4) 0; border-top: 1px solid var(--wv-border); }
+.wv-post { padding: var(--wv-5) 0; border-top: 1px solid var(--wv-border); }
 .wv-post:first-child { border-top: none; }
-.wv-post-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.wv-post-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
 .wv-post-avatar { flex-shrink: 0; }
-.wv-post-author { font-family: var(--wv-font-display); font-weight: 700; font-size: .85rem; color: var(--wv-ink); text-decoration: none; overflow-wrap: anywhere; }
+.wv-post-avatar .wv-avatar-xs, .cm-compose .who .wv-avatar-xs { width: 36px; height: 36px; border-radius: 50%; font-size: .82rem; }
+.wv-post-author { font-family: var(--wv-font-display); font-weight: 700; font-size: 1rem; letter-spacing: .3px; text-transform: uppercase; color: var(--wv-ink); text-decoration: none; overflow-wrap: anywhere; }
 .wv-post-author:hover { color: var(--wv-accent-ink); }
 .wv-post-artist {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-family: var(--wv-font-display); font-weight: 600; font-size: .74rem; letter-spacing: 1px; text-transform: uppercase;
-  color: var(--wv-accent-ink); text-decoration: none;
-  border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill); padding: 4px 10px;
-  max-width: 100%; overflow-wrap: anywhere;
-}
-.wv-post-artist:hover { border-color: var(--wv-accent); }
-.wv-post-time { margin-left: auto; font-family: var(--wv-font-display); font-weight: 600; font-size: .79rem; letter-spacing: .3px; color: var(--wv-muted); white-space: nowrap; text-decoration: none; }
-.wv-post-time:hover { color: var(--wv-accent-ink); text-decoration: underline; }
-.wv-post-body { font-size: .96rem; line-height: 1.65; color: var(--wv-ink-2); white-space: pre-wrap; word-wrap: break-word; max-width: 62ch; }
-.wv-post-actions { display: flex; align-items: center; gap: 8px; margin-top: var(--wv-3); flex-wrap: wrap; }
-.wv-act-btn {
   display: inline-flex; align-items: center; gap: 6px;
-  font-family: var(--wv-font-body); font-size: .8rem; color: var(--wv-muted);
-  background: none; border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill);
-  padding: 0 14px; min-height: 44px; cursor: pointer;
+  font-family: var(--wv-font-display); font-weight: 700; font-size: .78rem; letter-spacing: .8px; text-transform: uppercase;
+  color: var(--wv-accent-ink); text-decoration: none; padding: 2px 0;
+  border-bottom: 1px solid transparent; max-width: 100%; overflow-wrap: anywhere;
+}
+.wv-post-artist .wv-i { width: 14px; height: 14px; }
+.wv-post-artist:hover { border-bottom-color: var(--wv-accent); }
+.wv-post-time { margin-left: auto; font-family: var(--wv-font-display); font-weight: 600; font-size: .78rem; letter-spacing: .6px; text-transform: uppercase; color: var(--wv-muted); white-space: nowrap; text-decoration: none; }
+.wv-post-time:hover { color: var(--wv-accent-ink); }
+.wv-post-body { font-size: 1.06rem; line-height: 1.7; color: var(--wv-ink); white-space: pre-wrap; word-wrap: break-word; max-width: 62ch; }
+.wv-post-actions { display: flex; align-items: center; gap: 4px; margin-top: var(--wv-3); flex-wrap: wrap; }
+.wv-act-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--wv-font-display); font-weight: 600; font-size: .86rem; letter-spacing: .4px; color: var(--wv-muted);
+  background: none; border: 1px solid transparent; border-radius: 0;
+  padding: 0 10px; min-height: 40px; cursor: pointer;
   transition: border-color var(--wv-motion) var(--wv-ease), color var(--wv-motion) var(--wv-ease);
 }
-button.wv-act-btn:hover { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
+.wv-post-actions .wv-act-btn:first-child, .wv-post-actions form:first-child .wv-act-btn { padding-left: 0; }
+.wv-act-btn .wv-i { width: 17px; height: 17px; }
+button.wv-act-btn:hover { color: var(--wv-accent-ink); }
 button.wv-act-btn:disabled { opacity: .5; cursor: not-allowed; }
-.wv-act-btn svg { flex-shrink: 0; }
-.wv-like-btn.is-liked { color: #e0245e; border-color: #e0245e; }
-.wv-like-btn.is-liked svg { fill: currentColor; }
-button.wv-del-btn:hover { border-color: var(--wv-danger); color: var(--wv-danger); }
+.wv-like-btn.is-liked { color: var(--wv-accent-ink); }
+.wv-like-btn.is-liked .wv-i { fill: currentColor; }
+.wv-post-actions form:last-child:has(.wv-del-btn) { margin-left: auto; }
+button.wv-del-btn { font-size: .78rem; text-transform: uppercase; letter-spacing: 1px; }
+button.wv-del-btn:hover { color: var(--wv-danger); }
 
 .wv-post-discussion { scroll-margin-top: calc(var(--wv-dock-h) + var(--wv-5)); }
-.wv-comments { margin: var(--wv-3) 0 0 15px; padding-left: 21px; border-left: 1px solid var(--wv-border); display: grid; gap: 10px; }
-.wv-comment { font-size: .86rem; color: var(--wv-ink-2); line-height: 1.55; overflow-wrap: anywhere; }
-.wv-c-author { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); text-decoration: none; font-size: .82rem; overflow-wrap: anywhere; }
+.wv-comments { margin: var(--wv-3) 0 0 17px; padding-left: 22px; border-left: 1px solid var(--wv-border-2); display: grid; gap: 12px; }
+.wv-comment { font-size: .92rem; color: var(--wv-ink-2); line-height: 1.6; overflow-wrap: anywhere; }
+.wv-c-author { font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-ink); text-decoration: none; font-size: .86rem; letter-spacing: .3px; margin-right: 4px; overflow-wrap: anywhere; }
 .wv-c-author:hover { color: var(--wv-accent-ink); }
-.wv-c-time { color: var(--wv-muted); font-size: .74rem; margin-left: 6px; }
+.wv-c-time { color: var(--wv-muted); font-size: .76rem; margin-left: 6px; }
 .wv-post-viewall {
-  display: inline-block; margin: var(--wv-3) 0 0 15px; font-family: var(--wv-font-display); font-weight: 600;
-  font-size: .86rem; letter-spacing: .3px; color: var(--wv-accent-ink); text-decoration: none;
+  display: inline-block; margin: var(--wv-3) 0 0 17px; padding-left: 22px; font-family: var(--wv-font-display); font-weight: 700;
+  font-size: .82rem; letter-spacing: .8px; text-transform: uppercase; color: var(--wv-accent-ink); text-decoration: none;
 }
 .wv-post-viewall:hover { text-decoration: underline; }
-.wv-comment-form { display: flex; gap: 8px; margin: var(--wv-3) 0 0 15px; padding-left: 21px; }
+/* Reply: a quiet underlined line, not a second big form */
+.wv-comment-form { display: flex; align-items: center; gap: 10px; margin: var(--wv-3) 0 0 17px; padding-left: 22px; }
 .wv-comment-form input {
-  flex: 1; min-width: 0; font-family: var(--wv-font-body); font-size: .86rem;
-  border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill);
-  padding: 0 14px; height: 44px; background: var(--wv-surface-2); color: var(--wv-ink);
+  flex: 1; min-width: 0; font-family: var(--wv-font-body); font-size: .92rem;
+  border: 0; border-bottom: 1px solid var(--wv-border-2); border-radius: 0;
+  padding: 0 2px; height: 40px; background: transparent; color: var(--wv-ink);
 }
-.wv-comment-form input:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); }
+.wv-comment-form input::placeholder { color: var(--wv-muted); }
+.wv-comment-form input:focus { outline: none; border-bottom-color: var(--wv-accent); }
 .wv-comment-form button {
-  font-family: var(--wv-font-display); font-size: .77rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
-  color: var(--wv-on-accent); background: var(--wv-accent); border: none; border-radius: var(--wv-radius-pill);
-  padding: 0 18px; min-height: 44px; cursor: pointer;
+  font-family: var(--wv-font-display); font-size: .82rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--wv-accent-ink); background: none; border: 1px solid var(--wv-border-2); border-radius: 0;
+  padding: 0 16px; min-height: 40px; cursor: pointer;
+  transition: border-color var(--wv-motion) var(--wv-ease), background var(--wv-motion) var(--wv-ease), color var(--wv-motion) var(--wv-ease);
 }
-.wv-comment-form button:hover { background: var(--wv-accent-ink); }
+.wv-comment-form button:hover { background: var(--wv-accent); border-color: var(--wv-accent); color: var(--wv-on-accent); }
 @media (max-width: 480px) {
   .wv-post-list { padding: var(--wv-2) var(--wv-4); }
-  .wv-comments, .wv-comment-form, .wv-post-viewall { margin-left: 6px; padding-left: 10px; }
+  .wv-comments, .wv-comment-form, .wv-post-viewall { margin-left: 6px; padding-left: 12px; }
 }
 
 

@@ -1,6 +1,7 @@
 """Community feed blueprint: posting, likes, comments, the feed itself, and
 the public single-post detail/conversation page."""
 
+from services import GENRES
 from flask import Blueprint, render_template, request, redirect, url_for, abort
 from flask_login import login_required, current_user
 
@@ -48,7 +49,7 @@ def feed():
     rows = get_feed(viewer_id, scope=tab, page=page, per_page=PER_PAGE, limit=PER_PAGE + 1)
     has_next = len(rows) > PER_PAGE
     posts = rows[:PER_PAGE]
-    return render_template("feed.html", posts=posts, tab=tab, page=page, has_next=has_next)
+    return render_template("feed.html", posts=posts, tab=tab, page=page, has_next=has_next, genres=GENRES)
 
 
 @feed_bp.route("/post/<int:post_id>")
