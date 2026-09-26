@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{{ genre.label }} — Waveline{% endblock %}
+{% block description %}{{ genre.label }} on Waveline: the artists that define it, with listening data and AI-written analysis.{% endblock %}
+
+{% block head_extra %}
+<style>
+  .gp-head { display: grid; grid-template-columns: 1.2fr 1fr; border-bottom: 1px solid var(--wv-border); }
+  .gp-title { padding: var(--wv-6) var(--wv-5) var(--wv-5); border-right: 1px solid var(--wv-border); display: flex; flex-direction: column; }
+  .gp-back { font-family: var(--wv-font-display); font-weight: 700; font-size: .84rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); text-decoration: none; }
+  .gp-back:hover { color: var(--wv-accent-ink); }
+  .gp-title h1 { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(3.4rem, 10vw, 8rem); line-height: .84; text-transform: uppercase; letter-spacing: -1px; margin-top: auto; padding-top: var(--wv-6); overflow-wrap: anywhere; }
+  .gp-meta { display: flex; gap: var(--wv-5); margin-top: var(--wv-4); font-family: var(--wv-font-display); font-weight: 700; font-size: .82rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); flex-wrap: wrap; }
+  .gp-meta b { color: var(--wv-ink); }
+  .gp-about { padding: var(--wv-6) var(--wv-5) var(--wv-5); }
+  .gp-about p { color: var(--wv-ink-2); line-height: 1.75; font-size: .98rem; max-width: 60ch; }
+  .gp-about .src { margin-top: var(--wv-3); font-size: .78rem; color: var(--wv-muted); }
+  @media (max-width: 860px) { .gp-head { grid-template-columns: 1fr; } .gp-title { border-right: 0; border-bottom: 1px solid var(--wv-border); } }
+
+  .gp-grid { display: grid; grid-template-columns: repeat(5, 1fr); border-bottom: 1px solid var(--wv-border); }
+  @media (max-width: 1000px) { .gp-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 600px) { .gp-grid { grid-template-columns: repeat(2, 1fr); } }
+  .gp-card { position: relative; display: block; text-decoration: none; color: inherit; border-right: 1px solid var(--wv-border); border-top: 1px solid var(--wv-border); min-width: 0; }
+  .gp-ph { position: relative; aspect-ratio: 1; overflow: hidden; background: var(--wv-surface-2); }
+  .gp-ph img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--wv-motion-slow) var(--wv-ease); }
+  .gp-card:hover .gp-ph img { transform: scale(1.04); }
+  .gp-ph .ini { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--wv-font-display); font-weight: 700; font-size: 4rem; color: var(--wv-border-2); }
+  .gp-rank { position: absolute; left: 8px; top: 8px; background: var(--wv-bg); padding: 3px 7px; font-family: var(--wv-font-display); font-weight: 700; font-size: .74rem; letter-spacing: .6px; }
+  .gp-badge { position: absolute; right: 8px; top: 8px; background: var(--wv-accent); color: var(--wv-on-accent); padding: 3px 7px; font-family: var(--wv-font-display); font-weight: 700; font-size: .72rem; letter-spacing: .8px; text-transform: uppercase; }
+  .gp-m { padding: 12px 14px 14px; }
+  .gp-m .nm { font-family: var(--wv-font-display); font-weight: 700; font-size: 1.05rem; line-height: 1.1; text-transform: uppercase; overflow-wrap: anywhere; }
+  .gp-m .fans { color: var(--wv-muted); font-size: .8rem; margin-top: 3px; }
+  .gp-card:hover .nm { color: var(--wv-accent-ink); }
+
+  .gp-others { padding: var(--wv-6) var(--wv-5); }
+  .gp-others h2 { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.4rem, 2.8vw, 2rem); text-transform: uppercase; margin-bottom: var(--wv-3); }
+  .gp-others .row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .gp-others .wv-chip { font-family: var(--wv-font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .6px; background: transparent; }
+  .gp-empty { padding: var(--wv-6) var(--wv-5); }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="gp-head">
+  <div class="gp-title">
+    <a class="gp-back" href="/genres">← All genres</a>
+    <h1>{{ genre.label }}</h1>
+    <div class="gp-meta">
+      <span><b>{{ artists | length }}</b> top artists</span>
+      <span><b>{{ analysed_count }}</b> analysed on Waveline</span>
+    </div>
+  </div>
+  <div class="gp-about">
+    <p class="wv-coord" style="margin-bottom:12px;">About the sound</p>
+    {% if genre.summary %}
+    <p>{{ genre.summary | truncate(700) }}</p>
+    <p class="src">Description from <a class="wv-link" href="https://www.last.fm/tag/{{ genre.tag | urlencode }}" target="_blank" rel="noopener noreferrer">Last.fm ↗</a></p>
+    {% else %}
+    <p>Last.fm's description of this genre isn't available right now.</p>
+    {% endif %}
+  </div>
+</section>
+
+{% if artists %}
+<div class="gp-grid">
+  {% for a in artists %}
+  <a class="gp-card" href="/artist/{{ a.name | urlencode }}">
+    <div class="gp-ph">
+      {% if a.image %}<img src="{{ a.image | dz_size(500) }}" alt="" {% if loop.index > 5 %}loading="lazy" {% endif %}width="500" height="500">{% else %}<span class="ini" aria-hidden="true">{{ a.name[0] | upper }}</span>{% endif %}
+      <span class="gp-rank">{{ "%02d" | format(loop.index) }}</span>
+      {% if a.analysed %}<span class="gp-badge">Analysed</span>{% endif %}
+    </div>
+    <div class="gp-m">
+      <div class="nm">{{ a.name }}</div>
+      {% if a.fans %}<div class="fans">{{ a.fans | compact }} Deezer fans</div>{% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="gp-empty"><div class="wv-empty"><h3>Artists are temporarily unavailable</h3><p>Last.fm didn't answer just now. Try again in a moment.</p></div></div>
+{% endif %}
+
+<section class="gp-others">
+  <h2>More genres</h2>
+  <div class="row">{% for g in others %}<a class="wv-chip" href="/genre/{{ g.slug }}">{{ g.label }}</a>{% endfor %}</div>
+</section>
+{% endblock %}

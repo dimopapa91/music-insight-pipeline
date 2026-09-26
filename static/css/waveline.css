@@ -677,6 +677,10 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
 .wv-chapter { padding: var(--wv-8) 0; border-top: 1px solid var(--wv-border); }
 .wv-chapter:first-of-type { border-top: none; }
 
+/* Editorial page titles: every page's h1 in the condensed uppercase voice
+   of the 2026 redesign. Element-level, so page styles still set the size. */
+main h1 { font-family: var(--wv-font-display); text-transform: uppercase; letter-spacing: -.3px; line-height: .95; }
+
 /* ── Cards ─────────────────────────────────────────────── */
 .wv-card {
   background: var(--wv-surface); border: 1px solid var(--wv-border); border-radius: var(--wv-radius-lg);

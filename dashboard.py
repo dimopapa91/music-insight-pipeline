@@ -25,6 +25,7 @@ from views_taste import taste_bp
 from views_news import news_bp
 from views_feed import feed_bp
 from views_discover import discover_bp
+from views_genres import genres_bp
 from views_notifications import notifications_bp
 from views_messages import messages_bp
 from views_admin import admin_bp
@@ -149,6 +150,7 @@ app.register_blueprint(taste_bp)
 app.register_blueprint(news_bp)
 app.register_blueprint(feed_bp)
 app.register_blueprint(discover_bp)
+app.register_blueprint(genres_bp)
 app.register_blueprint(notifications_bp)
 app.register_blueprint(messages_bp)
 app.register_blueprint(admin_bp)

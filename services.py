@@ -448,6 +448,107 @@ def compact_number(n):
     return f"{int(n):,}"
 
 
+# ── Genres (Last.fm tags) ───────────────────────────────────────────
+#
+# A fixed, curated set of genre pages. Only these slugs resolve, so a
+# crawler can't turn /genre/<anything> into unbounded Last.fm traffic.
+# Each genre is Last.fm's tag info + top artists for that tag, cached 24h
+# (1h on failure), with Deezer photos via get_artist_photos().
+
+GENRES = [
+    {"slug": "trip-hop",   "label": "Trip-hop",   "tag": "trip-hop"},
+    {"slug": "electronic", "label": "Electronic", "tag": "electronic"},
+    {"slug": "jazz",       "label": "Jazz",       "tag": "jazz"},
+    {"slug": "hip-hop",    "label": "Hip-hop",    "tag": "hip-hop"},
+    {"slug": "rnb",        "label": "R&B",        "tag": "rnb"},
+    {"slug": "indie",      "label": "Indie",      "tag": "indie"},
+    {"slug": "ambient",    "label": "Ambient",    "tag": "ambient"},
+    {"slug": "soul",       "label": "Soul",       "tag": "soul"},
+]
+GENRES_BY_SLUG = {g["slug"]: g for g in GENRES}
+
+_genre_cache = {}              # slug -> {"data": dict, "at": float, "ok": bool}
+_GENRE_TTL = 86400
+_GENRE_NEG_TTL = 3600
+_GENRE_ARTISTS = 20
+
+_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _clean_lastfm_summary(text):
+    """Last.fm wiki summaries are HTML ending in a 'Read more on Last.fm'
+    link; keep just the prose."""
+    text = html.unescape(_TAG_RE.sub("", text or ""))
+    text = re.sub(r"\s*Read more on Last\.fm\.?\s*$", "", text).strip()
+    return text
+
+
+def get_genre(slug):
+    """{"slug", "label", "tag", "summary", "artists": [names]} for a curated
+    genre, or None for an unknown slug. Never raises."""
+    genre = GENRES_BY_SLUG.get(slug)
+    if not genre:
+        return None
+    entry = _genre_cache.get(slug)
+    if entry:
+        ttl = _GENRE_TTL if entry["ok"] else _GENRE_NEG_TTL
+        if time.time() - entry["at"] < ttl:
+            return entry["data"]
+
+    data = dict(genre, summary="", artists=[])
+    ok = True
+    try:
+        info = http_requests.get(LASTFM_BASE, params={
+            "method": "tag.getInfo", "tag": genre["tag"],
+            "api_key": LASTFM_API_KEY, "format": "json"}, timeout=5).json()
+        data["summary"] = _clean_lastfm_summary(info.get("tag", {}).get("wiki", {}).get("summary", ""))
+    except Exception:
+        ok = False
+    try:
+        top = http_requests.get(LASTFM_BASE, params={
+            "method": "tag.getTopArtists", "tag": genre["tag"], "limit": _GENRE_ARTISTS,
+            "api_key": LASTFM_API_KEY, "format": "json"}, timeout=5).json()
+        data["artists"] = [a["name"] for a in top.get("topartists", {}).get("artist", []) if a.get("name")]
+    except Exception:
+        ok = False
+    if not data["artists"]:
+        ok = False
+    _genre_cache[slug] = {"data": data, "at": time.time(), "ok": ok}
+    return data
+
+
+def get_genre_covers():
+    """[{"slug", "label", "artist", "image"}] for the genre index: each
+    genre's top artist and their photo. Genres load in parallel."""
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=len(GENRES)) as pool:
+        genres = list(pool.map(lambda g: get_genre(g["slug"]), GENRES))
+    leads = [g["artists"][0] for g in genres if g and g["artists"]]
+    photos = get_artist_photos(leads)
+    covers = []
+    for g in genres:
+        lead = g["artists"][0] if g and g["artists"] else ""
+        covers.append({"slug": g["slug"], "label": g["label"], "artist": lead,
+                       "image": photos.get(lead, {}).get("image", "") if lead else ""})
+    return covers
+
+
+def analysed_artist_names(names):
+    """The subset of `names` (lower-cased) already analysed on Waveline.
+    One query; empty set on any DB failure."""
+    names = [n for n in names if n]
+    if not names:
+        return set()
+    try:
+        with db_cursor() as cur:
+            cur.execute(
+                "SELECT DISTINCT LOWER(artist_name) FROM searches WHERE LOWER(artist_name) = ANY(%s)",
+                ([n.lower() for n in names],))
+            return {r[0] for r in cur.fetchall()}
+    except Exception:
+        return set()
+
+
 # ── Site pulse: the "Just analysed" strip ───────────────────────────
 #
 # Rendered on every page (context processor), so it's one small query,

@@ -31,6 +31,7 @@
             <nav class="wv-nav" aria-label="Primary">
                 <a href="/"         {% if path == '/' %}aria-current="page"{% endif %}>Home</a>
                 <a href="/discover" {% if path.startswith('/discover') %}aria-current="page"{% endif %}>Discover</a>
+                <a href="/genres" {% if path.startswith('/genre') %}aria-current="page"{% endif %}>Genres</a>
                 <a href="/feed"     {% if path.startswith('/feed') %}aria-current="page"{% endif %}>Feed</a>
                 <a href="/profile"  {% if path.startswith('/profile') %}aria-current="page"{% endif %}>Taste</a>
                 <a href="/news" {% if path.startswith('/news') %}aria-current="page"{% endif %}>News</a>
@@ -149,6 +150,7 @@
                 <h3>Explore</h3>
                 <a href="/">Home</a>
                 <a href="/discover">Discover</a>
+                <a href="/genres">Genres</a>
                 <a href="/feed">Feed</a>
                 <a href="/compare">Compare</a>
                 <a href="/news">News</a>
@@ -266,6 +268,7 @@
             {% endif %}
 
             <h2>Explore</h2>
+            <a href="/genres" {% if path.startswith('/genre') %}aria-current="page"{% endif %}>Genres <span class="muted">Browse by sound</span></a>
             <a href="/compare" {% if path.startswith('/compare') %}aria-current="page"{% endif %}>Compare <span class="muted">Side-by-side artists</span></a>
             <a href="/news" {% if path.startswith('/news') %}aria-current="page"{% endif %}>News <span class="muted">Headlines &amp; releases</span></a>
             <a href="/about">About Waveline <span class="muted">How it works</span></a>
