@@ -8,6 +8,11 @@ __pycache__/
 # GeoLite2 database (MaxMind) — never commit, see README "GeoIP setup"
 *.mmdb
 
+# x402 test-wallet private keys — never commit (see scripts/x402_testnet_pay.py)
+*.key
+.x402-test-key*
+x402-test-key*
+
 # Personal files
 *.docx
 .DS_Store

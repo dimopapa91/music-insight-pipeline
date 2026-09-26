@@ -46,6 +46,11 @@ os.environ["TICKETMASTER_API_KEY"] = ""   # tests never call Ticketmaster
 # during collection and wire up live error reporting mid-test.
 os.environ["SENTRY_DSN"] = ""   # tests never initialise Sentry
 
+# dashboard.py calls init_x402() at import time; an empty address keeps the
+# paid agent API off, so the suite never contacts a real x402 facilitator.
+# tests/test_agent_api.py builds its own app with a fake facilitator.
+os.environ["X402_PAY_TO"] = ""   # tests never enable real x402
+
 # Flask-Limiter's storage is a single in-memory counter shared by the whole
 # test session (dashboard.app is created once, at first import). Without
 # this, unrelated tests hitting /search, /artist/<name> or /compare many
