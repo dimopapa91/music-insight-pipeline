@@ -395,7 +395,60 @@ def get_artist_photos(names):
         return dict(zip(names, pool.map(get_artist_photo, names)))
 
 
-# ── Site pulse: "Just analysed" strip + member count ────────────────
+# ── Homepage headline stat: Last.fm plays covered ──────────────────
+#
+# The sum of Last.fm play counts across every analysed artist's stored top
+# tracks (latest row per artist, so re-searches don't double count). One
+# aggregate query, cached for 10 minutes; never raises.
+
+_plays_total_cache = {"data": None, "at": 0.0}
+_PLAYS_TOTAL_TTL = 600
+
+
+def get_plays_analysed():
+    """Total Last.fm plays across analysed artists' top tracks, or None."""
+    if _plays_total_cache["at"] and time.time() - _plays_total_cache["at"] < _PLAYS_TOTAL_TTL:
+        return _plays_total_cache["data"]
+    total = None
+    try:
+        with db_cursor() as cur:
+            cur.execute("""
+                SELECT COALESCE(SUM(
+                    CASE WHEN t->>'playcount' ~ '^[0-9]+$' THEN (t->>'playcount')::bigint END
+                ), 0)
+                FROM (
+                    SELECT DISTINCT ON (LOWER(artist_name)) top_tracks
+                    FROM searches
+                    ORDER BY LOWER(artist_name), searched_at DESC
+                ) latest,
+                LATERAL jsonb_array_elements(
+                    CASE WHEN jsonb_typeof(latest.top_tracks::jsonb) = 'array'
+                         THEN latest.top_tracks::jsonb ELSE '[]'::jsonb END
+                ) AS t
+            """)
+            total = int(cur.fetchone()[0])
+    except Exception:
+        total = None
+    _plays_total_cache["data"] = total
+    _plays_total_cache["at"] = time.time()
+    return total
+
+
+def compact_number(n):
+    """4_213_000_000 -> '4.2B', 193_600_000 -> '193.6M', 12_400 -> '12.4K'."""
+    try:
+        n = float(n)
+    except (TypeError, ValueError):
+        return "—"
+    for size, suffix in ((1e9, "B"), (1e6, "M"), (1e3, "K")):
+        if abs(n) >= size:
+            value = n / size
+            text = f"{value:.1f}".rstrip("0").rstrip(".")
+            return f"{text}{suffix}"
+    return f"{int(n):,}"
+
+
+# ── Site pulse: the "Just analysed" strip ───────────────────────────
 #
 # Rendered on every page (context processor), so it's one small query,
 # cached for a minute, and it never raises: a DB hiccup just hides the strip.
@@ -405,10 +458,10 @@ _SITE_PULSE_TTL = 60
 
 
 def get_site_pulse():
-    """{"recent": [{"artist": str, "at": datetime}, ...], "members": int|None}"""
+    """{"recent": [{"artist": str, "at": datetime}, ...]}"""
     if _site_pulse_cache["data"] is not None and time.time() - _site_pulse_cache["at"] < _SITE_PULSE_TTL:
         return _site_pulse_cache["data"]
-    data = {"recent": [], "members": None}
+    data = {"recent": []}
     try:
         with db_cursor() as cur:
             cur.execute("""
@@ -420,8 +473,6 @@ def get_site_pulse():
                 ORDER BY searched_at DESC LIMIT 2
             """)
             data["recent"] = [{"artist": r[0], "at": r[1]} for r in cur.fetchall()]
-            cur.execute("SELECT COUNT(*) FROM users")
-            data["members"] = cur.fetchone()[0]
     except Exception:
         pass
     _site_pulse_cache["data"] = data
