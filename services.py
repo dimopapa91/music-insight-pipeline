@@ -556,19 +556,48 @@ def analysed_artist_names(names):
         return set()
 
 
+# ── Freshness marker: "has anyone searched since we cached?" ─────────
+#
+# gunicorn runs 2 workers, and clear_dashboard_cache() only clears the
+# worker that handled the search, so the other one kept serving the old
+# homepage for up to _DASHBOARD_TTL. Artist-page and /compare pipeline runs
+# didn't clear it at all. Instead, every cache that shows "latest" data
+# remembers the newest searches.id it was built from and rebuilds as soon as
+# that changes. MAX(id) on the primary key is an index lookup, so this costs
+# one tiny query per check, and it works across workers.
+
+def latest_search_id():
+    """Newest searches.id, or None if the DB can't be asked (callers then
+    fall back to their plain TTL)."""
+    try:
+        with db_cursor() as cur:
+            cur.execute("SELECT MAX(id) FROM searches")
+            return cur.fetchone()[0]
+    except Exception:
+        return None
+
+
 # ── Site pulse: the "Just analysed" strip ───────────────────────────
 #
 # Rendered on every page (context processor), so it's one small query,
 # cached for a minute, and it never raises: a DB hiccup just hides the strip.
 
-_site_pulse_cache = {"data": None, "at": 0.0}
-_SITE_PULSE_TTL = 60
+_site_pulse_cache = {"data": None, "at": 0.0, "marker": None}
+_SITE_PULSE_TTL = 60           # upper bound; a new search refreshes it sooner
+_SITE_PULSE_CHECK = 5          # at most one freshness check per 5s per worker
 
 
 def get_site_pulse():
     """{"recent": [{"artist": str, "at": datetime}, ...]}"""
-    if _site_pulse_cache["data"] is not None and time.time() - _site_pulse_cache["at"] < _SITE_PULSE_TTL:
-        return _site_pulse_cache["data"]
+    now = time.time()
+    cached = _site_pulse_cache["data"]
+    if cached is not None and now - _site_pulse_cache.get("checked", 0) < _SITE_PULSE_CHECK:
+        return cached
+    marker = latest_search_id()
+    _site_pulse_cache["checked"] = now
+    if cached is not None and now - _site_pulse_cache["at"] < _SITE_PULSE_TTL \
+            and (marker is None or marker == _site_pulse_cache["marker"]):
+        return cached
     data = {"recent": []}
     try:
         with db_cursor() as cur:
@@ -585,6 +614,7 @@ def get_site_pulse():
         pass
     _site_pulse_cache["data"] = data
     _site_pulse_cache["at"] = time.time()
+    _site_pulse_cache["marker"] = marker
     return data
 
 
@@ -919,17 +949,24 @@ def resolve_insight(artist_name, current_insight):
 # rebuilds the identical thing — several DB aggregates plus the external
 # discovery calls above. A short TTL is the single biggest lever on the ~5s
 # TTFB; it's deliberately brief so a new search still surfaces quickly.
-_dashboard_cache = {"data": None, "at": 0}
-_DASHBOARD_TTL = 180           # 3 minutes
+_dashboard_cache = {"data": None, "at": 0, "marker": None}
+_DASHBOARD_TTL = 180           # 3 minutes: upper bound (discovery etc.)
 
 
 def clear_dashboard_cache():
     _dashboard_cache["data"] = None
     _dashboard_cache["at"] = 0
+    _dashboard_cache["marker"] = None
 
 
 def get_dashboard_data():
-    if _dashboard_cache["data"] is not None and time.time() - _dashboard_cache["at"] < _DASHBOARD_TTL:
+    # Rebuilt as soon as anyone's search lands (on any worker), so the hero
+    # always shows the most recently searched artist; otherwise reused for
+    # up to _DASHBOARD_TTL. See latest_search_id().
+    marker = latest_search_id()
+    if (_dashboard_cache["data"] is not None
+            and time.time() - _dashboard_cache["at"] < _DASHBOARD_TTL
+            and (marker is None or marker == _dashboard_cache["marker"])):
         return _dashboard_cache["data"]
 
     with db_cursor() as cur:
@@ -989,6 +1026,7 @@ def get_dashboard_data():
     data = total_searches, unique_artists, searches_today, artist_plays, latest_insights, discovery
     _dashboard_cache["data"] = data
     _dashboard_cache["at"] = time.time()
+    _dashboard_cache["marker"] = marker
     return data
 
 

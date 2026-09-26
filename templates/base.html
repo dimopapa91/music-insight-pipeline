@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% from "_icons.html" import icon, sprite %}<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -19,6 +19,7 @@
     <style>html.pre-light body { background:#e9e7e1; color:#16181b; }</style>
 </head>
 <body>
+    {{ sprite() }}
     <a class="wv-skip" href="#main-content">Skip to content</a>
 
     {% set path = request.path %}
@@ -53,16 +54,16 @@
                      wv-notif-panel below, untouched) instead of duplicating
                      it into a second, cramped floating panel on a phone. -->
                 <a class="wv-iconbtn wv-msgicon wv-mobile-only" href="/messages" aria-label="Messages{% if unread_messages %} ({{ unread_messages }} unread){% endif %}">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    {{ icon("mail") }}
                     {% if unread_messages %}<span class="wv-badge">{{ unread_messages if unread_messages <= 9 else '9+' }}</span>{% endif %}
                 </a>
                 <a class="wv-iconbtn wv-bell wv-mobile-only" href="/notifications" aria-label="Notifications{% if unread_notifications %} ({{ unread_notifications }} unread){% endif %}">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="M12 3a5 5 0 0 0-5 5v3.2c0 .5-.15 1-.44 1.4L5 15.5c-.6.9.02 2.1 1.1 2.1h11.8c1.08 0 1.7-1.2 1.1-2.1l-1.56-2.9a2.5 2.5 0 0 1-.44-1.4V8a5 5 0 0 0-5-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9.5 18.5a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    {{ icon("bell") }}
                     {% if unread_notifications %}<span class="wv-badge" id="wv-notif-badge-header-mobile">{{ unread_notifications if unread_notifications <= 9 else '9+' }}</span>{% endif %}
                 </a>
                 <div class="wv-msgmenu wv-desktop-only">
                     <button type="button" class="wv-iconbtn wv-msgicon wv-msgmenu-trigger" id="wv-msg-trigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="wv-msg-panel" aria-label="Messages{% if unread_messages %} ({{ unread_messages }} unread){% endif %}">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        {{ icon("mail") }}
                         {% if unread_messages %}<span class="wv-badge">{{ unread_messages }}</span>{% endif %}
                     </button>
                     <div class="wv-msgmenu-panel" id="wv-msg-panel" role="dialog" aria-label="Messages" hidden>
@@ -74,7 +75,7 @@
                 </div>
                 <div class="wv-notifmenu wv-desktop-only">
                     <button type="button" class="wv-iconbtn wv-bell wv-notifmenu-trigger" id="wv-notif-trigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="wv-notif-panel" aria-label="Notifications{% if unread_notifications %} ({{ unread_notifications }} unread){% endif %}">
-                        🔔{% if unread_notifications %}<span class="wv-badge">{{ unread_notifications }}</span>{% endif %}
+                        {{ icon("bell") }}{% if unread_notifications %}<span class="wv-badge">{{ unread_notifications }}</span>{% endif %}
                     </button>
                     <div class="wv-notifmenu-panel" id="wv-notif-panel" role="dialog" aria-label="Notifications" hidden>
                         <div class="wv-notifmenu-list" id="wv-notif-list" aria-live="polite">
@@ -246,12 +247,12 @@
 
             <div class="wv-more-quickgrid">
                 <a class="wv-more-quick" href="/messages">
-                    <span class="wv-more-quick-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span class="wv-more-quick-ic" aria-hidden="true">{{ icon("mail") }}</span>
                     <span>Messages</span>
                     {% if unread_messages %}<span class="wv-badge" id="wv-msg-badge-mobile">{{ unread_messages if unread_messages <= 9 else '9+' }}</span>{% endif %}
                 </a>
                 <a class="wv-more-quick" href="/notifications">
-                    <span class="wv-more-quick-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" focusable="false"><path d="M12 3a5 5 0 0 0-5 5v3.2c0 .5-.15 1-.44 1.4L5 15.5c-.6.9.02 2.1 1.1 2.1h11.8c1.08 0 1.7-1.2 1.1-2.1l-1.56-2.9a2.5 2.5 0 0 1-.44-1.4V8a5 5 0 0 0-5-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9.5 18.5a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+                    <span class="wv-more-quick-ic" aria-hidden="true">{{ icon("bell") }}</span>
                     <span>Notifications</span>
                     {% if unread_notifications %}<span class="wv-badge" id="wv-notif-badge-mobile">{{ unread_notifications if unread_notifications <= 9 else '9+' }}</span>{% endif %}
                 </a>
@@ -311,8 +312,8 @@
             <div class="wv-player-title" id="wv-player-title">—</div>
             <div class="wv-player-artist" id="wv-player-artist">&nbsp;</div>
         </div>
-        <button class="wv-player-btn" id="wv-player-toggle" type="button" aria-label="Pause">⏸</button>
-        <button class="wv-player-btn" id="wv-player-close" type="button" aria-label="Close preview">✕</button>
+        <button class="wv-player-btn" id="wv-player-toggle" type="button" aria-label="Pause">{{ icon("pause") }}</button>
+        <button class="wv-player-btn" id="wv-player-close" type="button" aria-label="Close preview">{{ icon("close") }}</button>
         <audio id="wv-audio" preload="none"></audio>
         <div class="wv-player-progress" aria-hidden="true"><div class="wv-player-progress-fill" id="wv-player-fill"></div></div>
     </div>

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}{{ artist_name | titlecase }} — Waveline{% endblock %}
 {% block description %}{{ artist_name | titlecase }} on Waveline: listener data, top tracks, an AI-written insight and similar artists worth exploring.{% endblock %}
 
@@ -26,7 +27,7 @@
   .ar-hero-teaser:hover { color: var(--wv-ink); }
   .ar-hero-teaser .more { display: block; margin-top: 4px; font-family: var(--wv-font-display); font-weight: 700; font-size: .82rem; letter-spacing: .8px; text-transform: uppercase; color: var(--wv-accent-ink); }
   .ar-actions { display: flex; flex-wrap: wrap; margin: var(--wv-5) calc(-1 * var(--wv-6)) 0; border-top: 1px solid var(--wv-border); }
-  .ar-actions a { flex: 1 1 160px; display: flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 var(--wv-3); font-family: var(--wv-font-display); font-weight: 700; font-size: .86rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-ink); text-decoration: none; border-right: 1px solid var(--wv-border); transition: background var(--wv-motion) var(--wv-ease); }
+  .ar-actions a { flex: 1 1 160px; display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 var(--wv-3); font-family: var(--wv-font-display); font-weight: 700; font-size: .86rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-ink); text-decoration: none; border-right: 1px solid var(--wv-border); transition: background var(--wv-motion) var(--wv-ease); }
   .ar-actions a:last-child { border-right: 0; }
   .ar-actions a:hover { background: var(--wv-surface-2); }
   .ar-actions a.pri { background: var(--wv-accent); color: var(--wv-on-accent); }
@@ -65,7 +66,8 @@
   .ar-track:last-child { border-bottom: 1px solid var(--wv-border); }
   .ar-track .rk { font-family: var(--wv-font-mono, monospace); font-size: .8rem; color: var(--wv-muted); }
   .ar-track .nm { display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; background: none; border: none; color: var(--wv-ink); font-family: var(--wv-font-display); font-weight: 700; font-size: 1.1rem; letter-spacing: .3px; text-transform: uppercase; text-align: left; padding: 0; min-width: 0; }
-  .ar-track .nm .pi { flex-shrink: 0; width: 26px; height: 26px; display: grid; place-items: center; border: 1px solid var(--wv-border-2); font-size: .6rem; color: var(--wv-ink-2); transition: all var(--wv-motion) var(--wv-ease); }
+  .ar-track .nm .pi { flex-shrink: 0; width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--wv-border-2); font-size: .72rem; color: var(--wv-ink-2); transition: all var(--wv-motion) var(--wv-ease); }
+  .ar-track .nm .pi .wv-i { width: 13px; height: 13px; }
   .ar-track .nm .tx { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ar-track:hover .nm .pi { background: var(--wv-ink); color: var(--wv-bg); border-color: var(--wv-ink); }
   .ar-track .bar { height: 4px; background: var(--wv-surface-2); }
@@ -138,9 +140,9 @@
     </a>
     {% endif %}
     <div class="ar-actions">
-      {% if tracks %}<a class="pri" href="#tracks" onclick='wvPlay({{ artist_name|tojson }}, {{ tracks[0].name|tojson }}, this); return false;'>▶ Play {{ tracks[0].name | truncate(24) }}</a>{% endif %}
+      {% if tracks %}<a class="pri" href="#tracks" onclick='wvPlay({{ artist_name|tojson }}, {{ tracks[0].name|tojson }}, this); return false;'>{{ icon("play") }}<span>Play {{ tracks[0].name | truncate(24) }}</span></a>{% endif %}
       <a href="/compare?a={{ artist_name | urlencode }}">Compare this artist</a>
-      {% if spotify.spotify_url %}<a href="{{ spotify.spotify_url }}" target="_blank" rel="noopener noreferrer">Open on Spotify ↗</a>{% endif %}
+      {% if spotify.spotify_url %}<a href="{{ spotify.spotify_url }}" target="_blank" rel="noopener noreferrer"><span>Open on Spotify</span>{{ icon("external") }}</a>{% endif %}
       <a href="/feed?tab=latest">Talk about it in Community</a>
     </div>
   </div>
@@ -174,7 +176,7 @@
       {% for track in tracks %}
       <div class="ar-track">
         <span class="rk">{{ "%02d" | format(loop.index) }}</span>
-        <button type="button" class="nm" onclick='wvPlay({{ artist_name|tojson }}, {{ track.name|tojson }}, this)'><span class="pi" aria-hidden="true">▶</span><span class="tx">{{ track.name }}</span></button>
+        <button type="button" class="nm" onclick='wvPlay({{ artist_name|tojson }}, {{ track.name|tojson }}, this)'><span class="pi" aria-hidden="true">{{ icon("play") }}</span><span class="tx">{{ track.name }}</span></button>
         <span class="bar" aria-hidden="true"><i style="width:{{ [(track.plays * 100 / top) | round(1), 2] | max }}%"></i></span>
         <span class="pl">{{ "{:,}".format(track.plays) }} plays</span>
       </div>
@@ -194,7 +196,7 @@
           <span class="ar-event-venue">{{ e.venue }}</span>
           <span class="ar-event-place">{{ e.city }}{% if e.country %} · {{ e.country }}{% endif %}</span>
         </span>
-        <a class="wv-btn wv-btn-ghost wv-btn-sm" href="{{ e.url }}" target="_blank" rel="noopener noreferrer">Get tickets →</a>
+        <a class="wv-btn wv-btn-ghost wv-btn-sm" href="{{ e.url }}" target="_blank" rel="noopener noreferrer">{{ icon("ticket") }}<span>Get tickets</span></a>
       </div>
       {% endfor %}
     </div>

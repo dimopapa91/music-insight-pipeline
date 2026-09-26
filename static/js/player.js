@@ -21,6 +21,16 @@
 
   function announce(msg) { if (announceEl) announceEl.textContent = msg; }
 
+  // Icons come from the sprite in base.html (templates/_icons.html).
+  function iconSvg(name) {
+    return '<svg class="wv-i wv-i-' + name + ' wv-i-fill" aria-hidden="true" focusable="false"><use href="#wv-i-' + name + '"></use></svg>';
+  }
+  function setToggle(playing) {
+    if (!toggleBtn) return;
+    toggleBtn.innerHTML = iconSvg(playing ? "pause" : "play");
+    toggleBtn.setAttribute("aria-label", playing ? "Pause" : "Play");
+  }
+
   function openPlayer() { if (player) player.classList.add("is-open"); }
   function closePlayer() {
     if (audio) audio.pause();
@@ -31,8 +41,10 @@
 
   window.wvPlay = function (artist, track, triggerEl) {
     if (!els()) return;
-    var restoreLabel = null;
-    if (triggerEl) { restoreLabel = triggerEl.textContent; triggerEl.textContent = "⏳ " + track; }
+    // Loading state as a class, not by rewriting the button's text: the
+    // trigger can hold markup (icon + label spans) that textContent would
+    // flatten for good.
+    if (triggerEl) { triggerEl.classList.add("is-loading"); triggerEl.setAttribute("aria-busy", "true"); }
 
     fetch("/preview?artist=" + encodeURIComponent(artist) + "&track=" + encodeURIComponent(track))
       .then(function (r) { return r.json(); })
@@ -44,8 +56,7 @@
           audio.load();
           var p = audio.play();
           if (p && p.catch) p.catch(function () {});
-          toggleBtn.textContent = "⏸";
-          toggleBtn.setAttribute("aria-label", "Pause");
+          setToggle(true);
           openPlayer();
           announce("Now previewing " + (data.title || track) + " by " + (data.artist || artist));
         } else {
@@ -56,7 +67,7 @@
         window.open("https://open.spotify.com/search/" + encodeURIComponent(artist + " " + track), "_blank", "noopener");
       })
       .finally(function () {
-        if (triggerEl && restoreLabel !== null) triggerEl.textContent = restoreLabel;
+        if (triggerEl) { triggerEl.classList.remove("is-loading"); triggerEl.removeAttribute("aria-busy"); }
       });
   };
 
@@ -67,10 +78,10 @@
       if (audio.paused) {
         var p = audio.play();
         if (p && p.catch) p.catch(function () {});
-        toggleBtn.textContent = "⏸"; toggleBtn.setAttribute("aria-label", "Pause");
+        setToggle(true);
       } else {
         audio.pause();
-        toggleBtn.textContent = "▶"; toggleBtn.setAttribute("aria-label", "Play");
+        setToggle(false);
       }
     });
     closeBtn.addEventListener("click", closePlayer);
@@ -80,7 +91,7 @@
       fillEl.style.width = ((audio.currentTime / audio.duration) * 100).toFixed(1) + "%";
     });
     audio.addEventListener("ended", function () {
-      toggleBtn.textContent = "▶"; toggleBtn.setAttribute("aria-label", "Play");
+      setToggle(false);
       fillEl.style.width = "0%";
     });
 
