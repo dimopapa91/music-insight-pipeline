@@ -123,6 +123,17 @@
         </div>
     </header>
 
+    {% if site_pulse and site_pulse.recent %}
+    <!-- "Just analysed" strip (NTS-style live bar): the latest artists
+         analysed on Waveline, straight from the searches table. -->
+    <nav class="wv-pulse" aria-label="Just analysed">
+        <span class="wv-pulse-tag"><span class="wv-pulse-dot" aria-hidden="true"></span>Just analysed</span>
+        {% for r in site_pulse.recent %}
+        <a class="wv-pulse-ch" href="/artist/{{ r.artist | urlencode }}"><span class="n" aria-hidden="true">{{ loop.index }}</span><span class="nm">{{ r.artist | titlecase }}</span><span class="t">{{ r.at | timeago }}</span></a>
+        {% endfor %}
+    </nav>
+    {% endif %}
+
     <main id="main-content">
         {% block content %}{% endblock %}
     </main>

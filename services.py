@@ -327,6 +327,108 @@ def get_discovery_artists(searched_artists):
     return [_deezer_artist_card(artist) for artist in new_artists]
 
 
+# ── Homepage artist photos ──────────────────────────────────────────
+#
+# The homepage shows a photo for each recently analysed artist. Only the
+# name is stored for those rows, so this is a name lookup, and a name can be
+# shared: Deezer's first result for "Bonobo" is a 63-fan namesake, not the
+# 365k-fan producer. So instead of taking result [0], keep every result
+# whose name really matches and pick the one with the most fans. The artist
+# page itself still resolves media by MBID (get_artist_media).
+
+_artist_photo_cache = {}       # name_lower -> {"data": dict, "at": float, "ok": bool}
+_ARTIST_PHOTO_TTL = 86400
+_ARTIST_PHOTO_NEG_TTL = 3600
+
+_DEEZER_SIZE_RE = re.compile(r"/(\d+)x\1-")
+
+
+def deezer_image_size(url, px):
+    """Ask Deezer's CDN for a different square size of the same image
+    (their URLs carry it as /250x250-...). Unknown URL shapes pass through."""
+    if not url:
+        return ""
+    return _DEEZER_SIZE_RE.sub(f"/{int(px)}x{int(px)}-", url, count=1)
+
+
+def get_artist_photo(name):
+    """{"image": str, "nb_fan": int} for an artist name; empty on no match
+    or failure. Cached like the other Deezer lookups."""
+    key = (name or "").strip().lower()
+    empty = {"image": "", "nb_fan": 0}
+    if not key:
+        return empty
+    entry = _artist_photo_cache.get(key)
+    if entry:
+        ttl = _ARTIST_PHOTO_TTL if entry["ok"] else _ARTIST_PHOTO_NEG_TTL
+        if time.time() - entry["at"] < ttl:
+            return entry["data"]
+
+    def _remember(data, ok):
+        _artist_photo_cache[key] = {"data": data, "at": time.time(), "ok": ok}
+        return data
+
+    try:
+        resp = http_requests.get("https://api.deezer.com/search/artist",
+                                 params={"q": name, "limit": 10}, timeout=4)
+        results = resp.json().get("data", []) or []
+        matches = [d for d in results if artist_names_match(name, d.get("name", ""))]
+        if not matches:
+            return _remember(empty, True)
+        best = max(matches, key=lambda d: d.get("nb_fan", 0) or 0)
+        return _remember({
+            "image": clean_deezer_image(best.get("picture_medium", "")),
+            "nb_fan": best.get("nb_fan", 0) or 0,
+        }, True)
+    except Exception:
+        return _remember(empty, False)
+
+
+def get_artist_photos(names):
+    """Photos for several artists at once. Lookups run in parallel so a
+    cold cache costs one Deezer round-trip, not one per artist."""
+    from concurrent.futures import ThreadPoolExecutor
+    names = list(names)
+    if not names:
+        return {}
+    with ThreadPoolExecutor(max_workers=min(6, len(names))) as pool:
+        return dict(zip(names, pool.map(get_artist_photo, names)))
+
+
+# ── Site pulse: "Just analysed" strip + member count ────────────────
+#
+# Rendered on every page (context processor), so it's one small query,
+# cached for a minute, and it never raises: a DB hiccup just hides the strip.
+
+_site_pulse_cache = {"data": None, "at": 0.0}
+_SITE_PULSE_TTL = 60
+
+
+def get_site_pulse():
+    """{"recent": [{"artist": str, "at": datetime}, ...], "members": int|None}"""
+    if _site_pulse_cache["data"] is not None and time.time() - _site_pulse_cache["at"] < _SITE_PULSE_TTL:
+        return _site_pulse_cache["data"]
+    data = {"recent": [], "members": None}
+    try:
+        with db_cursor() as cur:
+            cur.execute("""
+                SELECT artist_name, searched_at FROM (
+                    SELECT DISTINCT ON (LOWER(artist_name)) artist_name, searched_at
+                    FROM searches
+                    ORDER BY LOWER(artist_name), searched_at DESC
+                ) sub
+                ORDER BY searched_at DESC LIMIT 2
+            """)
+            data["recent"] = [{"artist": r[0], "at": r[1]} for r in cur.fetchall()]
+            cur.execute("SELECT COUNT(*) FROM users")
+            data["members"] = cur.fetchone()[0]
+    except Exception:
+        pass
+    _site_pulse_cache["data"] = data
+    _site_pulse_cache["at"] = time.time()
+    return data
+
+
 # ── MBID-anchored artist media ──────────────────────────────────────
 #
 # Searching a provider by name and taking the top result can't survive a
@@ -702,7 +804,7 @@ def get_dashboard_data():
                 FROM searches
                 ORDER BY artist_name, searched_at DESC
             ) sub
-            ORDER BY searched_at DESC LIMIT 5
+            ORDER BY searched_at DESC LIMIT 6
         """)
 
         class Row:
@@ -719,7 +821,10 @@ def get_dashboard_data():
         cur.execute("SELECT DISTINCT artist_name FROM searches ORDER BY artist_name")
         all_artists = [r[0] for r in cur.fetchall()]
 
-    # DB connection released before the (slower) external discovery calls
+    # DB connection released before the (slower) external calls
+    photos = get_artist_photos([row.artist for row in latest_insights])
+    for row in latest_insights:
+        row.photo = photos.get(row.artist, {}).get("image", "")
     discovery = get_discovery_artists(all_artists)
 
     data = total_searches, unique_artists, searches_today, artist_plays, latest_insights, discovery
