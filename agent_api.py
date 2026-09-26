@@ -33,6 +33,8 @@ import json
 import logging
 import os
 import re
+from datetime import timezone
+from urllib.parse import parse_qs
 
 from flask import Blueprint, current_app, jsonify, request
 
@@ -42,7 +44,11 @@ agent_api_bp = Blueprint("agent_api", __name__)
 
 INSIGHT_PATH = "/api/insight"
 PREVIEW_PATH = "/api/insight/preview"
-PREVIEW_ARTIST = "Radiohead"  # fixed, real sample (verified present in the live DB, 26 Sep 2026)
+# Fixed, real sample, deliberately NOT Radiohead (the artist used in our paid
+# examples), so the free preview doesn't give away the paid example
+# (Nikos's review point β). Verified present with an insight in the live DB,
+# 26 Sep 2026.
+PREVIEW_ARTIST = "Massive Attack"
 
 DEFAULT_NETWORK = "eip155:84532"  # Base Sepolia (testnet)
 DEFAULT_FACILITATOR_URL = "https://x402.org/facilitator"
@@ -153,6 +159,19 @@ class PaymentRequiredBodyFill:
         if environ.get("PATH_INFO") != INSIGHT_PATH:
             return self.wsgi_app(environ, start_response)
 
+        # A request that can never be served must not be asked to pay:
+        # reject a missing/blank/oversized ?artist with 400 BEFORE the x402
+        # middleware issues its 402 (Nikos's review point α).
+        problem = _artist_param_problem(environ.get("QUERY_STRING", ""))
+        if problem:
+            body = json.dumps({"error": "missing_artist", "message": problem}).encode("utf-8")
+            start_response("400 Bad Request", [
+                ("Content-Type", "application/json"),
+                ("Content-Length", str(len(body))),
+                ("Cache-Control", "private, no-store"),
+            ])
+            return [body]
+
         state = {"written": []}
 
         def capture(status, headers, exc_info=None):
@@ -172,6 +191,31 @@ class PaymentRequiredBodyFill:
             body, headers = _fill_402_body(body, headers)
         start_response(status, headers, state["exc_info"])
         return [body]
+
+
+def _artist_param_problem(query_string):
+    """Return an error message if ?artist can't be served, else None."""
+    values = parse_qs(query_string, keep_blank_values=True).get("artist", [])
+    artist = (values[0] if values else "").strip()
+    if not artist:
+        return "Pass the artist name as ?artist=<name>. No payment was requested."
+    if len(artist) > _MAX_ARTIST_LEN:
+        return f"Artist name is longer than {_MAX_ARTIST_LEN} characters. No payment was requested."
+    return None
+
+
+def _utc_iso(ts):
+    """ISO-8601 in UTC with a trailing Z.
+
+    searched_at is `timestamp without time zone DEFAULT now()` on a Postgres
+    whose TimeZone is Etc/UTC (checked on Railway, 26 Sep 2026), and the app
+    never changes the session time zone, so naive values are UTC.
+    """
+    if not hasattr(ts, "isoformat"):
+        return str(ts)
+    if getattr(ts, "tzinfo", None) is not None:
+        ts = ts.astimezone(timezone.utc).replace(tzinfo=None)
+    return ts.isoformat() + "Z"
 
 
 def _fill_402_body(body, headers):
@@ -242,11 +286,10 @@ def insight():
 
 def _insight_body(row):
     name, text, searched_at = row
-    generated_at = searched_at.isoformat() if hasattr(searched_at, "isoformat") else str(searched_at)
     return {
         "artist": name,
         "insight": text,
-        "generated_at": generated_at,
+        "generated_at": _utc_iso(searched_at),
         "source": SOURCE,
     }
 

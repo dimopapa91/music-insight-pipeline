@@ -130,7 +130,7 @@ def test_paid_known_artist_returns_insight_and_settles(monkeypatch):
     assert resp.get_json() == {
         "artist": "Radiohead",
         "insight": "An insight.",
-        "generated_at": "2026-09-01T12:00:00",
+        "generated_at": "2026-09-01T12:00:00Z",
         "source": agent_api.SOURCE,
     }
     assert len(facilitator.settled) == 1
@@ -164,17 +164,44 @@ def test_paid_db_failure_is_503_and_not_settled(monkeypatch):
 
 # ── handler details ─────────────────────────────────────────────────
 
-def test_missing_artist_is_400(monkeypatch):
+@pytest.mark.parametrize("query", ["", "?artist=", "?artist=%20%20", "?other=x", "?artist=" + "a" * 201])
+def test_unservable_artist_is_400_before_any_402(monkeypatch, no_db, query):
+    """Nikos's point α: never ask for payment for something we can't serve.
+    The 400 comes from the edge wrapper, before the x402 middleware."""
+    facilitator = FakeFacilitator()
+    app, _ = _make_app(monkeypatch, facilitator=facilitator)
+    resp = app.test_client().get("/api/insight" + query)
+    assert resp.status_code == 400
+    assert resp.get_json()["error"] == "missing_artist"
+    assert "PAYMENT-REQUIRED" not in resp.headers
+    assert facilitator.verified == [] and facilitator.settled == []
+
+
+def test_valid_artist_still_gets_402(monkeypatch, no_db):
+    app, _ = _make_app(monkeypatch)
+    assert app.test_client().get("/api/insight?artist=" + "a" * 200).status_code == 402
+
+
+def test_paid_request_without_artist_is_400_and_not_settled(monkeypatch):
     facilitator = FakeFacilitator()
     app, _ = _make_app(monkeypatch, facilitator=facilitator)
     client = app.test_client()
     header = _payment_header(client)
     resp = client.get("/api/insight", headers={"PAYMENT-SIGNATURE": header})
-    # The route is protected regardless of query string, so the paid retry
-    # reaches the handler, which rejects it without settling.
     assert resp.status_code == 400
-    assert resp.get_json()["error"] == "missing_artist"
-    assert facilitator.settled == []
+    assert facilitator.verified == [] and facilitator.settled == []
+
+
+def test_generated_at_is_utc_with_z():
+    naive = datetime.datetime(2026, 9, 21, 17, 35, 18, 584386)
+    assert agent_api._utc_iso(naive) == "2026-09-21T17:35:18.584386Z"
+    athens = datetime.timezone(datetime.timedelta(hours=3))
+    aware = datetime.datetime(2026, 9, 21, 20, 35, 18, tzinfo=athens)
+    assert agent_api._utc_iso(aware) == "2026-09-21T17:35:18Z"
+
+
+def test_preview_artist_differs_from_the_paid_example():
+    assert agent_api.PREVIEW_ARTIST.lower() != "radiohead"
 
 
 def test_response_has_no_third_party_numbers_and_no_store(monkeypatch):
@@ -251,13 +278,14 @@ def test_free_preview_needs_no_payment(monkeypatch):
 
     def lookup(artist):
         asked.append(artist)
-        return ("Radiohead", "An insight.", datetime.datetime(2026, 9, 1))
+        return ("Massive Attack", "An insight.", datetime.datetime(2026, 9, 1))
     monkeypatch.setattr(agent_api, "_latest_insight", lookup)
     resp = app.test_client().get("/api/insight/preview")
     assert resp.status_code == 200
     body = resp.get_json()
     assert body["preview"] is True
-    assert body["artist"] == "Radiohead" and body["insight"] == "An insight."
+    assert body["artist"] == "Massive Attack" and body["insight"] == "An insight."
+    assert body["generated_at"] == "2026-09-01T00:00:00Z"
     assert body["paid_endpoint"] == "/api/insight?artist=<name>"
     assert body["price"] == "$0.005" and body["network"] == "eip155:84532"
     assert asked == [agent_api.PREVIEW_ARTIST]
