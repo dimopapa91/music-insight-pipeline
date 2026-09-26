@@ -402,7 +402,7 @@ def test_below_the_fold_discovery_images_stay_lazy():
 
 def test_above_the_fold_hero_images_are_not_lazy():
     for path, marker in [
-        ("templates/artist_profile.html", "crossorigin=\"anonymous\""),
+        ("templates/artist_profile.html", 'fetchpriority="high"'),
         ("templates/compare.html", 'width="64" height="64"'),
     ]:
         html = _read(path)

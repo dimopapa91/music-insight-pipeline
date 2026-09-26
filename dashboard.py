@@ -16,7 +16,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from models import User, init_db
 from services import (render_markdown, markdown_preview, artist_titlecase, timeago, avatar_color,
-                      deezer_image_size, get_site_pulse)
+                      deezer_image_size, get_site_pulse, compact_number)
 from auth import auth_bp
 from profiles import profiles_bp
 from views_main import main_bp
@@ -138,6 +138,7 @@ app.jinja_env.filters["titlecase"] = artist_titlecase
 app.jinja_env.filters["timeago"] = timeago
 app.jinja_env.filters["avatar_color"] = avatar_color
 app.jinja_env.filters["dz_size"] = deezer_image_size
+app.jinja_env.filters["compact"] = compact_number
 
 # ── Blueprints ──────────────────────────────────────────────────────
 app.register_blueprint(auth_bp)
@@ -160,7 +161,7 @@ app.after_request(record_pageview)
 
 @app.context_processor
 def inject_site_pulse():
-    """"Just analysed" strip under the header + homepage member count.
+    """"Just analysed" strip under the header.
     Cached for a minute and never raises (see services.get_site_pulse)."""
     return {"site_pulse": get_site_pulse()}
 

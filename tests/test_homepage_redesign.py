@@ -15,9 +15,11 @@ import views_main
 def _clear_caches():
     services._artist_photo_cache.clear()
     services._site_pulse_cache.update(data=None, at=0.0)
+    services._plays_total_cache.update(data=None, at=0.0)
     yield
     services._artist_photo_cache.clear()
     services._site_pulse_cache.update(data=None, at=0.0)
+    services._plays_total_cache.update(data=None, at=0.0)
 
 
 class _Resp:
@@ -103,7 +105,19 @@ def test_deezer_image_size_passes_other_urls_through():
 
 def test_site_pulse_never_raises_without_a_database():
     # conftest pins DATABASE_URL to an unreachable address.
-    assert services.get_site_pulse() == {"recent": [], "members": None}
+    assert services.get_site_pulse() == {"recent": []}
+
+
+def test_plays_analysed_never_raises_without_a_database():
+    assert services.get_plays_analysed() is None
+
+
+@pytest.mark.parametrize("n,text", [
+    (4_213_000_000, "4.2B"), (193_600_000, "193.6M"), (1_000_000, "1M"),
+    (12_400, "12.4K"), (999, "999"), (None, "—"), ("x", "—"),
+])
+def test_compact_number(n, text):
+    assert services.compact_number(n) == text
 
 
 # ── rendering ────────────────────────────────────────────────────────
@@ -118,8 +132,9 @@ class _Row:
         self.similar_artists = []
 
 
-def _home(monkeypatch, rows, pulse):
+def _home(monkeypatch, rows, pulse, plays=None):
     monkeypatch.setattr(views_main, "get_dashboard_data", lambda: (10, 7, 0, [], rows, []))
+    monkeypatch.setattr(views_main, "get_plays_analysed", lambda: plays)
     monkeypatch.setattr(views_main, "get_feed", lambda *a, **k: [])
     monkeypatch.setattr(dashboard, "get_site_pulse", lambda: pulse)
     return dashboard.app.test_client().get("/").data.decode()
@@ -127,7 +142,7 @@ def _home(monkeypatch, rows, pulse):
 
 def test_hero_features_latest_artist_photo_at_full_size(monkeypatch):
     photo = "https://cdn-images.dzcdn.net/images/artist/abc/250x250-000000-80-0-0.jpg"
-    html = _home(monkeypatch, [_Row("Massive Attack", photo)], {"recent": [], "members": 3})
+    html = _home(monkeypatch, [_Row("Massive Attack", photo)], {"recent": [], })
     hero = html[html.index('id="top"'):html.index('id="wv-title"')]
     assert "/abc/1000x1000-" in hero
     assert "Massive Attack" in hero
@@ -135,27 +150,29 @@ def test_hero_features_latest_artist_photo_at_full_size(monkeypatch):
 
 
 def test_hero_without_photo_falls_back_to_initial(monkeypatch):
-    html = _home(monkeypatch, [_Row("Massive Attack")], {"recent": [], "members": 3})
+    html = _home(monkeypatch, [_Row("Massive Attack")], {"recent": [], })
     hero = html[html.index('id="top"'):html.index('id="wv-title"')]
     assert "wv-feature-noimg" in hero
     assert "<img" not in hero
 
 
 def test_hero_without_any_artist_is_search_only(monkeypatch):
-    html = _home(monkeypatch, [], {"recent": [], "members": None})
+    html = _home(monkeypatch, [], {"recent": [], })
     assert 'class="wv-hero no-feature"' in html
     assert "wv-feature" not in html[html.index('id="top"'):html.index('id="wv-title"')]
 
 
-def test_kpis_show_real_member_count_and_no_search_counts(monkeypatch):
-    html = _home(monkeypatch, [], {"recent": [], "members": 1234})
+def test_kpis_show_total_plays_compact_and_no_search_counts(monkeypatch):
+    html = _home(monkeypatch, [], {"recent": []}, plays=4_213_000_000)
     kpis = html[html.index('class="wv-kpis"'):html.index('id="chapter-01"')]
-    assert "1,234" in kpis
+    assert "4.2B" in kpis
+    assert "Plays analysed" in kpis
+    assert "Members" not in kpis
     assert "Searches" not in kpis   # bot-inflated search counts stay off the homepage
 
 
-def test_kpis_show_dash_when_member_count_unknown(monkeypatch):
-    html = _home(monkeypatch, [], {"recent": [], "members": None})
+def test_kpis_show_dash_when_plays_unknown(monkeypatch):
+    html = _home(monkeypatch, [], {"recent": [], })
     kpis = html[html.index('class="wv-kpis"'):html.index('id="chapter-01"')]
     assert "—" in kpis
 
@@ -164,7 +181,7 @@ def test_just_analysed_strip_lists_recent_artists(monkeypatch):
     now = datetime.datetime.utcnow()
     pulse = {"recent": [{"artist": "Massive Attack", "at": now - datetime.timedelta(hours=2)},
                         {"artist": "Nicolas Jaar", "at": now - datetime.timedelta(minutes=5)}],
-             "members": 3}
+             }
     html = _home(monkeypatch, [], pulse)
     strip = html[html.index('class="wv-pulse"'):html.index("</nav>", html.index('class="wv-pulse"'))]
     assert "Just analysed" in strip
@@ -174,5 +191,5 @@ def test_just_analysed_strip_lists_recent_artists(monkeypatch):
 
 
 def test_just_analysed_strip_hidden_when_nothing_recent(monkeypatch):
-    html = _home(monkeypatch, [], {"recent": [], "members": None})
+    html = _home(monkeypatch, [], {"recent": [], })
     assert 'class="wv-pulse"' not in html

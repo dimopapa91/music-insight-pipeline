@@ -15,6 +15,7 @@ from rate_limit import limiter
 from text_clean import strip_em_dashes
 from services import (
     get_similar_artists, get_artist_media, get_artist_events, get_artist_db,
+    get_artist_photos,
     artist_titlecase, resolve_insight, LASTFM_BASE, LASTFM_API_KEY,
 )
 
@@ -28,6 +29,15 @@ artist_bp = Blueprint("artist", __name__)
 # waste. Never cached on failure, so a transient provider error is retried
 # on the next request rather than being stuck.
 _compare_cache = {}
+
+
+def _safe_int(value):
+    """Last.fm play counts arrive as strings; a malformed one counts as 0
+    rather than taking the whole artist page down."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
 
 
 def _compare_cache_key(name_a, name_b):
@@ -85,7 +95,13 @@ def artist_profile(artist_name):
         # run_pipeline() for why an empty insight can exist at all.
         insight, insight_is_reused = resolve_insight(name, insight)
         tracks_list = top_tracks_raw if isinstance(top_tracks_raw, list) else json.loads(top_tracks_raw)
-        tracks = [{"name": t["name"], "plays": int(t.get("playcount", 0))} for t in tracks_list]
+        # Sorted by plays, most first: the stored order isn't guaranteed to
+        # be (Risingson at 6.34M used to sit below Inertia Creeps at 6.20M),
+        # and the "top track" stat below reads tracks[0].
+        tracks = sorted(
+            ({"name": t["name"], "plays": _safe_int(t.get("playcount", 0))} for t in tracks_list),
+            key=lambda t: t["plays"], reverse=True,
+        )
         top_playcount = f"{tracks[0]['plays']:,}" if tracks else "—"
         avg_plays = f"{sum(t['plays'] for t in tracks) // len(tracks):,}" if tracks else "—"
 
@@ -125,6 +141,7 @@ def artist_profile(artist_name):
             logging.warning(f"no spotify media for '{name}'")
 
         events = get_artist_events(name)
+        similar_photos = get_artist_photos(similar) if similar else {}
 
         return render_template("artist_profile.html",
             artist_name=name,
@@ -132,6 +149,7 @@ def artist_profile(artist_name):
             insight_is_reused=insight_is_reused,
             tracks=tracks,
             similar_artists=similar,
+            similar_photos=similar_photos,
             events=events,
             search_count=search_count,
             last_searched=last_searched.strftime("%d %b %Y") if hasattr(last_searched, 'strftime') else str(last_searched),

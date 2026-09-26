@@ -4,148 +4,176 @@
 
 {% block head_extra %}
 <style>
-  .ar-wrap { max-width: 980px; margin: 0 auto; padding: var(--wv-5) var(--wv-5) var(--wv-8); }
-  .ar-back { font-family: var(--wv-font-display); font-weight: 600; font-size: .86rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); text-decoration: none; }
-  .ar-back:hover { color: var(--wv-amb-ink); }
-
-  .ar-hero { position: relative; display: flex; gap: var(--wv-5); align-items: center; padding: var(--wv-6) var(--wv-5); margin: var(--wv-4) 0 var(--wv-3); overflow: hidden; }
-  .ar-hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 90% at 0% 0%, var(--wv-amb-soft), transparent 70%); pointer-events: none; }
-  .ar-hero > * { position: relative; }
-  .ar-hero img, .ar-hero .ph { width: 128px; height: 128px; border-radius: var(--wv-radius-lg); object-fit: cover; background: var(--wv-surface-2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--wv-font-display); font-weight: 700; font-size: 2.6rem; color: var(--wv-muted); border: 1px solid var(--wv-border); }
-  @media (max-width: 560px) { .ar-hero { flex-direction: column; text-align: center; } }
-  .ar-name { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.7rem, 4.4vw, 2.6rem); line-height: 1.03; letter-spacing: -.5px; }
-  .ar-sources { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-  .ar-src { font-family: var(--wv-font-display); font-size: .72rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 3px 9px; border-radius: var(--wv-radius-pill); color: #fff; }
-  .ar-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .ar-meta { font-size: .78rem; color: var(--wv-muted); margin-top: 12px; }
-  .ar-hero-teaser { display: block; font-size: .9rem; line-height: 1.6; color: var(--wv-ink-2); border-left: 2px solid var(--wv-accent); padding-left: var(--wv-3); margin-top: var(--wv-4); max-width: 52ch; text-decoration: none; transition: color var(--wv-motion) var(--wv-ease); }
-  .ar-hero-teaser:hover { color: var(--wv-ink); }
-  .ar-hero-teaser .more { display: block; margin-top: 4px; font-family: var(--wv-font-display); font-weight: 600; font-size: .82rem; letter-spacing: .6px; color: var(--wv-accent-ink); }
-  .ar-events-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: var(--wv-3); padding: 5px 12px 5px 10px; border-radius: var(--wv-radius-pill); background: var(--wv-accent); color: var(--wv-on-accent); font-family: var(--wv-font-display); font-size: .86rem; font-weight: 700; letter-spacing: .3px; line-height: 1; text-decoration: none; box-shadow: 0 3px 14px -3px var(--wv-accent-soft); transition: transform var(--wv-motion) var(--wv-ease), filter var(--wv-motion) var(--wv-ease); }
-  .ar-events-badge:hover { transform: translateY(-1px); filter: brightness(1.05); }
+  /* ── Artist hero: square photo left, huge name right (NTS-style) ── */
+  .ar-top { display: grid; grid-template-columns: minmax(280px, 520px) 1fr; border-bottom: 1px solid var(--wv-border); }
+  .ar-photo { position: relative; aspect-ratio: 1; overflow: hidden; background: var(--wv-surface-2); border-right: 1px solid var(--wv-border); }
+  .ar-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .ar-photo .ph { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(8rem, 18vw, 14rem); color: var(--wv-border-2); background: linear-gradient(155deg, var(--wv-accent-soft), transparent 70%); }
+  .ar-info { display: flex; flex-direction: column; min-width: 0; padding: var(--wv-5) var(--wv-6) 0; }
+  .ar-back { font-family: var(--wv-font-display); font-weight: 700; font-size: .84rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); text-decoration: none; }
+  .ar-back:hover { color: var(--wv-accent-ink); }
+  .ar-name { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(3rem, 8.5vw, 7.5rem); line-height: .86; letter-spacing: -1px; text-transform: uppercase; margin: auto 0 var(--wv-4); padding-top: var(--wv-6); overflow-wrap: anywhere; }
+  .ar-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ar-tags .wv-chip { min-height: 30px; font-family: var(--wv-font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: .8rem; background: transparent; cursor: default; }
+  .ar-sources { display: flex; flex-wrap: wrap; gap: 16px; margin-top: var(--wv-4); font-family: var(--wv-font-display); font-weight: 700; font-size: .8rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-ink-2); }
+  .ar-sources .src::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--wv-accent); margin-right: 6px; vertical-align: 1px; }
+  .ar-meta { flex-basis: 100%; color: var(--wv-muted); font-weight: 600; letter-spacing: .6px; }
+  .ar-events-badge { display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; margin-top: var(--wv-4); padding: 6px 12px 6px 10px; background: var(--wv-accent); color: var(--wv-on-accent); font-family: var(--wv-font-display); font-size: .86rem; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; line-height: 1; text-decoration: none; }
+  .ar-events-badge:hover { filter: brightness(1.06); }
   .ar-events-badge:focus-visible { outline: 2px solid var(--wv-accent); outline-offset: 2px; }
   .ar-events-badge svg { width: 13px; height: 13px; flex-shrink: 0; }
-  .ar-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: var(--wv-3); }
-  @media (max-width: 560px) { .ar-actions { justify-content: center; } }
-  .ar-spotify { border-color: #1a7f4b !important; color: #3fcf7a !important; }
-  .ar-spotify:hover { background: #1a7f4b; color: #fff !important; }
-
-  /* A single data readout, not five identical dashboard tiles: one bordered
-     strip with thin dividers between values — reads as one instrument, not
-     a stack of KPI cards. */
-  .ar-stats { display: flex; flex-wrap: wrap; border: 1px solid var(--wv-border); border-radius: var(--wv-radius-lg); background: var(--wv-surface); margin-bottom: var(--wv-6); }
-  .ar-stat { flex: 1 1 140px; padding: var(--wv-4) var(--wv-4); border-left: 1px solid var(--wv-border); }
-  .ar-stat:first-child { border-left: none; }
-  @media (max-width: 760px) { .ar-stat { flex: 1 1 45%; border-left: none; border-top: 1px solid var(--wv-border); } .ar-stat:nth-child(-n+2) { border-top: none; } }
-  .ar-stat .l { font-family: var(--wv-font-display); font-weight: 600; font-size: .72rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); }
-  .ar-stat .v { font-family: var(--wv-font-display); font-weight: 700; font-size: 1.3rem; margin-top: 4px; color: var(--wv-amb-ink); }
-
-  .ar-section { padding: var(--wv-7) 0; border-top: 1px solid var(--wv-border); }
-  .ar-section:first-of-type { border-top: none; }
-  .ar-section-head { display: flex; align-items: baseline; gap: var(--wv-3); margin-bottom: var(--wv-5); }
-  .ar-section-head h2 { font-family: var(--wv-font-display); font-weight: 600; font-size: .94rem; letter-spacing: 1.6px; text-transform: uppercase; color: var(--wv-amb-ink); }
-  .ar-section-head .n { font-family: var(--wv-font-display); font-weight: 600; font-size: .84rem; color: var(--wv-muted); }
-
-  .ar-insight-layout { display: grid; grid-template-columns: 1fr 300px; gap: var(--wv-5); align-items: start; }
-  @media (max-width: 820px) { .ar-insight-layout { grid-template-columns: 1fr; } }
-  .ar-insight { font-size: 1.05rem; line-height: 1.85; color: var(--wv-ink-2); max-width: 68ch; }
-  .ar-insight p { margin-bottom: 16px; }
-  .ar-insight p:first-of-type { font-size: 1.15rem; color: var(--wv-ink); }
-  .ar-ai-flag { display: inline-flex; align-items: center; gap: 6px; font-family: var(--wv-font-display); font-weight: 600; font-size: .74rem; letter-spacing: 1.4px; text-transform: uppercase; color: var(--wv-muted); border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill); padding: 5px 12px; margin-bottom: var(--wv-4); }
-  .ar-ai-flag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--wv-amb); }
-  .ar-track { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--wv-border); font-size: .92rem; }
-  .ar-track:last-child { border-bottom: none; }
-  .ar-track .nm { cursor: pointer; background: none; border: none; color: var(--wv-ink); font: inherit; text-align: left; padding: 0; }
-  .ar-track .nm:hover { color: var(--wv-amb-ink); }
-  .ar-track .pl { font-size: .75rem; color: var(--wv-muted); flex-shrink: 0; }
-
-  /* Event rows mirror .ar-track's single-instrument strip, with room for
-     the venue line to wrap on narrow screens. */
-  .ar-event { display: flex; align-items: center; justify-content: space-between; gap: var(--wv-3); padding: 12px 0; border-bottom: 1px solid var(--wv-border); font-size: .92rem; }
-  .ar-event:last-child { border-bottom: none; }
-  .ar-event-when { font-family: var(--wv-font-display); font-weight: 700; font-size: .84rem; color: var(--wv-amb-ink); flex-shrink: 0; min-width: 92px; }
-  .ar-event-where { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-  .ar-event-venue { overflow-wrap: anywhere; }
-  .ar-event-place { font-size: .78rem; color: var(--wv-muted); margin-top: 2px; overflow-wrap: anywhere; }
-  .ar-event .wv-btn { flex-shrink: 0; }
-  @media (max-width: 560px) {
-    .ar-event { flex-wrap: wrap; }
-    .ar-event-where { flex-basis: 100%; order: 3; }
+  .ar-hero-teaser { display: block; font-size: .95rem; line-height: 1.6; color: var(--wv-ink-2); border-left: 2px solid var(--wv-accent); padding-left: var(--wv-3); margin-top: var(--wv-4); max-width: 60ch; text-decoration: none; }
+  .ar-hero-teaser:hover { color: var(--wv-ink); }
+  .ar-hero-teaser .more { display: block; margin-top: 4px; font-family: var(--wv-font-display); font-weight: 700; font-size: .82rem; letter-spacing: .8px; text-transform: uppercase; color: var(--wv-accent-ink); }
+  .ar-actions { display: flex; flex-wrap: wrap; margin: var(--wv-5) calc(-1 * var(--wv-6)) 0; border-top: 1px solid var(--wv-border); }
+  .ar-actions a { flex: 1 1 160px; display: flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 var(--wv-3); font-family: var(--wv-font-display); font-weight: 700; font-size: .86rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-ink); text-decoration: none; border-right: 1px solid var(--wv-border); transition: background var(--wv-motion) var(--wv-ease); }
+  .ar-actions a:last-child { border-right: 0; }
+  .ar-actions a:hover { background: var(--wv-surface-2); }
+  .ar-actions a.pri { background: var(--wv-accent); color: var(--wv-on-accent); }
+  .ar-actions a.pri:hover { filter: brightness(1.06); }
+  @media (max-width: 860px) {
+    .ar-top { grid-template-columns: 1fr; }
+    .ar-photo { border-right: 0; border-bottom: 1px solid var(--wv-border); aspect-ratio: 4 / 3; }
+    .ar-info { padding: var(--wv-4) var(--wv-4) 0; }
+    .ar-name { padding-top: var(--wv-3); }
+    .ar-actions { margin: var(--wv-5) calc(-1 * var(--wv-4)) 0; }
+    .ar-actions a { flex-basis: 50%; border-bottom: 1px solid var(--wv-border); }
   }
 
-  .ar-similar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--wv-3); }
-  .ar-similar-card { padding: var(--wv-4); text-align: center; text-decoration: none; color: inherit; }
-  .ar-similar-card .ph2 { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto var(--wv-2); background: var(--wv-surface-2); border: 1px solid var(--wv-border); display: flex; align-items: center; justify-content: center; font-family: var(--wv-font-display); font-weight: 700; color: var(--wv-muted); }
-  .ar-similar-card .nm { font-family: var(--wv-font-display); font-weight: 700; font-size: .86rem; }
+  .ar-body { max-width: var(--wv-maxw-wide); margin: 0 auto; padding: 0 var(--wv-5) var(--wv-8); }
+  .wv-subnav { margin-bottom: 0; }
 
-  .ar-compare-cta { padding: var(--wv-6); text-align: center; }
+  /* Big-number readout: one strip, thin dividers */
+  .ar-stats { display: grid; grid-template-columns: repeat(5, 1fr); border-bottom: 1px solid var(--wv-border); margin: 0 calc(-1 * var(--wv-5)); }
+  .ar-stat { padding: var(--wv-5); border-right: 1px solid var(--wv-border); min-width: 0; }
+  .ar-stat:last-child { border-right: 0; }
+  .ar-stat .l { font-family: var(--wv-font-display); font-weight: 700; font-size: .8rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); }
+  .ar-stat .v { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1; margin: 10px 0 6px; }
+  .ar-stat .s { font-size: .76rem; color: var(--wv-muted); overflow-wrap: anywhere; }
+  @media (max-width: 900px) { .ar-stats { grid-template-columns: repeat(2, 1fr); } .ar-stat { border-bottom: 1px solid var(--wv-border); } .ar-stat:nth-child(2n) { border-right: 0; } }
+
+  .ar-section { padding: var(--wv-7) 0; border-top: 1px solid var(--wv-border); }
+  .ar-stats + .ar-section { border-top: 0; }
+  .ar-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--wv-3); margin-bottom: var(--wv-4); flex-wrap: wrap; }
+  .ar-section-head h2 { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.6rem, 3.2vw, 2.2rem); line-height: 1; text-transform: uppercase; }
+  .ar-section-head .n { font-family: var(--wv-font-display); font-weight: 700; font-size: .8rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); }
+
+  /* Top tracks: rank, name, bar scaled to the top track, plays */
+  .ar-track { display: grid; grid-template-columns: 36px minmax(0, 1.2fr) minmax(80px, 1fr) 132px; gap: var(--wv-4); align-items: center; padding: 14px 0; border-top: 1px solid var(--wv-border); }
+  .ar-track:last-child { border-bottom: 1px solid var(--wv-border); }
+  .ar-track .rk { font-family: var(--wv-font-mono, monospace); font-size: .8rem; color: var(--wv-muted); }
+  .ar-track .nm { display: flex; align-items: center; gap: 12px; cursor: pointer; background: none; border: none; color: var(--wv-ink); font-family: var(--wv-font-display); font-weight: 700; font-size: 1.1rem; letter-spacing: .3px; text-transform: uppercase; text-align: left; padding: 0; min-width: 0; }
+  .ar-track .nm .pi { flex-shrink: 0; width: 26px; height: 26px; display: grid; place-items: center; border: 1px solid var(--wv-border-2); font-size: .6rem; color: var(--wv-ink-2); transition: all var(--wv-motion) var(--wv-ease); }
+  .ar-track .nm .tx { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ar-track:hover .nm .pi { background: var(--wv-ink); color: var(--wv-bg); border-color: var(--wv-ink); }
+  .ar-track .bar { height: 4px; background: var(--wv-surface-2); }
+  .ar-track .bar i { display: block; height: 100%; background: var(--wv-accent); }
+  .ar-track .pl { text-align: right; white-space: nowrap; font-family: var(--wv-font-mono, monospace); font-size: .8rem; color: var(--wv-ink-2); }
+  @media (max-width: 560px) { .ar-track { grid-template-columns: 28px 1fr auto; } .ar-track .bar { display: none; } }
+
+  .ar-event { display: flex; align-items: center; justify-content: space-between; gap: var(--wv-4); padding: 14px 0; border-top: 1px solid var(--wv-border); font-size: .95rem; }
+  .ar-event:last-child { border-bottom: 1px solid var(--wv-border); }
+  .ar-event-when { font-family: var(--wv-font-display); font-weight: 700; font-size: 1rem; text-transform: uppercase; color: var(--wv-accent-ink); flex-shrink: 0; min-width: 110px; }
+  .ar-event-where { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .ar-event-venue { font-family: var(--wv-font-display); font-weight: 700; text-transform: uppercase; overflow-wrap: anywhere; }
+  .ar-event-place { font-size: .8rem; color: var(--wv-muted); margin-top: 2px; overflow-wrap: anywhere; }
+  .ar-event .wv-btn { flex-shrink: 0; }
+  @media (max-width: 560px) { .ar-event { flex-wrap: wrap; } .ar-event-where { flex-basis: 100%; order: 3; } }
+
+  .ar-insight-layout { display: grid; grid-template-columns: 1fr 300px; gap: var(--wv-6); align-items: start; }
+  @media (max-width: 860px) { .ar-insight-layout { grid-template-columns: 1fr; } }
+  .ar-insight { font-size: 1.05rem; line-height: 1.85; color: var(--wv-ink-2); max-width: 70ch; }
+  .ar-insight p { margin-bottom: 16px; }
+  .ar-insight p:first-of-type { font-family: var(--wv-font-display); font-weight: 600; font-size: clamp(1.4rem, 2.6vw, 1.9rem); line-height: 1.2; color: var(--wv-ink); margin-bottom: var(--wv-5); }
+  .ar-ai-flag { display: inline-flex; align-items: center; gap: 8px; font-family: var(--wv-font-display); font-weight: 700; font-size: .8rem; letter-spacing: 1.2px; text-transform: uppercase; color: var(--wv-accent-ink); margin-bottom: var(--wv-4); }
+  .ar-ai-flag .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--wv-accent); }
+  .ar-aside { border: 1px solid var(--wv-border); padding: var(--wv-5); }
+  .ar-aside p { font-size: .88rem; color: var(--wv-ink-2); line-height: 1.7; }
+
+  /* Similar artists: photo tiles, name centred (NTS explore) */
+  .ar-similar-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  @media (max-width: 860px) { .ar-similar-grid { grid-template-columns: repeat(2, 1fr); } }
+  .ar-similar-card { position: relative; display: block; aspect-ratio: 1; overflow: hidden; background: var(--wv-surface-2); text-decoration: none; color: #fff; }
+  .ar-similar-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(.85) brightness(.55); transition: transform var(--wv-motion-slow) var(--wv-ease), filter var(--wv-motion) var(--wv-ease); }
+  .ar-similar-card:hover img { filter: saturate(1) brightness(.75); transform: scale(1.03); }
+  .ar-similar-card .nm { position: absolute; inset: 0; display: grid; place-items: center; padding: 0 10px; text-align: center; font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1rem, 1.8vw, 1.25rem); letter-spacing: .5px; text-transform: uppercase; text-shadow: 0 1px 12px rgba(0,0,0,.6); }
+  .ar-similar-card:not(:has(img)) .nm { color: var(--wv-ink); text-shadow: none; }
+
+  .ar-compare-cta { padding: var(--wv-7) var(--wv-5); text-align: center; border: 1px solid var(--wv-border); }
+  .ar-compare-cta h2 { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.6rem, 3.2vw, 2.2rem); text-transform: uppercase; margin-bottom: 8px; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="ar-wrap">
-  <a class="ar-back" href="/">← Home</a>
-
-  <div class="wv-card ar-hero" id="overview" style="--wv-amb: {{ amb_accent | default('var(--wv-accent)') }}; --wv-amb-ink: {{ amb_accent_ink | default('var(--wv-accent-ink)') }}; --wv-amb-soft: {{ amb_soft | default('var(--wv-accent-soft)') }};" data-wv-artist-hero data-artist-image="{{ deezer_image or spotify.image or '' }}">
-    {% if deezer_image or spotify.image %}<img src="{{ deezer_image or spotify.image }}" alt="" width="128" height="128" crossorigin="anonymous">{% else %}<div class="ph" aria-hidden="true">{{ artist_name[0] | upper }}</div>{% endif %}
-    <div>
-      <h1 class="ar-name">{{ artist_name | titlecase }}</h1>
-      <div class="ar-sources">
-        {% if lastfm_listeners %}<span class="ar-src" style="background:#d51007">Last.fm</span>{% endif %}
-        {% if deezer_fans %}<span class="ar-src" style="background:#a238ff">Deezer</span>{% endif %}
-        {% if spotify.spotify_url %}<span class="ar-src" style="background:#1a7f4b">Spotify</span>{% endif %}
-      </div>
-      {% if events %}
-      <a href="#events" class="ar-events-badge" aria-label="{{ events | length }} upcoming event{{ 's' if events | length != 1 }}, jump to events section">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 11v2"/><path d="M13 17v2"/></svg>
-        {{ events | length }} upcoming event{{ 's' if events | length != 1 }}
-      </a>
-      {% endif %}
-      {% set tags = (lastfm_tags or []) + (spotify.genres or []) %}
-      {% if tags %}
-      <div class="ar-tags">{% for t in tags[:5] %}<span class="wv-chip wv-btn-sm" style="cursor:default;">{{ t }}</span>{% endfor %}</div>
-      {% endif %}
-      <div class="ar-meta">Analysed {{ search_count }} time{{ 's' if search_count != 1 }} · last on {{ last_searched }}</div>
-      {% if insight %}
-      <a href="#insight" class="ar-hero-teaser">
-        {{ insight | truncate(150) }}
-        <span class="more">Read the full AI insight →</span>
-      </a>
-      {% endif %}
-      <div class="ar-actions">
-        {% if spotify.spotify_url %}<a class="wv-btn wv-btn-ghost wv-btn-sm ar-spotify" href="{{ spotify.spotify_url }}" target="_blank" rel="noopener noreferrer">Open on Spotify →</a>{% endif %}
-        <a class="wv-btn wv-btn-ghost wv-btn-sm" href="/compare?a={{ artist_name | urlencode }}">Compare this artist</a>
-        <a class="wv-btn wv-btn-ghost wv-btn-sm" href="/feed?tab=latest">Talk about it in Community</a>
-      </div>
+{% set photo = (deezer_image | dz_size(1000)) if deezer_image else (spotify.image or '') %}
+<section class="ar-top" id="overview">
+  <div class="ar-photo">
+    {% if photo %}<img src="{{ photo }}" alt="{{ artist_name | titlecase }}" width="1000" height="1000" fetchpriority="high">{% else %}<div class="ph" aria-hidden="true">{{ artist_name[0] | upper }}</div>{% endif %}
+  </div>
+  <div class="ar-info">
+    <a class="ar-back" href="/">← Home</a>
+    <h1 class="ar-name">{{ artist_name | titlecase }}</h1>
+    {% set tags = (lastfm_tags or []) + (spotify.genres or []) %}
+    {% if tags %}
+    <div class="ar-tags">{% for t in tags[:5] %}<span class="wv-chip">{{ t }}</span>{% endfor %}</div>
+    {% endif %}
+    <div class="ar-sources">
+      {% if lastfm_listeners %}<span class="src">Last.fm</span>{% endif %}
+      {% if deezer_fans %}<span class="src">Deezer</span>{% endif %}
+      {% if spotify.spotify_url %}<span class="src">Spotify</span>{% endif %}
+      <span class="ar-meta">Analysed {{ search_count }} time{{ 's' if search_count != 1 }} · last on {{ last_searched }}</span>
+    </div>
+    {% if events %}
+    <a href="#events" class="ar-events-badge" aria-label="{{ events | length }} upcoming event{{ 's' if events | length != 1 }}, jump to events section">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 11v2"/><path d="M13 17v2"/></svg>
+      {{ events | length }} upcoming event{{ 's' if events | length != 1 }}
+    </a>
+    {% endif %}
+    {% if insight %}
+    <a href="#insight" class="ar-hero-teaser">
+      {{ insight | truncate(150) }}
+      <span class="more">Read the full AI insight →</span>
+    </a>
+    {% endif %}
+    <div class="ar-actions">
+      {% if tracks %}<a class="pri" href="#tracks" onclick='wvPlay({{ artist_name|tojson }}, {{ tracks[0].name|tojson }}, this); return false;'>▶ Play {{ tracks[0].name | truncate(24) }}</a>{% endif %}
+      <a href="/compare?a={{ artist_name | urlencode }}">Compare this artist</a>
+      {% if spotify.spotify_url %}<a href="{{ spotify.spotify_url }}" target="_blank" rel="noopener noreferrer">Open on Spotify ↗</a>{% endif %}
+      <a href="/feed?tab=latest">Talk about it in Community</a>
     </div>
   </div>
+</section>
 
-  <nav class="wv-subnav" data-wv-scrollspy aria-label="Artist sections">
-    <div class="wv-subnav-inner">
-      <a href="#overview">Overview</a>
-      {% if tracks %}<a href="#tracks">Top Tracks</a>{% endif %}
-      {% if events %}<a href="#events">Events</a>{% endif %}
-      <a href="#insight">AI Insight</a>
-      {% if similar_artists %}<a href="#similar">Similar Artists</a>{% endif %}
-      <a href="#compare">Compare</a>
-    </div>
-  </nav>
+<nav class="wv-subnav" data-wv-scrollspy aria-label="Artist sections">
+  <div class="wv-subnav-inner" style="padding:0 var(--wv-5);">
+    <a href="#overview">Overview</a>
+    {% if tracks %}<a href="#tracks">Top Tracks</a>{% endif %}
+    {% if events %}<a href="#events">Events</a>{% endif %}
+    <a href="#insight">AI Insight</a>
+    {% if similar_artists %}<a href="#similar">Similar Artists</a>{% endif %}
+    <a href="#compare">Compare</a>
+  </div>
+</nav>
 
+<div class="ar-body">
   <div class="ar-stats">
-    <div class="ar-stat"><div class="l">Listeners</div><div class="v">{{ "{:,}".format(lastfm_listeners) if lastfm_listeners else "—" }}</div></div>
-    <div class="ar-stat"><div class="l">Scrobbles</div><div class="v">{% if lastfm_scrobbles and lastfm_scrobbles > 1000000 %}{{ "%.1fM" | format(lastfm_scrobbles / 1000000) }}{% elif lastfm_scrobbles %}{{ "{:,}".format(lastfm_scrobbles) }}{% else %}—{% endif %}</div></div>
-    <div class="ar-stat"><div class="l">Deezer fans</div><div class="v">{% if deezer_fans and deezer_fans > 1000000 %}{{ "%.1fM" | format(deezer_fans / 1000000) }}{% elif deezer_fans %}{{ "{:,}".format(deezer_fans) }}{% else %}—{% endif %}</div></div>
-    <div class="ar-stat"><div class="l">Popularity</div><div class="v">{{ spotify.popularity ~ '/100' if spotify.popularity else "—" }}</div></div>
-    <div class="ar-stat"><div class="l">Top track plays</div><div class="v">{{ top_playcount }}</div></div>
+    <div class="ar-stat"><div class="l">Listeners</div><div class="v">{{ lastfm_listeners | compact if lastfm_listeners else "—" }}</div><div class="s">{{ "Last.fm · {:,}".format(lastfm_listeners) if lastfm_listeners else "Last.fm" }}</div></div>
+    <div class="ar-stat"><div class="l">Scrobbles</div><div class="v">{{ lastfm_scrobbles | compact if lastfm_scrobbles else "—" }}</div><div class="s">Last.fm · all time</div></div>
+    <div class="ar-stat"><div class="l">Deezer fans</div><div class="v">{{ deezer_fans | compact if deezer_fans else "—" }}</div><div class="s">Deezer</div></div>
+    <div class="ar-stat"><div class="l">Popularity</div><div class="v">{{ spotify.popularity ~ '/100' if spotify.popularity else "—" }}</div><div class="s">Spotify</div></div>
+    <div class="ar-stat"><div class="l">Top track plays</div><div class="v">{{ tracks[0].plays | compact if tracks else "—" }}</div><div class="s">{{ tracks[0].name ~ " · " ~ top_playcount if tracks else "Last.fm" }}</div></div>
   </div>
 
   {% if tracks %}
   <section class="ar-section" id="tracks">
     <div class="ar-section-head"><h2>Top tracks</h2><span class="n">{{ tracks | length }} tracks · Last.fm play counts</span></div>
-    <div class="wv-card wv-card-pad">
+    {% set top = tracks[0].plays or 1 %}
+    <div>
       {% for track in tracks %}
       <div class="ar-track">
-        <button type="button" class="nm" onclick='wvPlay({{ artist_name|tojson }}, {{ track.name|tojson }}, this)'>▶ {{ track.name }}</button>
+        <span class="rk">{{ "%02d" | format(loop.index) }}</span>
+        <button type="button" class="nm" onclick='wvPlay({{ artist_name|tojson }}, {{ track.name|tojson }}, this)'><span class="pi" aria-hidden="true">▶</span><span class="tx">{{ track.name }}</span></button>
+        <span class="bar" aria-hidden="true"><i style="width:{{ [(track.plays * 100 / top) | round(1), 2] | max }}%"></i></span>
         <span class="pl">{{ "{:,}".format(track.plays) }} plays</span>
       </div>
       {% endfor %}
@@ -156,7 +184,7 @@
   {% if events %}
   <section class="ar-section" id="events">
     <div class="ar-section-head"><h2>Upcoming events</h2><span class="n">via Ticketmaster</span></div>
-    <div class="wv-card wv-card-pad">
+    <div>
       {% for e in events %}
       <div class="ar-event">
         <span class="ar-event-when">{{ e.date }}</span>
@@ -186,21 +214,22 @@
         <div class="wv-notice wv-notice-info">Written insight is temporarily unavailable. Artist data and tracks are still available.</div>
         {% endif %}
       </article>
-      <aside class="wv-card wv-card-pad">
+      <aside class="ar-aside">
         <p class="wv-coord" style="margin-bottom:10px;">Data sources</p>
-        <p style="font-size:.86rem;color:var(--wv-ink-2);line-height:1.7;">Listener stats and tags from Last.fm, genre and popularity from Spotify, artwork and fan count from Deezer. Combined and summarised by Claude.</p>
+        <p>Listener stats and tags from Last.fm, genre and popularity from Spotify, artwork and fan count from Deezer. Combined and summarised by Claude.</p>
       </aside>
     </div>
   </section>
 
   {% if similar_artists %}
   <section class="ar-section" id="similar">
-    <div class="ar-section-head"><h2>Similar artists</h2><span class="n">via Last.fm</span></div>
+    <div class="ar-section-head"><h2>If you like {{ artist_name | titlecase }}</h2><span class="n">Similar artists · via Last.fm</span></div>
     <div class="ar-similar-grid">
       {% for name in similar_artists %}
-      <a href="/artist/{{ name | urlencode }}" class="wv-card ar-similar-card">
-        <div class="ph2" aria-hidden="true">{{ name[0] | upper }}</div>
-        <div class="nm">{{ name | titlecase }}</div>
+      {% set sp = (similar_photos or {}).get(name, {}) %}
+      <a href="/artist/{{ name | urlencode }}" class="ar-similar-card">
+        {% if sp.image %}<img src="{{ sp.image | dz_size(500) }}" alt="" loading="lazy" width="500" height="500">{% endif %}
+        <span class="nm">{{ name | titlecase }}</span>
       </a>
       {% endfor %}
     </div>
@@ -208,56 +237,11 @@
   {% endif %}
 
   <section class="ar-section" id="compare">
-    <div class="wv-card ar-compare-cta">
-      <h2 class="wv-h2" style="margin-bottom:8px;">See how {{ artist_name | titlecase }} stacks up</h2>
+    <div class="ar-compare-cta">
+      <h2>See how {{ artist_name | titlecase }} stacks up</h2>
       <p style="color:var(--wv-muted);margin-bottom:var(--wv-4);">Put them side by side against another artist for an AI-written comparison.</p>
       <a class="wv-btn wv-btn-primary" href="/compare?a={{ artist_name | urlencode }}">Compare {{ artist_name | titlecase }} →</a>
     </div>
   </section>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-  // Ambient accent: sample the artist image's dominant hue client-side, with a
-  // silent fallback to the default signal accent if the image can't be read
-  // (cross-origin canvas taint, load failure, etc).
-  (function () {
-    var hero = document.querySelector('[data-wv-artist-hero]');
-    if (!hero) return;
-    var src = hero.getAttribute('data-artist-image');
-    if (!src) return;
-    var img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = function () {
-      try {
-        var c = document.createElement('canvas');
-        var size = 24;
-        c.width = size; c.height = size;
-        var ctx = c.getContext('2d');
-        ctx.drawImage(img, 0, 0, size, size);
-        var data = ctx.getImageData(0, 0, size, size).data;
-        var r = 0, g = 0, b = 0, n = 0;
-        for (var i = 0; i < data.length; i += 4) {
-          if (data[i + 3] < 200) continue;
-          r += data[i]; g += data[i + 1]; b += data[i + 2]; n++;
-        }
-        if (!n) return;
-        r = Math.round(r / n); g = Math.round(g / n); b = Math.round(b / n);
-        // Boost saturation/lightness a touch so muted photos still read as a signal colour.
-        var max = Math.max(r, g, b), min = Math.min(r, g, b);
-        if (max - min < 18) return; // too grey to be a meaningful accent — keep default
-        var ink = (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#12100d' : '#fff8f2';
-        hero.style.setProperty('--wv-amb', 'rgb(' + r + ',' + g + ',' + b + ')');
-        hero.style.setProperty('--wv-amb-ink', 'rgb(' + Math.min(255, r + 40) + ',' + Math.min(255, g + 40) + ',' + Math.min(255, b + 40) + ')');
-        hero.style.setProperty('--wv-amb-soft', 'rgba(' + r + ',' + g + ',' + b + ',.16)');
-        document.documentElement.style.setProperty('--wv-amb', 'rgb(' + r + ',' + g + ',' + b + ')');
-        document.documentElement.style.setProperty('--wv-amb-ink', 'rgb(' + Math.min(255, r + 40) + ',' + Math.min(255, g + 40) + ',' + Math.min(255, b + 40) + ')');
-        document.documentElement.style.setProperty('--wv-amb-soft', 'rgba(' + r + ',' + g + ',' + b + ',.16)');
-      } catch (e) { /* tainted canvas or unsupported — default accent stands */ }
-    };
-    img.onerror = function () {};
-    img.src = src;
-  })();
-</script>
 {% endblock %}
