@@ -191,10 +191,15 @@ def test_robots_txt_served_with_expected_disallows_and_allows():
     assert resp.status_code == 200
     assert resp.content_type.startswith("text/plain")
     body = resp.data.decode()
-    for path in ["/compare", "/artist/", "/search", "/api/", "/admin/", "/messages", "/settings", "/notifications", "/u/"]:
+    for path in ["/compare", "/search", "/api/", "/admin/", "/messages", "/settings", "/notifications", "/u/"]:
         assert f"Disallow: {path}" in body, f"missing Disallow: {path}"
-    for path in ["/", "/about", "/news", "/discover", "/feed"]:
+    # 27 Sep 2026: a GET of /artist/<name> never runs the pipeline any more,
+    # so analysed artist pages are indexable; the paid agent API is
+    # crawlable for x402 catalogs; the sitemap is advertised.
+    for path in ["/", "/artist/", "/api/insight", "/api/insight/preview"]:
         assert f"Allow: {path}" in body, f"missing Allow: {path}"
+    assert "Disallow: /artist/" not in body
+    assert "Sitemap: https://wearewaveline.com/sitemap.xml" in body
 
 
 def test_robots_txt_not_recorded_in_analytics(monkeypatch):

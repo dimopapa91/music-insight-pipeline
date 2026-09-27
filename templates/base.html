@@ -5,12 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#000000">
     <title>{% block title %}Waveline{% endblock %}</title>
-    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ static_url('favicon.svg') }}">
+    <link rel="apple-touch-icon" href="{{ static_url('apple-touch-icon.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/waveline.css') }}">
+    <link rel="stylesheet" href="{{ static_url('css/waveline.css') }}">
     <meta name="description" content="{% block description %}Waveline: search any artist for listening data, top tracks, AI-powered insights and the connections leading to your next discovery.{% endblock %}">
+    {%- set page_url = request.url_root.rstrip('/') ~ (request.path | urlencode) %}
+    <link rel="canonical" href="{{ page_url }}">
+    <meta property="og:site_name" content="Waveline">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:title" content="{{ self.title() }}">
+    <meta property="og:description" content="{{ self.description() }}">
+    <meta property="og:url" content="{{ page_url }}">
+    <meta property="og:image" content="{% block og_image %}{{ request.url_root.rstrip('/') }}{{ static_url('brand/waveline-app-icon-1024.png') }}{% endblock %}">
+    <meta name="twitter:card" content="{% block twitter_card %}summary{% endblock %}">
+    <meta name="twitter:title" content="{{ self.title() }}">
+    <meta name="twitter:description" content="{{ self.description() }}">
     {% block head_extra %}{% endblock %}
     <script>
       // Theme before paint: default is the dark signal theme; 'wv-theme'='light' opts out.
@@ -29,7 +40,7 @@
     <!-- ═══ DESKTOP DOCK NAVIGATION ═══ -->
     <header class="wv-header" id="wv-header">
         <div class="wv-dock">
-            <a class="wv-brand" href="/" aria-label="Waveline home"><img class="wv-brand-word wv-brand-word-dark" src="{{ url_for('static', filename='brand/waveline-wordmark-header-dark.svg') }}" alt="Waveline" width="115" height="24"><img class="wv-brand-word wv-brand-word-light" src="{{ url_for('static', filename='brand/waveline-wordmark-header-light.svg') }}" alt="" aria-hidden="true" width="115" height="24"></a>
+            <a class="wv-brand" href="/" aria-label="Waveline home"><img class="wv-brand-word wv-brand-word-dark" src="{{ static_url('brand/waveline-wordmark-header-dark.svg') }}" alt="Waveline" width="115" height="24"><img class="wv-brand-word wv-brand-word-light" src="{{ static_url('brand/waveline-wordmark-header-light.svg') }}" alt="" aria-hidden="true" width="115" height="24"></a>
 
             <nav class="wv-nav" aria-label="Primary">
                 <a href="/"         {% if path == '/' %}aria-current="page"{% endif %}>Home</a>
@@ -42,7 +53,7 @@
 
             <div class="wv-header-actions">
                 <button class="wv-searchbtn wv-desktop-only" type="button" id="wv-search-trigger" aria-haspopup="dialog" aria-controls="wv-palette-overlay" aria-label="Search">
-                    <img class="wv-searchbtn-mark wv-searchbtn-mark-dark" src="{{ url_for('static', filename='brand/waveline-mark.svg') }}" alt="" aria-hidden="true" width="16" height="16"><img class="wv-searchbtn-mark wv-searchbtn-mark-light" src="{{ url_for('static', filename='brand/waveline-mark-on-light.svg') }}" alt="" aria-hidden="true" width="16" height="16">
+                    <img class="wv-searchbtn-mark wv-searchbtn-mark-dark" src="{{ static_url('brand/waveline-mark.svg') }}" alt="" aria-hidden="true" width="16" height="16"><img class="wv-searchbtn-mark wv-searchbtn-mark-light" src="{{ static_url('brand/waveline-mark-on-light.svg') }}" alt="" aria-hidden="true" width="16" height="16">
                     <span class="wv-hide-crowded">Search</span>
                 </button>
                 <button class="wv-iconbtn wv-mobile-only" id="wv-search-trigger-mobile" type="button" aria-haspopup="dialog" aria-controls="wv-palette-overlay" aria-label="Search" title="Search">
@@ -318,8 +329,8 @@
         username: {{ (current_user.username if current_user.is_authenticated else '') | tojson }}
       };
     </script>
-    <script src="{{ url_for('static', filename='js/nav-progress.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/nav.js') }}"></script>
+    <script src="{{ static_url('js/nav-progress.js') }}"></script>
+    <script src="{{ static_url('js/nav.js') }}"></script>
     {#- Prefetch on hover (Chromium): the next page is usually already
         loaded by the time the click lands. Opt-in selectors only, all of
         them side-effect-free GETs of already-analysed artists or static
@@ -333,8 +344,8 @@
         {"not": {"href_matches": "/profile*"}}
       ]}, "eagerness": "moderate"}]}
     </script>
-    <script src="{{ url_for('static', filename='js/player.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/command-palette.js') }}"></script>
+    <script src="{{ static_url('js/player.js') }}"></script>
+    <script src="{{ static_url('js/command-palette.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

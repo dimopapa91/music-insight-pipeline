@@ -29,6 +29,7 @@ from views_genres import genres_bp
 from views_notifications import notifications_bp
 from views_messages import messages_bp
 from views_admin import admin_bp
+from site_meta import site_meta_bp, add_security_headers, check_same_origin, static_url
 from agent_api import agent_api_bp, init_x402
 from social import count_unread
 from messaging import count_unread_messages
@@ -155,6 +156,13 @@ app.register_blueprint(notifications_bp)
 app.register_blueprint(messages_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(agent_api_bp)
+app.register_blueprint(site_meta_bp)
+
+# Security headers + long static caching, and a same-origin check on every
+# state-changing request (see site_meta.py).
+app.after_request(add_security_headers)
+app.before_request(check_same_origin)
+app.jinja_env.globals["static_url"] = static_url
 
 # Self-hosted, privacy-respecting analytics: one row per real HTML page view.
 # Never raises into the request/response cycle (see analytics.py).
@@ -212,35 +220,11 @@ def rate_limited(e):
     ), 429
 
 
-# Disallows the routes that trigger real work (pipeline runs, Claude calls,
-# private/account pages); allows the pages that are safe and worth indexing.
-# A well-behaved crawler respecting this alone removes most of the abuse
-# surface — see views_artist.py / views_main.py for the actual enforcement
-# (auth gating + rate limits) for crawlers that don't.
-_ROBOTS_TXT = """User-agent: *
-Disallow: /compare
-Disallow: /artist/
-Disallow: /search
-Disallow: /api/
-Disallow: /admin/
-Disallow: /messages
-Disallow: /settings
-Disallow: /notifications
-Disallow: /u/
-Allow: /
-Allow: /about
-Allow: /news
-Allow: /discover
-Allow: /feed
-"""
-
-
-@app.route("/robots.txt")
-def robots_txt():
-    return Response(_ROBOTS_TXT, mimetype="text/plain")
-
-
-limiter.exempt(robots_txt)
+# robots.txt, sitemap.xml, favicon.ico, llms.txt, /.well-known/x402 and
+# /openapi.json live in site_meta.py (27 Sep 2026 audit follow-up).
+for _view in ("robots_txt", "sitemap_xml", "favicon_ico", "llms_txt",
+              "well_known_x402", "openapi_json"):
+    limiter.exempt(app.view_functions["site_meta." + _view])
 
 
 # Ensure all application tables exist (idempotent — safe on every boot/worker).

@@ -3,7 +3,19 @@
 {% block title %}{{ artist_name | titlecase }} · Waveline{% endblock %}
 {% block description %}{{ artist_name | titlecase }} on Waveline: listener data, top tracks, an AI-written insight and similar artists worth exploring.{% endblock %}
 
+{% block og_type %}profile{% endblock %}
+{% block twitter_card %}{{ 'summary_large_image' if deezer_image else 'summary' }}{% endblock %}
+{% block og_image %}{{ (deezer_image | dz_size(1000)) if deezer_image else super() }}{% endblock %}
+
 {% block head_extra %}
+<script type="application/ld+json">{{ {
+  "@context": "https://schema.org",
+  "@type": "MusicGroup",
+  "name": artist_name | titlecase,
+  "url": request.url_root.rstrip('/') ~ (request.path | urlencode),
+  "image": (deezer_image | dz_size(1000)) if deezer_image else None,
+  "genre": ((lastfm_tags or [])[:4]) or None,
+} | tojson }}</script>
 <style>
   /* ── Artist hero: square photo left, huge name right (NTS-style) ── */
   .ar-top { display: grid; grid-template-columns: minmax(280px, 520px) 1fr; border-bottom: 1px solid var(--wv-border); }
@@ -19,6 +31,8 @@
   .ar-sources { display: flex; flex-wrap: wrap; gap: 16px; margin-top: var(--wv-4); font-family: var(--wv-font-display); font-weight: 700; font-size: .8rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-ink-2); }
   .ar-sources .src::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--wv-accent); margin-right: 6px; vertical-align: 1px; }
   .ar-meta { flex-basis: 100%; color: var(--wv-muted); font-weight: 600; letter-spacing: .6px; }
+  .ar-refresh { display: inline; margin-left: 10px; }
+  .ar-refresh button { background: none; border: 0; padding: 0; cursor: pointer; font: inherit; color: var(--wv-accent-ink); text-decoration: underline; }
   .ar-events-badge { display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; margin-top: var(--wv-4); padding: 6px 12px 6px 10px; background: var(--wv-accent); color: var(--wv-on-accent); font-family: var(--wv-font-display); font-size: .86rem; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; line-height: 1; text-decoration: none; }
   .ar-events-badge:hover { filter: brightness(1.06); }
   .ar-events-badge:focus-visible { outline: 2px solid var(--wv-accent); outline-offset: 2px; }
@@ -122,7 +136,8 @@
     <div class="ar-tags">{% for t in tags[:5] %}<span class="wv-chip">{{ t }}</span>{% endfor %}</div>
     {% endif %}
     <div class="ar-sources">
-      <span class="ar-meta">Analysed {{ search_count }} time{{ 's' if search_count != 1 }} · last on {{ last_searched }}</span>
+      <span class="ar-meta">Analysed {{ search_count }} time{{ 's' if search_count != 1 }} · last on {{ last_searched }}{% if insight_is_stale and current_user.is_authenticated %}
+        <form class="ar-refresh" method="POST" action="/search"><input type="hidden" name="artist" value="{{ artist_name }}"><button type="submit" class="wv-link">Refresh analysis</button></form>{% endif %}</span>
     </div>
     {% if events %}
     <a href="#events" class="ar-events-badge" aria-label="{{ events | length }} upcoming event{{ 's' if events | length != 1 }}, jump to events section">
