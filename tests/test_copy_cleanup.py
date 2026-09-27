@@ -22,7 +22,9 @@ def _visible(path):
 def test_no_source_names_in_visible_text_except_about():
     offenders = {}
     for p in glob.glob("templates/*.html"):
-        if p.endswith(("about.html", "admin_stats.html")):
+        # about: attribution lives there. taste_profile: "Connect Last.fm"
+        # names the account you link, like "Open on Spotify" does.
+        if p.endswith(("about.html", "admin_stats.html", "taste_profile.html")):
             continue
         hits = SOURCES.findall(_visible(p))
         if hits:
