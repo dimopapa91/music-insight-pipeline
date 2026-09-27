@@ -11,7 +11,7 @@ from flask_login import current_user, login_required
 import lastfm_user
 from db import db_cursor
 from rate_limit import limiter
-from text_clean import strip_em_dashes
+from text_clean import strip_em_dashes, clean_ai_text
 
 taste_bp = Blueprint("taste", __name__)
 logger = logging.getLogger(__name__)
@@ -45,12 +45,12 @@ def _listening_summary(user_id, username, period, taste):
 
 Their most-tagged sounds: {genre_block}.
 
-Write a short taste read in 2 short paragraphs of plain prose (max 120 words total). Cover what connects these artists and what the balance of plays says about how they listen. No markdown, no lists, no headers. Do not use em dashes (the "\u2014" character). Do not infer sensitive personal characteristics."""
+Write a short taste read in 2 short paragraphs of plain prose (max 120 words total). Cover what connects these artists and what the balance of plays says about how they listen. No markdown, no lists, no headers. Do not use em dashes (the "\u2014" character). Do not mention where the data comes from and do not name any data platform (Last.fm, Spotify, Deezer, MusicBrainz); talk about the music and the listeners directly. Do not infer sensitive personal characteristics."""
     try:
         client = _anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
         msg = client.messages.create(model="claude-haiku-4-5-20251001", max_tokens=400,
                                      messages=[{"role": "user", "content": prompt}])
-        text = strip_em_dashes(msg.content[0].text)
+        text = clean_ai_text(msg.content[0].text)
         _taste_cache[key] = text
         return text
     except Exception as e:
@@ -122,14 +122,14 @@ def taste_profile():
 
 {artist_block}
 
-Based on this, write a 2-3 paragraph taste profile in plain prose. Cover: what genres and sounds connect these artists, what this reveals about the listener's personality and taste, and what they might enjoy discovering next. No markdown, no bullet points, no headers, just clean conversational paragraphs. Do not use em dashes (the "—" character); use commas, colons or separate sentences instead. Do not infer sensitive personal characteristics."""
+Based on this, write a 2-3 paragraph taste profile in plain prose. Cover: what genres and sounds connect these artists, what this reveals about the listener's personality and taste, and what they might enjoy discovering next. No markdown, no bullet points, no headers, just clean conversational paragraphs. Do not use em dashes (the "—" character); use commas, colons or separate sentences instead. Do not mention where the data comes from and do not name any data platform (Last.fm, Spotify, Deezer, MusicBrainz); talk about the music and the listeners directly. Do not infer sensitive personal characteristics."""
         try:
             _client = _anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
             msg = _client.messages.create(model="claude-haiku-4-5-20251001", max_tokens=600, messages=[{"role": "user", "content": prompt}])
             # Belt and suspenders: the prompt already asks Claude not to use
             # em dashes, but that's a request, not a guarantee. Enforce it
             # deterministically before this is cached.
-            analysis = strip_em_dashes(msg.content[0].text)
+            analysis = clean_ai_text(msg.content[0].text)
             _taste_cache[cache_key] = analysis
         except Exception as e:
             # Never leak provider/exception detail to the user — but this

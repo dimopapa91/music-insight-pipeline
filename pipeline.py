@@ -7,7 +7,7 @@ import anthropic
 from dotenv import load_dotenv
 
 from db import get_db_connection
-from text_clean import strip_em_dashes
+from text_clean import strip_em_dashes, clean_ai_text
 
 load_dotenv()
 
@@ -92,7 +92,7 @@ Please give me:
 2. What production or songwriting patterns might explain their popularity
 3. One recommendation for a similar artist someone might enjoy
 
-Write in plain prose only. No markdown, no headers, no bullet points, no bold or italic formatting. Just clean paragraphs. Do not use em dashes (the "—" character); use commas, colons or separate sentences instead."""
+Write in plain prose only. No markdown, no headers, no bullet points, no bold or italic formatting. Just clean paragraphs. Do not use em dashes (the "—" character); use commas, colons or separate sentences instead. Do not mention where the data comes from and do not name any data platform (Last.fm, Spotify, Deezer, MusicBrainz); talk about the music and the listeners directly."""
 
     message = client.messages.create(
         model="claude-haiku-4-5-20251001",
@@ -103,7 +103,7 @@ Write in plain prose only. No markdown, no headers, no bullet points, no bold or
     # Belt and suspenders: the prompt already asks Claude not to use em
     # dashes, but that's a request, not a guarantee. Enforce it
     # deterministically before this ever reaches the database.
-    return strip_em_dashes(message.content[0].text)
+    return clean_ai_text(message.content[0].text)
 
 
 def _log_claude_failure(artist_name, exc):

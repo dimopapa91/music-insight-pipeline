@@ -73,7 +73,7 @@ Please provide:
 1. What do these genre trends reveal about the music being analysed?
 2. Are there any interesting genre overlaps or patterns?
 3. What does this suggest about the listener's taste profile?
-Keep it concise and insightful. Do not use em dashes (the "—" character); use commas, colons or separate sentences instead."""
+Keep it concise and insightful. Do not use em dashes (the "—" character); use commas, colons or separate sentences instead. Do not mention where the data comes from and do not name any data platform (Last.fm, Spotify, Deezer, MusicBrainz); talk about the music and the listeners directly."""
 
     print("\n🤖 Claude's Genre Trend Analysis:")
     print("─" * 40)

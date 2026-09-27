@@ -141,7 +141,7 @@
     <section class="wv-card tp-card">
       <h2>The read</h2>
       {% if taste_analysis %}
-      <div class="tp-text">{{ taste_analysis | markdown }}</div>
+      <div class="tp-text">{{ taste_analysis | clean_ai | markdown }}</div>
       {% else %}
       <p class="tp-note">The written read couldn't load just now. Your artists and sound are above.</p>
       {% endif %}
@@ -195,7 +195,7 @@
   <section class="wv-card tp-card">
     <h2>Your taste profile</h2>
     {% if taste_analysis %}
-    <div class="tp-text">{{ taste_analysis | markdown }}</div>
+    <div class="tp-text">{{ taste_analysis | clean_ai | markdown }}</div>
     {% else %}
     <div class="wv-notice wv-notice-info">Your artists are here. The written read couldn't tune in just now.</div>
     {% endif %}

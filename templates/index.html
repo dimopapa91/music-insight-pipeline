@@ -181,7 +181,7 @@
         <span class="k">Latest search · {{ featured.searched_at | timeago }}</span>
         <h2><a href="/artist/{{ featured.artist | urlencode }}">{{ featured.artist | titlecase }}</a></h2>
         {% if featured.top_tracks %}<p class="meta">Top track · {{ featured.top_tracks[0] }}</p>{% endif %}
-        {% if featured.insight %}<blockquote>{{ featured.insight | markdown_preview(220) }}</blockquote>{% endif %}
+        {% if featured.insight %}<blockquote>{{ featured.insight | clean_ai | markdown_preview(220) }}</blockquote>{% endif %}
         <a class="go" href="/artist/{{ featured.artist | urlencode }}">Open the analysis →</a>
       </div>
       {% endif %}
@@ -274,7 +274,7 @@
       <div class="wv-featured-body">
         <p class="wv-eyebrow">AI insight</p>
         {% if featured.insight %}
-        <p class="wv-featured-summary">{{ featured.insight | markdown_preview(320) }}…</p>
+        <p class="wv-featured-summary">{{ featured.insight | clean_ai | markdown_preview(320) }}…</p>
         {% else %}
         <p class="wv-featured-summary">Written insight is temporarily unavailable for this artist.</p>
         {% endif %}
@@ -295,7 +295,7 @@
       {% for row in latest_insights[1:4] %}
       <a class="wv-secondary-row" href="/artist/{{ row.artist | urlencode }}">
         <span class="nm">{{ row.artist | titlecase }}</span>
-        <span class="sm">{% if row.insight %}{{ row.insight | markdown_preview(90) }}…{% else %}AI insight unavailable{% endif %}</span>
+        <span class="sm">{% if row.insight %}{{ row.insight | clean_ai | markdown_preview(90) }}…{% else %}AI insight unavailable{% endif %}</span>
       </a>
       {% endfor %}
     </div>
