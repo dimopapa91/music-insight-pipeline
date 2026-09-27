@@ -73,6 +73,19 @@ def _lastfm_artist_info(name):
     return data
 
 
+# An analysis older than this gets a "Refresh analysis" button for
+# logged-in users (it POSTs to /search, which is rate-limited).
+STALE_AFTER_DAYS = 30
+
+
+def _is_stale(searched_at):
+    if not hasattr(searched_at, "date"):
+        return False
+    import datetime as _dt
+    now = _dt.datetime.utcnow() if searched_at.tzinfo is None else _dt.datetime.now(_dt.timezone.utc)
+    return (now - searched_at).days >= STALE_AFTER_DAYS
+
+
 def _safe_int(value):
     """Last.fm play counts arrive as strings; a malformed one counts as 0
     rather than taking the whole artist page down."""
@@ -181,6 +194,7 @@ def artist_profile(artist_name):
             events=events,
             search_count=search_count,
             last_searched=last_searched.strftime("%d %b %Y") if hasattr(last_searched, 'strftime') else str(last_searched),
+            insight_is_stale=_is_stale(last_searched),
             top_playcount=top_playcount,
             avg_plays=avg_plays,
             deezer_image=deezer_image,

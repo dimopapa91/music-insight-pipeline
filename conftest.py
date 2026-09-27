@@ -28,6 +28,9 @@ os.environ.setdefault("SPOTIFY_CLIENT_ID", "test")
 os.environ.setdefault("SPOTIFY_CLIENT_SECRET", "test")
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 os.environ["DATABASE_URL"] = "postgresql://test:test@127.0.0.1:1/pytest_must_not_reach_a_real_db"
+# db.py pools connections in production; tests use unpooled connections so
+# their monkeypatched get_db_connection() fakes keep working.
+os.environ["DB_POOL"] = "0"
 
 # artist_profile() calls services.get_artist_events() on every render, and
 # the ~dozen artist-page tests don't mock it — so with a real key present
