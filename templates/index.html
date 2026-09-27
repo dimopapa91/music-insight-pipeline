@@ -6,10 +6,13 @@
 {% block head_extra %}
 <style>
   /* ── Hero: featured artist photo + search panel (NTS-style split) ── */
-  .wv-hero { display: grid; grid-template-columns: 1.5fr 1fr; border-bottom: 1px solid var(--wv-border); min-height: min(640px, calc(100svh - var(--wv-header-h) - 41px)); }
+  /* Desktop hero: a SQUARE photo (artist photos are 1000×1000, so nothing
+     is cropped or zoomed) and the latest artist + search on the right. */
+  .wv-hero { --hero-h: clamp(460px, calc(100svh - var(--wv-header-h) - 41px), 720px);
+             display: grid; grid-template-columns: var(--hero-h) 1fr; border-bottom: 1px solid var(--wv-border); min-height: var(--hero-h); }
   .wv-hero.no-feature { grid-template-columns: 1fr; }
   .wv-feature { position: relative; overflow: hidden; display: block; color: var(--wv-ink); text-decoration: none; border-right: 1px solid var(--wv-border); background: var(--wv-surface-2); min-height: 420px; }
-  .wv-feature-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; transition: transform var(--wv-motion-slow) var(--wv-ease); }
+  .wv-feature-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; transition: transform var(--wv-motion-slow) var(--wv-ease); }
   .wv-feature:hover .wv-feature-img { transform: scale(1.02); }
   .wv-feature-noimg { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(8rem, 22vw, 16rem); color: var(--wv-border-2); background: linear-gradient(155deg, var(--wv-accent-soft), transparent 70%); }
   .wv-boxlbl { position: absolute; left: var(--wv-4); bottom: var(--wv-4); right: var(--wv-4); max-width: 460px; background: var(--wv-bg); padding: 14px 16px 14px; }
@@ -25,7 +28,20 @@
   .wv-feature .wv-boxlbl .go { margin-top: 6px; font-size: .74rem; }
 
   .wv-hero-side { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
-  .wv-hero-inner { padding: var(--wv-7) var(--wv-6); }
+  .wv-hero-inner { padding: var(--wv-7) clamp(var(--wv-6), 5vw, 96px); width: 100%; max-width: 860px; }
+
+  /* Latest artist, right column (desktop). On phones the photo label does
+     this job instead, so this block is hidden there. */
+  .wv-hero .wv-feature .wv-boxlbl { display: none; }
+  .wv-now { margin-bottom: var(--wv-6); }
+  .wv-now .k { font-family: var(--wv-font-display); font-weight: 700; font-size: .8rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--wv-accent-ink); }
+  .wv-now h2 { margin: 10px 0 12px; font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(2.8rem, 5.2vw, 5rem); line-height: .9; text-transform: uppercase; letter-spacing: -.5px; overflow-wrap: anywhere; }
+  .wv-now h2 a { color: var(--wv-ink); text-decoration: none; }
+  .wv-now h2 a:hover { color: var(--wv-accent-ink); }
+  .wv-now .meta { color: var(--wv-muted); font-size: .92rem; }
+  .wv-now blockquote { margin: var(--wv-4) 0 0; padding-left: 14px; border-left: 2px solid var(--wv-accent); color: var(--wv-ink-2); font-size: 1rem; line-height: 1.6; max-width: 56ch;
+                       display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .wv-now .go { display: inline-block; margin-top: var(--wv-4); font-family: var(--wv-font-display); font-weight: 700; font-size: .85rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-accent-ink); text-decoration: none; border-bottom: 1px solid var(--wv-accent); }
   .wv-hero.no-feature .wv-hero-inner { max-width: 820px; }
   .wv-hero-searchcard { margin-top: 0; }
   .wv-hero-searchrow { display: flex; border: 1px solid var(--wv-border-2); }
@@ -44,6 +60,8 @@
   /* Mobile order: search first, then the photo */
   @media (max-width: 900px) {
     .wv-hero { grid-template-columns: 1fr; min-height: 0; }
+    .wv-hero .wv-feature .wv-boxlbl { display: block; }
+    .wv-now { display: none; }
     .wv-hero-side { display: contents; }
     .wv-hero-inner { order: 1; padding: var(--wv-5) var(--wv-4); }
     .wv-feature { order: 2; border-right: 0; min-height: 0; aspect-ratio: 4 / 3.4; border-bottom: 1px solid var(--wv-border); }
@@ -157,6 +175,16 @@
   <div class="wv-hero-side">
     <div class="wv-hero-inner">
       <h1 id="wv-title" class="wv-sr-only">Waveline. Follow the sound.</h1>
+
+      {% if featured %}
+      <div class="wv-now">
+        <span class="k">Latest search · {{ featured.searched_at | timeago }}</span>
+        <h2><a href="/artist/{{ featured.artist | urlencode }}">{{ featured.artist | titlecase }}</a></h2>
+        {% if featured.top_tracks %}<p class="meta">Top track · {{ featured.top_tracks[0] }}</p>{% endif %}
+        {% if featured.insight %}<blockquote>{{ featured.insight | markdown_preview(220) }}</blockquote>{% endif %}
+        <a class="go" href="/artist/{{ featured.artist | urlencode }}">Open the analysis →</a>
+      </div>
+      {% endif %}
 
       <form method="POST" action="/search" id="search-form" class="wv-hero-searchcard" autocomplete="off" role="search" aria-label="Search for an artist">
         <div class="wv-hero-search-wrap">
