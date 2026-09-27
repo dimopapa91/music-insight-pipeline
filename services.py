@@ -338,7 +338,11 @@ def get_discovery_artists(searched_artists):
 
 _artist_photo_cache = {}       # name_lower -> {"data": dict, "at": float, "ok": bool}
 _ARTIST_PHOTO_TTL = 86400
-_ARTIST_PHOTO_NEG_TTL = 3600
+_ARTIST_PHOTO_NEG_TTL = 3600        # a real "no such artist on Deezer"
+# A Deezer error (quota exceeded, timeout, 5xx) is NOT "no photo": caching it
+# for an hour after a cold start made photos vanish site-wide for that hour.
+# Retry errors after two minutes instead.
+_ARTIST_PHOTO_ERR_TTL = 120
 
 _DEEZER_SIZE_RE = re.compile(r"/(\d+)x\1-")
 
@@ -360,18 +364,29 @@ def get_artist_photo(name):
         return empty
     entry = _artist_photo_cache.get(key)
     if entry:
-        ttl = _ARTIST_PHOTO_TTL if entry["ok"] else _ARTIST_PHOTO_NEG_TTL
+        if entry["ok"] and entry["data"]["image"]:
+            ttl = _ARTIST_PHOTO_TTL
+        elif entry["ok"]:
+            ttl = _ARTIST_PHOTO_NEG_TTL
+        else:
+            ttl = _ARTIST_PHOTO_ERR_TTL
         if time.time() - entry["at"] < ttl:
             return entry["data"]
 
     def _remember(data, ok):
+        # Never replace a good cached photo with an error result.
+        if not ok and entry and entry["ok"] and entry["data"]["image"]:
+            return entry["data"]
         _artist_photo_cache[key] = {"data": data, "at": time.time(), "ok": ok}
         return data
 
     try:
         resp = http_requests.get("https://api.deezer.com/search/artist",
                                  params={"q": name, "limit": 10}, timeout=4)
-        results = resp.json().get("data", []) or []
+        payload = resp.json()
+        if getattr(resp, "status_code", 200) != 200 or "error" in payload:
+            return _remember(empty, False)          # quota/5xx: retry soon
+        results = payload.get("data", []) or []
         matches = [d for d in results if artist_names_match(name, d.get("name", ""))]
         if not matches:
             return _remember(empty, True)
