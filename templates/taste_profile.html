@@ -16,14 +16,47 @@
   .tp-step .n { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--wv-accent-soft); color: var(--wv-accent-ink); font-family: var(--wv-font-display); font-weight: 700; font-size: .8rem; display: flex; align-items: center; justify-content: center; }
   .tp-step p { font-size: .92rem; color: var(--wv-ink-2); }
   .tp-cta { display: flex; gap: var(--wv-3); flex-wrap: wrap; margin-top: var(--wv-5); }
+
+  /* Connect Last.fm */
+  .tp-connect { display: flex; gap: var(--wv-3); flex-wrap: wrap; margin-top: var(--wv-3); }
+  .tp-connect input { flex: 1; min-width: 180px; height: 44px; padding: 0 14px; font-size: 16px; background: var(--wv-bg); color: var(--wv-ink); border: 1px solid var(--wv-border-2); }
+  .tp-connect input:focus { outline: none; border-color: var(--wv-accent); }
+  .tp-note { font-size: .82rem; color: var(--wv-muted); margin-top: var(--wv-3); }
+
+  /* Listening profile */
+  .tp-wrap.is-wide { max-width: 1060px; }
+  .tp-bar { display: flex; flex-wrap: wrap; gap: var(--wv-3); align-items: center; justify-content: space-between; margin-top: var(--wv-4); }
+  .tp-periods { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tp-periods a { font-family: var(--wv-font-display); font-weight: 700; font-size: .78rem; letter-spacing: 1px; text-transform: uppercase; padding: 8px 12px; min-height: 36px; display: inline-flex; align-items: center; border: 1px solid var(--wv-border); color: var(--wv-ink-2); text-decoration: none; }
+  .tp-periods a[aria-current="page"] { background: var(--wv-accent); color: var(--wv-on-accent); border-color: var(--wv-accent); }
+  .tp-linked { font-size: .82rem; color: var(--wv-muted); display: flex; gap: 10px; align-items: center; }
+  .tp-linked button { background: none; border: 0; padding: 0; font: inherit; color: var(--wv-accent-ink); text-decoration: underline; cursor: pointer; }
+  .tp-cols { display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--wv-5); }
+  @media (max-width: 860px) { .tp-cols { grid-template-columns: 1fr; } }
+  .tp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  @media (max-width: 560px) { .tp-grid { grid-template-columns: repeat(2, 1fr); } }
+  .tp-art { position: relative; display: block; aspect-ratio: 1; background: var(--wv-surface-2); overflow: hidden; color: var(--wv-ink); text-decoration: none; }
+  .tp-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .tp-art .ini { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--wv-font-display); font-weight: 700; font-size: 2.4rem; color: var(--wv-border-2); }
+  .tp-art .lbl { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 8px 7px; background: linear-gradient(transparent, rgba(0,0,0,.85)); font-family: var(--wv-font-display); font-weight: 700; font-size: .82rem; text-transform: uppercase; line-height: 1.05; }
+  .tp-art .lbl small { display: block; font-family: var(--wv-font-body); font-weight: 400; text-transform: none; font-size: .7rem; color: var(--wv-ink-2); margin-top: 2px; }
+  .tp-art .rk { position: absolute; left: 6px; top: 6px; background: var(--wv-bg); font-family: var(--wv-font-display); font-weight: 700; font-size: .72rem; padding: 2px 6px; }
+  .tp-genres { display: grid; gap: 10px; }
+  .tp-genre { display: grid; grid-template-columns: 110px 1fr 38px; gap: 10px; align-items: center; font-size: .86rem; }
+  .tp-genre .nm { text-transform: capitalize; color: var(--wv-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tp-genre .tr { height: 8px; background: var(--wv-surface-2); }
+  .tp-genre .fl { height: 100%; background: var(--wv-accent); }
+  .tp-genre .pc { text-align: right; color: var(--wv-muted); font-variant-numeric: tabular-nums; }
+  .tp-recs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  @media (max-width: 860px) { .tp-recs { grid-template-columns: repeat(3, 1fr); } }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="tp-wrap">
+<div class="tp-wrap{{ ' is-wide' if state == 'lastfm' }}">
   <div class="tp-head">
     <p class="wv-eyebrow">Taste profile</p>
-    <h1>Your taste, from what you explore</h1>
+    <h1>{{ 'Your taste, from what you play' if state == 'lastfm' else 'Your taste, from what you explore' }}</h1>
     {% if state == 'ready' %}<p>Built from the {{ artist_count }} artist{{ 's' if artist_count != 1 }} you've analysed on Waveline.</p>{% endif %}
   </div>
 
@@ -46,6 +79,91 @@
     </div>
   </section>
 
+  {% elif state == 'lastfm' %}
+  <div class="tp-bar">
+    <nav class="tp-periods" aria-label="Time range">
+      {% for key, label in periods.items() %}<a href="?period={{ key }}" {% if key == period %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+    </nav>
+    <form class="tp-linked" method="POST" action="/profile/lastfm/disconnect">
+      <span>Connected to Last.fm as <b>{{ lastfm_name }}</b></span>
+      <button type="submit">Disconnect</button>
+    </form>
+  </div>
+
+  {% if not taste.top %}
+  <div class="wv-empty" style="margin-top:var(--wv-5);">
+    <h3>No plays in this range yet.</h3>
+    <p>Try a longer time range, or check back once you've listened a bit.</p>
+  </div>
+  {% else %}
+  <section class="wv-card tp-card">
+    <h2>Your top artists</h2>
+    <div class="tp-grid">
+      {% for a in taste.top[:10] %}
+      {% set ph = (taste.photos.get(a.name) or {}).get('image') %}
+      <a class="tp-art" href="/artist/{{ a.name | urlencode }}">
+        {% if ph %}<img src="{{ ph | dz_size(500) }}" alt="" loading="lazy" width="500" height="500">{% else %}<span class="ini" aria-hidden="true">{{ a.name[0] | upper }}</span>{% endif %}
+        <span class="rk">{{ loop.index }}</span>
+        <span class="lbl">{{ a.name }}<small>{{ a.plays | compact }} plays</small></span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="tp-cols">
+    <section class="wv-card tp-card">
+      <h2>Your sound</h2>
+      {% if taste.genres %}
+      <div class="tp-genres">
+        {% set top_share = taste.genres[0].share or 1 %}
+        {% for g in taste.genres %}
+        <div class="tp-genre"><span class="nm">{{ g.name | upper if g.name | length <= 3 else g.name }}</span><span class="tr"><span class="fl" style="display:block;width:{{ (100 * g.share / top_share) | round(1) }}%"></span></span><span class="pc">{{ g.share }}%</span></div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="tp-note">Not enough tag data for this range yet.</p>
+      {% endif %}
+    </section>
+    <section class="wv-card tp-card">
+      <h2>The read</h2>
+      {% if taste_analysis %}
+      <div class="tp-text">{{ taste_analysis | markdown }}</div>
+      {% else %}
+      <p class="tp-note">The written read couldn't load just now. Your artists and sound are above.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  {% if taste.recs %}
+  <section class="wv-card tp-card">
+    <h2>New for you</h2>
+    <div class="tp-recs">
+      {% for name in taste.recs %}
+      {% set ph = (taste.photos.get(name) or {}).get('image') %}
+      <a class="tp-art" href="/artist/{{ name | urlencode }}">
+        {% if ph %}<img src="{{ ph | dz_size(500) }}" alt="" loading="lazy" width="500" height="500">{% else %}<span class="ini" aria-hidden="true">{{ name[0] | upper }}</span>{% endif %}
+        <span class="lbl">{{ name }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="wv-card tp-card">
+    <h2>Share your taste</h2>
+    <p class="tp-note" style="margin-top:0;">A card with your top artists and sound, made on your device. Nothing is published.</p>
+    <div class="tp-cta" style="margin-top:var(--wv-3);">
+      <button type="button" class="wv-btn wv-btn-primary" id="tp-card-btn">Download taste card</button>
+    </div>
+    <script type="application/json" id="tp-card-data">{{ {
+      "period": periods[period],
+      "artists": taste.top[:5] | map(attribute="name") | list,
+      "genres": taste.genres[:4],
+      "mark": static_url("brand/waveline-app-icon.svg")
+    } | tojson }}</script>
+  </section>
+  {% endif %}
+
   {% elif state == 'forming' %}
   <div class="wv-empty" style="margin-top:var(--wv-5);">
     <h3>Your wave is forming.</h3>
@@ -57,6 +175,20 @@
     {% endif %}
     <a class="wv-btn wv-btn-primary" href="/" style="margin-top:var(--wv-4);">Explore an artist</a>
   </div>
+
+  {% if show_connect %}
+  <section class="wv-card tp-card" id="connect-lastfm">
+    <h2>Connect your listening</h2>
+    <div class="tp-text" style="font-size:.95rem;"><p>Add your Last.fm username and your taste profile will come from what you actually play: your top artists, the sounds you return to, and new artists picked from your favourites.</p></div>
+    {% if request.args.get('lastfm_error') %}<div class="wv-notice wv-notice-error" role="alert">We couldn't find that Last.fm account. Check the username and try again.</div>{% endif %}
+    <form class="tp-connect" method="POST" action="/profile/lastfm">
+      <label class="wv-sr-only" for="lastfm_username">Last.fm username</label>
+      <input id="lastfm_username" name="lastfm_username" placeholder="Last.fm username" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="15" required>
+      <button type="submit" class="wv-btn wv-btn-primary">Connect</button>
+    </form>
+    <p class="tp-note">Only your public username is saved. No password, and you can disconnect any time.</p>
+  </section>
+  {% endif %}
 
   {% else %}
   <section class="wv-card tp-card">
@@ -79,6 +211,24 @@
       {% endfor %}
     </div>
   </section>
+
+  {% if show_connect %}
+  <section class="wv-card tp-card" id="connect-lastfm">
+    <h2>Connect your listening</h2>
+    <div class="tp-text" style="font-size:.95rem;"><p>Add your Last.fm username and your taste profile will come from what you actually play: your top artists, the sounds you return to, and new artists picked from your favourites.</p></div>
+    {% if request.args.get('lastfm_error') %}<div class="wv-notice wv-notice-error" role="alert">We couldn't find that Last.fm account. Check the username and try again.</div>{% endif %}
+    <form class="tp-connect" method="POST" action="/profile/lastfm">
+      <label class="wv-sr-only" for="lastfm_username">Last.fm username</label>
+      <input id="lastfm_username" name="lastfm_username" placeholder="Last.fm username" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="15" required>
+      <button type="submit" class="wv-btn wv-btn-primary">Connect</button>
+    </form>
+    <p class="tp-note">Only your public username is saved. No password, and you can disconnect any time.</p>
+  </section>
+  {% endif %}
   {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% if state == 'lastfm' %}<script src="{{ static_url('js/taste-card.js') }}"></script>{% endif %}
 {% endblock %}
