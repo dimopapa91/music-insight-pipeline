@@ -432,3 +432,85 @@ def test_mainnet_network_is_advertised_when_configured(monkeypatch, no_db):
     assert accept["network"] == "eip155:8453"
     assert accept["asset"].lower() == "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"  # USDC on Base
     assert accept["amount"] == "5000"
+
+
+# ── path alias /api/insight/artist/<name> (for x402-list.com, whose form
+#    rejects query strings) ────────────────────────────────────────────
+
+def _path_payment_header(client, artist="Radiohead"):
+    from x402.http import encode_payment_signature_header
+    from x402.schemas import PaymentPayload, PaymentRequirements
+
+    challenge = client.get(f"/api/insight/artist/{artist}")
+    assert challenge.status_code == 402
+    required = json.loads(base64.b64decode(challenge.headers["PAYMENT-REQUIRED"]))
+    requirements = PaymentRequirements.model_validate(required["accepts"][0])
+    payload = PaymentPayload(x402_version=2, accepted=requirements,
+                             payload={"signature": "0xdead", "authorization": {}},
+                             resource=required["resource"])
+    return encode_payment_signature_header(payload)
+
+
+def test_path_alias_unpaid_gets_402_same_price(monkeypatch, no_db):
+    app, _ = _make_app(monkeypatch)
+    resp = app.test_client().get("/api/insight/artist/Radiohead")
+    assert resp.status_code == 402
+    required = json.loads(base64.b64decode(resp.headers["PAYMENT-REQUIRED"]))
+    assert required["accepts"][0]["amount"] == "5000"
+    assert required["accepts"][0]["payTo"] == PAY_TO
+    assert resp.get_json()  # v1 clients get the requirements in the body too
+
+
+def test_path_alias_paid_known_artist_settles(monkeypatch):
+    facilitator = FakeFacilitator()
+    app, _ = _make_app(monkeypatch, facilitator=facilitator)
+    seen = []
+    monkeypatch.setattr(agent_api, "_latest_insight",
+                        lambda a: seen.append(a) or ("Massive Attack", "An insight.", datetime.datetime(2026, 9, 1)))
+    client = app.test_client()
+    resp = client.get("/api/insight/artist/Massive%20Attack",
+                      headers={"PAYMENT-SIGNATURE": _path_payment_header(client, "Massive%20Attack")})
+    assert resp.status_code == 200
+    assert resp.get_json()["artist"] == "Massive Attack"
+    assert seen == ["Massive Attack"]
+    assert len(facilitator.settled) == 1
+
+
+def test_path_alias_paid_unknown_artist_is_404_and_not_settled(monkeypatch):
+    facilitator = FakeFacilitator()
+    app, _ = _make_app(monkeypatch, facilitator=facilitator)
+    monkeypatch.setattr(agent_api, "_latest_insight", lambda a: None)
+    client = app.test_client()
+    resp = client.get("/api/insight/artist/Nobody",
+                      headers={"PAYMENT-SIGNATURE": _path_payment_header(client, "Nobody")})
+    assert resp.status_code == 404
+    assert facilitator.settled == []
+
+
+def test_path_alias_oversized_name_is_400_before_402(monkeypatch, no_db):
+    app, _ = _make_app(monkeypatch)
+    resp = app.test_client().get("/api/insight/artist/" + "a" * 201)
+    assert resp.status_code == 400
+    assert "PAYMENT-REQUIRED" not in resp.headers
+
+
+def test_path_alias_does_not_gate_the_free_preview_or_bare_prefix(monkeypatch, no_db):
+    app, _ = _make_app(monkeypatch)
+    client = app.test_client()
+    assert client.get("/api/insight/artist/").status_code == 404
+    assert client.get("/api/insight/artist").status_code == 404
+    monkeypatch.setattr(agent_api, "_latest_insight",
+                        lambda a: ("Massive Attack", "x", datetime.datetime(2026, 9, 1)))
+    preview = client.get("/api/insight/preview")
+    assert preview.status_code == 200
+    assert preview.get_json()["paid_endpoint_path"] == "/api/insight/artist/<name>"
+
+
+def test_path_alias_is_off_when_x402_is_off(monkeypatch, no_db):
+    app, enabled = _make_app(monkeypatch, pay_to=None)
+    assert enabled is False
+    assert app.test_client().get("/api/insight/artist/Radiohead").status_code == 404
+
+
+def test_path_description_within_cdp_limit():
+    assert len(agent_api.PATH_DESCRIPTION) <= 500
