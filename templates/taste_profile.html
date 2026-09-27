@@ -60,6 +60,20 @@
     {% if state == 'ready' %}<p>Built from the {{ artist_count }} artist{{ 's' if artist_count != 1 }} you've analysed on Waveline.</p>{% endif %}
   </div>
 
+  {% if show_connect %}
+  <section class="wv-card tp-card" id="connect-lastfm">
+    <h2>Connect your listening</h2>
+    <div class="tp-text" style="font-size:.95rem;"><p>Add your Last.fm username and your taste profile will come from what you actually play: your top artists, the sounds you return to, and new artists picked from your favourites.</p></div>
+    {% if request.args.get('lastfm_error') %}<div class="wv-notice wv-notice-error" role="alert">We couldn't find that Last.fm account. Check the username and try again.</div>{% endif %}
+    <form class="tp-connect" method="POST" action="/profile/lastfm">
+      <label class="wv-sr-only" for="lastfm_username">Last.fm username</label>
+      <input id="lastfm_username" name="lastfm_username" placeholder="Last.fm username" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="15" required>
+      <button type="submit" class="wv-btn wv-btn-primary">Connect</button>
+    </form>
+    <p class="tp-note">Only your public username is saved. No password, and you can disconnect any time.</p>
+  </section>
+  {% endif %}
+
   {% if state == 'logged_out' %}
   <section class="wv-card tp-card">
     <h2>What is a taste profile?</h2>
@@ -176,19 +190,6 @@
     <a class="wv-btn wv-btn-primary" href="/" style="margin-top:var(--wv-4);">Explore an artist</a>
   </div>
 
-  {% if show_connect %}
-  <section class="wv-card tp-card" id="connect-lastfm">
-    <h2>Connect your listening</h2>
-    <div class="tp-text" style="font-size:.95rem;"><p>Add your Last.fm username and your taste profile will come from what you actually play: your top artists, the sounds you return to, and new artists picked from your favourites.</p></div>
-    {% if request.args.get('lastfm_error') %}<div class="wv-notice wv-notice-error" role="alert">We couldn't find that Last.fm account. Check the username and try again.</div>{% endif %}
-    <form class="tp-connect" method="POST" action="/profile/lastfm">
-      <label class="wv-sr-only" for="lastfm_username">Last.fm username</label>
-      <input id="lastfm_username" name="lastfm_username" placeholder="Last.fm username" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="15" required>
-      <button type="submit" class="wv-btn wv-btn-primary">Connect</button>
-    </form>
-    <p class="tp-note">Only your public username is saved. No password, and you can disconnect any time.</p>
-  </section>
-  {% endif %}
 
   {% else %}
   <section class="wv-card tp-card">
@@ -212,19 +213,6 @@
     </div>
   </section>
 
-  {% if show_connect %}
-  <section class="wv-card tp-card" id="connect-lastfm">
-    <h2>Connect your listening</h2>
-    <div class="tp-text" style="font-size:.95rem;"><p>Add your Last.fm username and your taste profile will come from what you actually play: your top artists, the sounds you return to, and new artists picked from your favourites.</p></div>
-    {% if request.args.get('lastfm_error') %}<div class="wv-notice wv-notice-error" role="alert">We couldn't find that Last.fm account. Check the username and try again.</div>{% endif %}
-    <form class="tp-connect" method="POST" action="/profile/lastfm">
-      <label class="wv-sr-only" for="lastfm_username">Last.fm username</label>
-      <input id="lastfm_username" name="lastfm_username" placeholder="Last.fm username" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="15" required>
-      <button type="submit" class="wv-btn wv-btn-primary">Connect</button>
-    </form>
-    <p class="tp-note">Only your public username is saved. No password, and you can disconnect any time.</p>
-  </section>
-  {% endif %}
   {% endif %}
 </div>
 {% endblock %}
