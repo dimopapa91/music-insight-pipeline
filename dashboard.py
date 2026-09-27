@@ -30,6 +30,7 @@ from views_notifications import notifications_bp
 from views_messages import messages_bp
 from views_admin import admin_bp
 import lastfm_user
+from mcp_server import mcp_bp
 from site_meta import site_meta_bp, add_security_headers, check_same_origin, static_url
 from agent_api import agent_api_bp, init_x402
 from social import count_unread
@@ -158,6 +159,7 @@ app.register_blueprint(messages_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(agent_api_bp)
 app.register_blueprint(site_meta_bp)
+app.register_blueprint(mcp_bp)
 
 # Security headers + long static caching, and a same-origin check on every
 # state-changing request (see site_meta.py).
