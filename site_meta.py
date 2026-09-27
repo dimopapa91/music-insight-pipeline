@@ -220,6 +220,9 @@ Built by Dimos Papageorgiou. Agent API built in collaboration with nsgoods.
 - Only a 200 is charged. Unknown artist: 404, not charged. Missing artist: 400 before any payment request.
 - [x402 manifest]({site}/.well-known/x402) · [OpenAPI]({site}/openapi.json) · [Docs](https://github.com/dimopapa91/music-insight-pipeline/blob/main/docs/x402.md)
 
+## MCP server
+- {site}/mcp (Streamable HTTP, no sign-in, read-only, free). Tools: search_artists, get_artist, recently_analysed, get_insight_preview.
+
 ## Pages
 - [Home]({site}/): search any artist.
 - [Genres]({site}/genres): browse by sound.
@@ -249,6 +252,7 @@ def x402_manifest():
         ],
         "previewUrl": f"{SITE_URL}/api/insight/preview",
         "openapi": f"{SITE_URL}/openapi.json",
+        "mcp": f"{SITE_URL}/mcp",
         "docs": "https://github.com/dimopapa91/music-insight-pipeline/blob/main/docs/x402.md",
         "contact": SITE_URL + "/about",
     }
