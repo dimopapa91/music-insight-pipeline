@@ -52,6 +52,11 @@ agent_api_bp = Blueprint("agent_api", __name__)
 
 INSIGHT_PATH = "/api/insight"
 PREVIEW_PATH = "/api/insight/preview"
+# Path-style alias of the paid route, for catalogs whose submission forms
+# reject query strings (x402-list.com). Same price, same handler, same
+# "never charged unless 200" rule. Deliberately NOT /api/insight/<name>:
+# that pattern would also payment-gate the free /api/insight/preview.
+ARTIST_PATH_PREFIX = "/api/insight/artist/"
 # Fixed, real sample, deliberately NOT Radiohead (the artist used in our paid
 # examples), so the free preview doesn't give away the paid example
 # (Nikos's review point β). Verified present with an insight in the live DB,
@@ -128,18 +133,38 @@ def _bazaar_extension():
     )
 
 
+PATH_DESCRIPTION = (
+    "Waveline artist insight: an AI-written analysis of an artist's "
+    "sound and appeal, from Waveline's database of ~10,900 artists. "
+    f"Path form: {ARTIST_PATH_PREFIX}<name> (same as {INSIGHT_PATH}?artist=<name>). "
+    "Unknown artists return 404 and are not charged. "
+    f"Free preview: GET {PREVIEW_PATH}"
+)
+
+
 def _build_routes(pay_to, network, price):
     from x402.http import PaymentOption, RouteConfig
 
+    def accepts():
+        return PaymentOption(scheme="exact", pay_to=pay_to, price=price, network=network)
+
     return {
         f"GET {INSIGHT_PATH}": RouteConfig(
-            accepts=PaymentOption(scheme="exact", pay_to=pay_to, price=price, network=network),
+            accepts=accepts(),
             description=DESCRIPTION,
             mime_type="application/json",
             service_name=SERVICE_NAME,
             tags=list(SERVICE_TAGS),
             extensions=_bazaar_extension() or None,
-        )
+        ),
+        # No Bazaar extension here: Bazaar indexes the query form above.
+        f"GET {ARTIST_PATH_PREFIX}[name]": RouteConfig(
+            accepts=accepts(),
+            description=PATH_DESCRIPTION,
+            mime_type="application/json",
+            service_name=SERVICE_NAME,
+            tags=list(SERVICE_TAGS),
+        ),
     }
 
 
@@ -255,13 +280,17 @@ class PaymentRequiredBodyFill:
         self.wsgi_app = wsgi_app
 
     def __call__(self, environ, start_response):
-        if environ.get("PATH_INFO") != INSIGHT_PATH:
+        path = environ.get("PATH_INFO") or ""
+        if path == INSIGHT_PATH:
+            # A request that can never be served must not be asked to pay:
+            # reject a missing/blank/oversized ?artist with 400 BEFORE the
+            # x402 middleware issues its 402 (Nikos's review point α).
+            problem = _artist_param_problem(environ.get("QUERY_STRING", ""))
+        elif _is_artist_path(path):
+            problem = _artist_value_problem(path[len(ARTIST_PATH_PREFIX):])
+        else:
             return self.wsgi_app(environ, start_response)
 
-        # A request that can never be served must not be asked to pay:
-        # reject a missing/blank/oversized ?artist with 400 BEFORE the x402
-        # middleware issues its 402 (Nikos's review point α).
-        problem = _artist_param_problem(environ.get("QUERY_STRING", ""))
         if problem:
             body = json.dumps({"error": "missing_artist", "message": problem}).encode("utf-8")
             start_response("400 Bad Request", [
@@ -295,12 +324,24 @@ class PaymentRequiredBodyFill:
 def _artist_param_problem(query_string):
     """Return an error message if ?artist can't be served, else None."""
     values = parse_qs(query_string, keep_blank_values=True).get("artist", [])
-    artist = (values[0] if values else "").strip()
+    return _artist_value_problem(values[0] if values else "")
+
+
+def _artist_value_problem(value):
+    artist = (value or "").strip()
     if not artist:
         return "Pass the artist name as ?artist=<name>. No payment was requested."
     if len(artist) > _MAX_ARTIST_LEN:
         return f"Artist name is longer than {_MAX_ARTIST_LEN} characters. No payment was requested."
     return None
+
+
+def _is_artist_path(path):
+    """True for /api/insight/artist/<one segment>, the paid path alias."""
+    if not path.startswith(ARTIST_PATH_PREFIX):
+        return False
+    rest = path[len(ARTIST_PATH_PREFIX):]
+    return bool(rest) and "/" not in rest
 
 
 def _utc_iso(ts):
@@ -354,11 +395,20 @@ def _no_store(response, status=200):
 
 @agent_api_bp.route(INSIGHT_PATH)
 def insight():
+    return _serve_insight(request.args.get("artist"))
+
+
+@agent_api_bp.route(ARTIST_PATH_PREFIX + "<name>")
+def insight_by_path(name):
+    return _serve_insight(name)
+
+
+def _serve_insight(value):
     # Never serve the paid content when the middleware isn't in front of it.
     if not current_app.config.get("X402_ENABLED"):
         return _no_store(jsonify({"error": "not_found"}), 404)
 
-    artist = (request.args.get("artist") or "").strip()
+    artist = (value or "").strip()
     if not artist or len(artist) > _MAX_ARTIST_LEN:
         return _no_store(jsonify({
             "error": "missing_artist",
@@ -412,6 +462,7 @@ def insight_preview():
     body.update({
         "preview": True,
         "paid_endpoint": f"{INSIGHT_PATH}?artist=<name>",
+        "paid_endpoint_path": f"{ARTIST_PATH_PREFIX}<name>",
         "price": current_app.config.get("X402_PRICE", DEFAULT_PRICE),
         "currency": "USDC",
         "network": current_app.config.get("X402_NETWORK", DEFAULT_NETWORK),
