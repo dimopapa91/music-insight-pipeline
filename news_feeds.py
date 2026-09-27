@@ -5,8 +5,9 @@ top-albums chart) with writers who cover the scenes the charts miss, grouped
 by scene so people can browse what's happening in jazz, ambient, club music,
 underground hip-hop and so on.
 
-Every feed below was checked live on 27 Sep 2026 (valid RSS, recent posts,
-images in the feed). Feeds are fetched in parallel, parsed defensively, and
+Every feed below was checked live on 27 Sep 2026 (valid RSS, recent posts).
+Resident Advisor was dropped the same day: it refuses automated readers.
+Stories whose feed carries no image get the article's og:image instead. Feeds are fetched in parallel, parsed defensively, and
 the whole result is cached for an hour; a feed that fails keeps its last
 good items so one outage never empties a scene.
 """
@@ -15,6 +16,7 @@ import html
 import re
 import time
 import logging
+import threading
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -39,7 +41,6 @@ FEEDS = [
     {"name": "Bandcamp Daily",     "home": "https://daily.bandcamp.com",   "url": "https://daily.bandcamp.com/feed",       "scene": "underground"},
     {"name": "The Quietus",        "home": "https://thequietus.com",       "url": "https://thequietus.com/feed/",          "scene": "experimental"},
     {"name": "Aquarium Drunkard",  "home": "https://aquariumdrunkard.com", "url": "https://aquariumdrunkard.com/feed/",    "scene": "psych"},
-    {"name": "Resident Advisor",   "home": "https://ra.co",                "url": "https://ra.co/xml/news.xml",            "scene": "electronic"},
     {"name": "XLR8R",              "home": "https://xlr8r.com",            "url": "https://xlr8r.com/feed/",               "scene": "electronic"},
     {"name": "FACT",               "home": "https://www.factmag.com",      "url": "https://www.factmag.com/feed/",         "scene": "electronic"},
     {"name": "Crack",              "home": "https://crackmagazine.net",    "url": "https://crackmagazine.net/feed/",       "scene": "electronic"},
@@ -66,6 +67,42 @@ _BOILERPLATE_RE = re.compile(r"The post .*? (?:first )?appeared (?:first )?on .*
 
 _cache = {"data": None, "at": 0.0}
 _last_good = {}   # feed name -> items
+_refresh_lock = threading.Lock()
+
+# og:image lookups for stories whose feed has no image: link -> (url, at)
+_og_cache = {}
+_OG_TTL = 86400
+_OG_MAX_BYTES = 300_000
+_OG_RE = re.compile(
+    r"<meta[^>]+(?:property|name)=[\"'](?:og:image|twitter:image)(?::src)?[\"'][^>]*content=[\"']([^\"']+)[\"']"
+    r"|<meta[^>]+content=[\"']([^\"']+)[\"'][^>]*(?:property|name)=[\"'](?:og:image|twitter:image)[\"']",
+    re.I)
+
+
+def og_image(link):
+    """The article's share image (og:image / twitter:image), or "". Cached a
+    day per link, never raises, reads at most the first ~300 KB."""
+    hit = _og_cache.get(link)
+    if hit and time.time() - hit[1] < _OG_TTL:
+        return hit[0]
+    url = ""
+    try:
+        with http_requests.get(link, timeout=6, headers={"User-Agent": _UA}, stream=True) as resp:
+            if resp.status_code == 200:
+                chunk = b""
+                for part in resp.iter_content(16384):
+                    chunk += part
+                    if len(chunk) >= _OG_MAX_BYTES or b"</head>" in chunk:
+                        break
+                m = _OG_RE.search(chunk.decode("utf-8", "ignore"))
+                if m:
+                    found = html.unescape(m.group(1) or m.group(2) or "")
+                    if found.startswith("https://"):
+                        url = found
+    except Exception:
+        pass
+    _og_cache[link] = (url, time.time())
+    return url
 
 
 def _text(el, path):
@@ -167,14 +204,13 @@ def fetch_feed(feed):
     return _last_good.get(feed["name"], [])
 
 
-def get_news():
-    """{"articles": [...newest first], "scenes": {key: label}, "sources": [...],
-    "counts": {scene: n}}. Cached for an hour."""
-    if _cache["data"] is not None and time.time() - _cache["at"] < CACHE_TTL:
-        return _cache["data"]
+def _build():
     with ThreadPoolExecutor(max_workers=6) as pool:
         results = list(pool.map(fetch_feed, FEEDS))
-    articles = [a for items in results for a in items]
+        articles = [a for items in results for a in items]
+        missing = [a for a in articles if not a["image"]]
+        for a, img in zip(missing, pool.map(lambda a: og_image(a["link"]), missing)):
+            a["image"] = img
     epoch = datetime(1970, 1, 1)
     articles.sort(key=lambda a: a["published"] or epoch, reverse=True)
     counts = {}
@@ -187,6 +223,35 @@ def get_news():
         "sources": [{"name": f["name"], "home": f["home"], "scene": SCENES[f["scene"]]} for f in FEEDS],
     }
     _cache["data"], _cache["at"] = data, time.time()
+    return data
+
+
+def _refresh_in_background():
+    if not _refresh_lock.acquire(blocking=False):
+        return            # a refresh is already running
+    def run():
+        try:
+            _build()
+        except Exception:
+            logger.exception("News refresh failed")
+        finally:
+            _refresh_lock.release()
+    threading.Thread(target=run, daemon=True).start()
+
+
+def get_news():
+    """{"articles": [...newest first], "scenes": {key: label}, "sources": [...],
+    "counts": {scene: n}}. Fresh for an hour; after that the last result is
+    served straight away while a background refresh runs, so no visitor
+    waits on a dozen publications. Only a cold start builds inline."""
+    data = _cache["data"]
+    if data is None:
+        with _refresh_lock:
+            if _cache["data"] is None:
+                return _build()
+            return _cache["data"]
+    if time.time() - _cache["at"] >= CACHE_TTL:
+        _refresh_in_background()
     return data
 
 

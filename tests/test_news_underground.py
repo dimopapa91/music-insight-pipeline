@@ -112,3 +112,65 @@ def test_scene_filter(monkeypatch):
     assert 'href="/news?scene=ambient" aria-current="page"' in html
     bogus = dashboard.app.test_client().get("/news?scene=<script>").data.decode()
     assert "Story 0" in bogus                                # unknown scene = all
+
+
+# ── og:image fallback + background refresh ──────────────────────────
+
+class _Page:
+    def __init__(self, body, status=200):
+        self.status_code = status
+        self._body = body
+
+    def iter_content(self, n):
+        yield self._body
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+def test_og_image_found_and_cached(monkeypatch):
+    news_feeds._og_cache.clear()
+    calls = []
+
+    def fake(url, **k):
+        calls.append(url)
+        return _Page(b'<html><head><meta property="og:image" content="https://x.io/share.jpg"></head>')
+    monkeypatch.setattr(news_feeds.http_requests, "get", fake)
+    assert news_feeds.og_image("https://x.io/a") == "https://x.io/share.jpg"
+    assert news_feeds.og_image("https://x.io/a") == "https://x.io/share.jpg"
+    assert len(calls) == 1
+
+
+def test_og_image_reversed_attribute_order_and_insecure_ignored(monkeypatch):
+    news_feeds._og_cache.clear()
+    monkeypatch.setattr(news_feeds.http_requests, "get", lambda url, **k: _Page(
+        b'<meta content="https://x.io/t.png" name="twitter:image">'))
+    assert news_feeds.og_image("https://x.io/b") == "https://x.io/t.png"
+    monkeypatch.setattr(news_feeds.http_requests, "get", lambda url, **k: _Page(
+        b'<meta property="og:image" content="http://x.io/insecure.jpg">'))
+    assert news_feeds.og_image("https://x.io/c") == ""
+
+
+def test_og_image_failure_is_empty(monkeypatch):
+    news_feeds._og_cache.clear()
+
+    def boom(*a, **k):
+        raise ConnectionError("down")
+    monkeypatch.setattr(news_feeds.http_requests, "get", boom)
+    assert news_feeds.og_image("https://x.io/d") == ""
+
+
+def test_stale_cache_is_served_while_refreshing(monkeypatch):
+    stale = {"articles": ["old"], "scenes": {}, "counts": {}, "sources": []}
+    news_feeds._cache.update(data=stale, at=0.0)          # long expired
+    started = []
+    monkeypatch.setattr(news_feeds, "_refresh_in_background", lambda: started.append(1))
+    assert news_feeds.get_news() is stale
+    assert started == [1]
+
+
+def test_resident_advisor_dropped():
+    assert "Resident Advisor" not in {f["name"] for f in news_feeds.FEEDS}
