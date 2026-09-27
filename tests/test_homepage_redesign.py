@@ -223,3 +223,27 @@ def test_desktop_hero_photo_is_square_and_artist_sits_beside_it(monkeypatch):
     now = html[html.index('class="wv-now"'):html.index('id="search-form"')]
     assert "J Dilla" in now and "Open the analysis" in now and "An insight." in now
     assert ".wv-now { display: none; }" in tpl                     # phones keep the photo label
+
+
+# ── Deezer errors are not "no photo" (27 Sep 2026) ───────────────────
+
+def test_deezer_quota_error_is_retried_soon_not_cached_as_no_photo(monkeypatch):
+    monkeypatch.setattr(services.http_requests, "get", lambda *a, **k: _Resp(
+        {"error": {"type": "Exception", "message": "Quota limit exceeded", "code": 4}}))
+    assert services.get_artist_photo("Bonobo")["image"] == ""
+    entry = services._artist_photo_cache["bonobo"]
+    assert entry["ok"] is False
+    entry["at"] -= services._ARTIST_PHOTO_ERR_TTL + 1          # two minutes later
+    monkeypatch.setattr(services.http_requests, "get", lambda *a, **k: _deezer(("Bonobo", 365253, "bbb")))
+    assert "/bbb/" in services.get_artist_photo("Bonobo")["image"]
+
+
+def test_error_never_overwrites_a_good_cached_photo(monkeypatch):
+    monkeypatch.setattr(services.http_requests, "get", lambda *a, **k: _deezer(("Tricky", 141201, "ttt")))
+    good = services.get_artist_photo("Tricky")
+    services._artist_photo_cache["tricky"]["at"] -= services._ARTIST_PHOTO_TTL + 1   # expired
+
+    def boom(*a, **k):
+        raise ConnectionError("down")
+    monkeypatch.setattr(services.http_requests, "get", boom)
+    assert services.get_artist_photo("Tricky") == good
