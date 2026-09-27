@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}@{{ user.username }} · Waveline{% endblock %}
 {% block description %}@{{ user.username }} on Waveline{% if user.bio %}: {{ user.bio }}{% endif %}{% endblock %}
 
@@ -58,18 +59,22 @@
   .pf-section-head h2 { font-family: var(--wv-font-display); font-weight: 700; font-size: 1.15rem; letter-spacing: -.2px; }
   .pf-section-count { font-family: var(--wv-font-display); font-weight: 600; font-size: .79rem; letter-spacing: 1.4px; text-transform: uppercase; color: var(--wv-muted); }
 
-  .pf-artist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--wv-3); }
-  .pf-artist-tile {
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    padding: var(--wv-4); border: 1px solid var(--wv-border); border-radius: var(--wv-radius);
-    background: var(--wv-surface); text-decoration: none; color: var(--wv-ink);
-    font-family: var(--wv-font-display); font-weight: 700; font-size: .88rem; line-height: 1.3;
-    transition: border-color var(--wv-motion) var(--wv-ease), transform var(--wv-motion) var(--wv-ease), color var(--wv-motion) var(--wv-ease);
-  }
-  .pf-artist-tile:hover { border-color: var(--wv-accent); transform: translateY(-2px); color: var(--wv-accent-ink); }
-  .pf-artist-tile span:first-child { min-width: 0; overflow-wrap: break-word; }
-  .pf-artist-tile .go { color: var(--wv-muted); font-size: .85rem; flex-shrink: 0; }
-  .pf-artist-tile:hover .go { color: var(--wv-accent-ink); }
+  /* Minimal collection: a short row of chips, the rest behind "Show all". */
+  .pf-artist-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pf-artist-chip { text-decoration: none; min-height: 36px; display: inline-flex; align-items: center; }
+  .pf-more { margin-top: var(--wv-3); }
+  .pf-more summary { cursor: pointer; font-family: var(--wv-font-display); font-weight: 700; font-size: .8rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-accent-ink); list-style: none; display: inline-block; padding: 6px 0; }
+  .pf-more summary::-webkit-details-marker { display: none; }
+  .pf-more[open] summary { margin-bottom: var(--wv-3); }
+  /* Social links: one tidy row of labelled buttons. */
+  .pf-links { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: var(--wv-4) 0 0; padding: 0; }
+  .pf-link { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; border: 1px solid var(--wv-border-2); color: var(--wv-ink); text-decoration: none; font-size: .84rem; }
+  a.pf-link:hover { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
+  .pf-link-ic { width: 14px; height: 14px; display: block; }
+  body.light .pf-link-ic { filter: invert(1); }
+  .pf-link .wv-i { width: 14px; height: 14px; }
+  .pf-links-empty { margin-top: var(--wv-3); font-size: .84rem; }
+  .pf-links-empty a { color: var(--wv-accent-ink); }
 
   .pf-activity-inner { max-width: 720px; }
 
@@ -117,10 +122,23 @@
       </div>
       <p class="pf-meta">
         {% if user.location %}{{ user.location }} · {% endif -%}
-        {%- if user.created_at %}Joined {{ user.created_at.strftime('%B %Y') }}{% endif -%}
-        {%- if user.website %} · <a href="{{ user.website }}" target="_blank" rel="noopener nofollow noreferrer">{{ user.website | replace('https://','') | replace('http://','') }}</a>{% endif %}
+        {%- if user.created_at %}Joined {{ user.created_at.strftime('%B %Y') }}{% endif %}
       </p>
       {% if user.bio %}<p class="pf-bio">{{ user.bio }}</p>{% endif %}
+      {% if links %}
+      <ul class="pf-links" aria-label="Links">
+        {% for l in links %}
+        <li>
+          {% if l.href %}<a class="pf-link" href="{{ l.href }}" target="_blank" rel="nofollow noopener noreferrer" title="{{ l.text }}">{% else %}<span class="pf-link" title="{{ l.label }}: {{ l.text }}">{% endif %}
+            {% if l.icon %}<img class="pf-link-ic" src="https://cdn.simpleicons.org/{{ l.icon }}/ffffff" alt="" width="14" height="14" loading="lazy">{% else %}{{ icon("external") }}{% endif %}
+            <span>{{ l.label }}{% if not l.href %} · {{ l.text }}{% endif %}</span>
+          {% if l.href %}</a>{% else %}</span>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% elif is_own %}
+      <p class="pf-links-empty"><a href="/settings#links">Add your Instagram, SoundCloud, Discord and more →</a></p>
+      {% endif %}
       {% if user.genre_list %}<div class="pf-genres">{% for g in user.genre_list %}<span class="wv-chip wv-btn-sm" style="cursor:default;">{{ g }}</span>{% endfor %}</div>{% endif %}
       <div class="pf-stats">
         <span class="pf-stat"><b>{{ artists|length }}</b><span>Artists</span></span>
@@ -148,14 +166,17 @@
       {% if artists %}<span class="pf-section-count">{{ artists|length }}</span>{% endif %}
     </div>
     {% if artists %}
-    <div class="pf-artist-grid">
-      {% for a in artists %}
-      <a class="pf-artist-tile" href="/artist/{{ a | urlencode }}">
-        <span>{{ a | titlecase }}</span>
-        <span class="go" aria-hidden="true">→</span>
-      </a>
-      {% endfor %}
+    <div class="pf-artist-list">
+      {% for a in artists[:artists_shown] %}<a class="wv-chip pf-artist-chip" href="/artist/{{ a | urlencode }}">{{ a | titlecase }}</a>{% endfor %}
     </div>
+    {% if artists | length > artists_shown %}
+    <details class="pf-more">
+      <summary>Show all {{ artists | length }}</summary>
+      <div class="pf-artist-list">
+        {% for a in artists[artists_shown:] %}<a class="wv-chip pf-artist-chip" href="/artist/{{ a | urlencode }}">{{ a | titlecase }}</a>{% endfor %}
+      </div>
+    </details>
+    {% endif %}
     {% else %}
     <div class="wv-empty">
       <h3>No artists explored yet</h3>

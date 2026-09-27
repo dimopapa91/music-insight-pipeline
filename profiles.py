@@ -8,6 +8,7 @@ in during Phase 2 (tables already exist).
 from flask import Blueprint, request, redirect, url_for, render_template, abort
 from flask_login import login_required, current_user
 
+import social_links
 from db import db_cursor
 from models import User
 from social import get_user_posts, get_follow_counts, toggle_follow, is_following
@@ -21,12 +22,26 @@ profiles_bp = Blueprint("profiles", __name__)
 
 
 def get_user_searched_artists(user_id):
+    """Artists this user searched, most recent first, one entry per artist
+    ("SZA" and "Sza" used to show as two tiles)."""
     with db_cursor() as cur:
         cur.execute(
-            "SELECT DISTINCT artist_name FROM searches WHERE user_id = %s ORDER BY artist_name",
+            "SELECT artist_name, MAX(searched_at) AS last FROM searches WHERE user_id = %s "
+            "GROUP BY artist_name ORDER BY last DESC",
             (user_id,),
         )
-        return [r[0] for r in cur.fetchall()]
+        rows = cur.fetchall()
+    seen, out = set(), []
+    for name, _ in rows:
+        key = " ".join((name or "").lower().split())
+        if key and key not in seen:
+            seen.add(key)
+            out.append(name)
+    return out
+
+
+# The profile shows this many artists; the rest sit behind "Show all".
+ARTISTS_SHOWN = 8
 
 
 @profiles_bp.route("/me")
@@ -47,9 +62,10 @@ def profile(username):
     is_own = current_user.is_authenticated and current_user.id == user.id
     following_this = bool(viewer_id and not is_own and is_following(viewer_id, user.id))
     can_message = bool(viewer_id and not is_own and can_users_message(viewer_id, user.id))
+    links = social_links.links_for_display(user.id, user.website)
     return render_template(
         "profile.html",
-        user=user, artists=artists, posts=posts,
+        user=user, artists=artists, posts=posts, links=links, artists_shown=ARTISTS_SHOWN,
         followers=followers, following=following,
         is_own=is_own, following_this=following_this, can_message=can_message,
     )
@@ -68,15 +84,36 @@ def follow(username):
 @login_required
 def settings():
     saved = False
+    link_errors = {}
+    links = social_links.get_links(current_user.id)
     if request.method == "POST":
         bio = request.form.get("bio", "").strip()[:500]
         location = request.form.get("location", "").strip()[:120]
         website = request.form.get("website", "").strip()[:255]
         genres = request.form.get("genres", "").strip()[:255]
+        # A mistyped link never costs the rest of the form: valid fields are
+        # saved, an invalid link keeps its previous value and shows an error
+        # next to the field with what the user typed.
+        previous = dict(links)
+        to_save, shown = {}, {}
+        for platform in social_links.PLATFORMS:
+            raw = request.form.get(f"link_{platform}", "")
+            try:
+                to_save[platform] = shown[platform] = social_links.normalize(platform, raw)
+            except social_links.LinkError as e:
+                link_errors[platform] = str(e)
+                to_save[platform] = previous.get(platform, "")
+                shown[platform] = raw.strip()
         current_user.update_profile(bio, location, website, genres)
-        saved = True
+        try:
+            social_links.save_links(current_user.id, to_save)
+        except Exception:
+            link_errors["_all"] = "Your links couldn't be saved just now. Try again in a moment."
+        links = {p: v for p, v in shown.items() if v}
+        saved = True   # profile fields saved; any link problems are listed per field
     return render_template(
         "settings.html", user=current_user, saved=saved,
+        links=links, link_errors=link_errors, platforms=social_links.PLATFORMS,
         image_storage_configured=is_image_storage_configured(),
     )
 

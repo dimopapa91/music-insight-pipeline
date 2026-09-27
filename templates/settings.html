@@ -38,6 +38,12 @@
   .st-cover-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .st-upload-form input[type=file] { font-size: .8rem; color: var(--wv-ink-2); max-width: 100%; }
   .st-upload-form { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+  .st-links { border: 0; padding: 0; margin: var(--wv-5) 0 var(--wv-4); }
+  .st-links legend { font-family: var(--wv-font-display); font-weight: 700; font-size: .95rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-accent-ink); margin-bottom: 6px; }
+  .st-links .st-hint { margin-bottom: var(--wv-3); }
+  .st-link-field { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 4px 12px; }
+  .st-link-field .st-error { grid-column: 2; color: #ff8a8a; font-size: .8rem; margin: 0; }
+  @media (max-width: 560px) { .st-link-field { grid-template-columns: 1fr; } .st-link-field .st-error { grid-column: 1; } }
 </style>
 {% endblock %}
 
@@ -56,7 +62,7 @@
         <input id="location" type="text" name="location" maxlength="120" value="{{ user.location }}" placeholder="e.g. Manchester, UK" autocomplete="off">
       </div>
       <div class="st-field">
-        <label for="website">Website or social link</label>
+        <label for="website">Website</label>
         <input id="website" type="text" name="website" maxlength="255" value="{{ user.website }}" placeholder="https://…" autocomplete="url" inputmode="url">
       </div>
       <div class="st-field">
@@ -64,6 +70,20 @@
         <input id="genres" type="text" name="genres" maxlength="255" value="{{ user.genres }}" placeholder="jazz, hip-hop, ambient" aria-describedby="genres-hint">
         <p class="st-hint" id="genres-hint">Comma-separated. Shown as tags on your profile.</p>
       </div>
+      <fieldset class="st-links" id="links">
+        <legend>Links</legend>
+        <p class="st-hint">Add a username or paste a link. They appear as buttons on your profile.</p>
+        {% if link_errors.get('_all') %}<p class="st-error" role="alert">{{ link_errors['_all'] }}</p>{% endif %}
+        {% for key, meta in platforms.items() %}
+        <div class="st-field st-link-field">
+          <label for="link_{{ key }}">{{ meta[0] }}</label>
+          <input id="link_{{ key }}" type="text" name="link_{{ key }}" maxlength="255" value="{{ links.get(key, '') }}"
+                 placeholder="{{ meta[3] }}" autocomplete="off" autocapitalize="none" spellcheck="false"
+                 {% if link_errors.get(key) %}aria-invalid="true" aria-describedby="err_{{ key }}"{% endif %}>
+          {% if link_errors.get(key) %}<p class="st-error" id="err_{{ key }}" role="alert">{{ link_errors[key] }}</p>{% endif %}
+        </div>
+        {% endfor %}
+      </fieldset>
       <button type="submit" class="wv-btn wv-btn-primary">Save</button>
     </form>
     <p class="st-link">Your public profile: <a href="/u/{{ user.username }}">/u/{{ user.username }}</a></p>

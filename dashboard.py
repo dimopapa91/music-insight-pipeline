@@ -30,6 +30,7 @@ from views_notifications import notifications_bp
 from views_messages import messages_bp
 from views_admin import admin_bp
 import lastfm_user
+import social_links
 from text_clean import clean_ai_text
 from mcp_server import mcp_bp
 from site_meta import site_meta_bp, add_security_headers, check_same_origin, static_url
@@ -236,6 +237,7 @@ for _view in ("robots_txt", "sitemap_xml", "favicon_ico", "llms_txt",
 # Ensure all application tables exist (idempotent — safe on every boot/worker).
 init_db()
 lastfm_user.ensure_schema()
+social_links.ensure_schema()
 
 # Load the optional GeoLite2 database once at startup (see analytics.py —
 # safe no-op if GEOIP_DB_PATH is unset or the file is missing).
