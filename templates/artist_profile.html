@@ -47,13 +47,13 @@
   .wv-subnav { margin-bottom: 0; }
 
   /* Big-number readout: one strip, thin dividers */
-  .ar-stats { display: grid; grid-template-columns: repeat(5, 1fr); border-bottom: 1px solid var(--wv-border); margin: 0 calc(-1 * var(--wv-5)); }
+  .ar-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--wv-border); margin: 0 calc(-1 * var(--wv-5)); }
   .ar-stat { padding: var(--wv-5); border-right: 1px solid var(--wv-border); min-width: 0; }
   .ar-stat:last-child { border-right: 0; }
   .ar-stat .l { font-family: var(--wv-font-display); font-weight: 700; font-size: .8rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); }
   .ar-stat .v { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1; margin: 10px 0 6px; }
   .ar-stat .s { font-size: .76rem; color: var(--wv-muted); overflow-wrap: anywhere; }
-  @media (max-width: 900px) { .ar-stats { grid-template-columns: repeat(2, 1fr); } .ar-stat { border-bottom: 1px solid var(--wv-border); padding: var(--wv-4); } .ar-stat:nth-child(2n) { border-right: 0; } .ar-stat:last-child { grid-column: 1 / -1; border-bottom: 0; } .ar-body { padding: 0 var(--wv-4) var(--wv-8); } .ar-stats { margin: 0 calc(-1 * var(--wv-4)); } .ar-section { padding: var(--wv-6) 0; } }
+  @media (max-width: 900px) { .ar-stats { grid-template-columns: repeat(2, 1fr); } .ar-stat { border-bottom: 1px solid var(--wv-border); padding: var(--wv-4); } .ar-stat:nth-child(2n) { border-right: 0; } .ar-stat:nth-last-child(-n+2) { border-bottom: 0; } .ar-body { padding: 0 var(--wv-4) var(--wv-8); } .ar-stats { margin: 0 calc(-1 * var(--wv-4)); } .ar-section { padding: var(--wv-6) 0; } }
 
   .ar-section { padding: var(--wv-7) 0; border-top: 1px solid var(--wv-border); }
   .ar-stats + .ar-section { border-top: 0; }
@@ -161,7 +161,6 @@
     <div class="ar-stat"><div class="l">Listeners</div><div class="v">{{ lastfm_listeners | compact if lastfm_listeners else "—" }}</div><div class="s">{{ "{:,}".format(lastfm_listeners) if lastfm_listeners else "" }}</div></div>
     <div class="ar-stat"><div class="l">Scrobbles</div><div class="v">{{ lastfm_scrobbles | compact if lastfm_scrobbles else "—" }}</div><div class="s">all time</div></div>
     <div class="ar-stat"><div class="l">Fans</div><div class="v">{{ deezer_fans | compact if deezer_fans else "—" }}</div><div class="s">followers</div></div>
-    <div class="ar-stat"><div class="l">Popularity</div><div class="v">{{ spotify.popularity ~ '/100' if spotify.popularity else "—" }}</div><div class="s">out of 100</div></div>
     <div class="ar-stat"><div class="l">Top track plays</div><div class="v">{{ tracks[0].plays | compact if tracks else "—" }}</div><div class="s">{{ tracks[0].name ~ " · " ~ top_playcount if tracks else "" }}</div></div>
   </div>
 

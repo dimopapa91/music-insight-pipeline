@@ -102,33 +102,22 @@ def artist_profile(artist_name):
                 cur.execute("SELECT COUNT(*) FROM searches WHERE LOWER(artist_name) = LOWER(%s)", (artist_name,))
                 search_count = cur.fetchone()[0]
         if not row:
-            if not current_user.is_authenticated:
-                # This is a public, unauthenticated GET with an
-                # attacker-controlled path segment — running the pipeline
-                # here for anyone who asks is exactly the cost/abuse vector
-                # this closes (a fresh Last.fm + Claude call per novel URL a
-                # crawler invents). Turn the dead end into a signup moment
-                # instead of silently doing paid work for anonymous traffic.
-                #
-                # Real 404, not 200: we have no way to tell a genuine
-                # not-yet-searched artist apart from crawler garbage/typos
-                # without an external API call, which would defeat the whole
-                # point of not doing paid work here — so this URL genuinely
-                # doesn't resolve to a resource right now, and a 404 status
-                # says that honestly while still rendering the same calm,
-                # on-brand page instead of a bare error. robots.txt already
-                # disallows /artist/ entirely, so this has no SEO downside.
-                return render_template("artist_not_found.html",
-                    artist_name=artist_titlecase(artist_name)), 404
-            # Logged-in: keep the existing behaviour exactly — auto-fetch,
-            # then reload the now-populated page.
-            try:
-                run_pipeline(artist_name)
-                return redirect(url_for("artist.artist_profile", artist_name=artist_name))
-            except Exception:
-                return render_template("error.html",
-                    heading=f"Could not load {artist_titlecase(artist_name)}",
-                    message="We couldn't fetch this artist from our data sources just now. Check the spelling, or try again in a moment."), 500
+            # A GET never starts paid work (Last.fm + Claude). Before 27 Sep
+            # 2026 a logged-in GET of an unanalysed artist ran the whole
+            # pipeline, so any link checker, prefetcher or crawler riding a
+            # logged-in session triggered paid analyses. Now everyone gets
+            # the same calm page with a real 404; logged-in users get an
+            # "Analyse" button that POSTs to /search (rate-limited), and
+            # anonymous visitors get the sign-up prompt.
+            #
+            # Real 404, not 200: without an external API call we can't tell
+            # a genuine not-yet-searched artist from crawler garbage or a
+            # typo, so the URL honestly doesn't resolve to a resource yet,
+            # and search engines won't index it.
+            return render_template("artist_not_found.html",
+                artist_name=artist_titlecase(artist_name),
+                raw_name=artist_name.strip(),
+                can_analyse=current_user.is_authenticated), 404
 
         name, insight, last_searched, top_tracks_raw = row
         # Opened from a search (⌘K palette / homepage suggestions): count it

@@ -14,6 +14,7 @@
   .au-hint { font-size: .78rem; color: var(--wv-muted); margin-top: 6px; }
   .au-remember { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--wv-ink-2); margin-bottom: var(--wv-4); }
   .au-remember input { width: 18px; height: 18px; }
+  .au-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
   .au-errors { background: var(--wv-danger-soft); border: 1px solid color-mix(in srgb, var(--wv-danger) 30%, transparent); border-radius: var(--wv-radius); padding: 12px 14px; margin-bottom: var(--wv-4); }
   .au-errors li { list-style: none; color: var(--wv-danger); font-size: .85rem; margin: 3px 0; }
   .au-submit { width: 100%; }
@@ -56,6 +57,11 @@
         <label for="password">Password</label>
         <input id="password" type="password" name="password" minlength="8" autocomplete="new-password" required aria-describedby="pw-hint">
         <p class="au-hint" id="pw-hint">At least 8 characters.</p>
+      </div>
+      {#- Honeypot: invisible to people, filled in by form-spamming bots. -#}
+      <div class="au-hp" aria-hidden="true">
+        <label for="website">Website</label>
+        <input id="website" type="text" name="website" tabindex="-1" autocomplete="off">
       </div>
       <button type="submit" class="wv-btn wv-btn-primary au-submit" data-label="Sign up">Sign up</button>
     </form>

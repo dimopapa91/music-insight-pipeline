@@ -18,11 +18,20 @@
   <div class="wv-card">
     <p class="wv-eyebrow">Not analysed yet</p>
     <h1>{{ artist_name }} hasn't been analysed on Waveline yet</h1>
+    {% if can_analyse %}
+    <p>Run the analysis now: top tracks, listening data and an AI-written read, saved straight to your taste profile. If the name has a typo, nothing will be found and nothing is saved.</p>
+    <form class="anf-cta" method="POST" action="/search">
+      <input type="hidden" name="artist" value="{{ raw_name }}">
+      <button type="submit" class="wv-btn wv-btn-primary">Analyse {{ artist_name }}</button>
+      <a class="wv-btn wv-btn-ghost" href="/#top">Search another artist</a>
+    </form>
+    {% else %}
     <p>Create a free account to run the analysis yourself: top tracks, listening data and an AI-written read, saved straight to your taste profile.</p>
     <div class="anf-cta">
       <a class="wv-btn wv-btn-primary" href="/register">Create free account</a>
       <a class="wv-btn wv-btn-ghost" href="/login">Log in</a>
     </div>
+    {% endif %}
     <p class="anf-alt"><a class="wv-link" href="/discover">Or discover artists already on Waveline →</a></p>
   </div>
 </div>
