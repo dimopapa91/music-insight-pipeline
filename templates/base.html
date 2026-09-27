@@ -40,10 +40,9 @@
             </nav>
 
             <div class="wv-header-actions">
-                <button class="wv-searchbtn wv-desktop-only" type="button" id="wv-search-trigger" aria-haspopup="dialog" aria-controls="wv-palette-overlay">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                    <span>Search</span>
-                    <kbd class="wv-hide-crowded" aria-hidden="true">&#8984;K</kbd>
+                <button class="wv-searchbtn wv-desktop-only" type="button" id="wv-search-trigger" aria-haspopup="dialog" aria-controls="wv-palette-overlay" aria-label="Search">
+                    <img class="wv-searchbtn-mark wv-searchbtn-mark-dark" src="{{ url_for('static', filename='brand/waveline-mark.svg') }}" alt="" aria-hidden="true" width="16" height="16"><img class="wv-searchbtn-mark wv-searchbtn-mark-light" src="{{ url_for('static', filename='brand/waveline-mark-on-light.svg') }}" alt="" aria-hidden="true" width="16" height="16">
+                    <span class="wv-hide-crowded">Search</span>
                 </button>
                 <button class="wv-iconbtn wv-mobile-only" id="wv-search-trigger-mobile" type="button" aria-haspopup="dialog" aria-controls="wv-palette-overlay" aria-label="Search" title="Search">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -92,14 +91,13 @@
                         {% else %}
                         <span class="wv-profile-avatar" aria-hidden="true">{{ current_user.username[0] | upper }}</span>
                         {% endif %}
-                        <span class="wv-hide-crowded" aria-hidden="true">@{{ current_user.username }}</span>
-                        <span class="wv-profilemenu-caret" aria-hidden="true">▾</span>
                     </button>
                     <div class="wv-profilemenu-panel" id="wv-profile-menu" role="menu" aria-label="Profile menu" hidden>
                         <a role="menuitem" href="/me">Profile</a>
                         <a role="menuitem" href="/messages">Messages{% if unread_messages %} <span class="wv-badge" style="position:static;">{{ unread_messages }}</span>{% endif %}</a>
                         <a role="menuitem" href="/profile">Taste Profile</a>
                         <a role="menuitem" href="/feed">Feed</a>
+                        <a role="menuitem" href="/compare" {% if path.startswith('/compare') %}aria-current="page"{% endif %}>Compare</a>
                         <a role="menuitem" href="/settings">Settings</a>
                         <a role="menuitem" href="{{ url_for('auth.logout') }}">Sign out</a>
                     </div>
@@ -109,15 +107,6 @@
                 <a class="wv-userchip wv-mobile-only" href="/login">Log in</a>
                 <a class="wv-btn wv-btn-primary wv-btn-sm wv-desktop-only" href="/register">Sign up</a>
                 {% endif %}
-                <div class="wv-navmenu wv-desktop-only">
-                    <button type="button" class="wv-navmenu-trigger{{ ' is-active' if path.startswith('/compare') }}" id="wv-navmenu-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="wv-navmenu-panel">
-                        <span>More</span>
-                        <span class="wv-navmenu-caret" aria-hidden="true">▾</span>
-                    </button>
-                    <div class="wv-navmenu-panel" id="wv-navmenu-panel" role="menu" aria-label="More" hidden>
-                        <a role="menuitem" href="/compare" {% if path.startswith('/compare') %}aria-current="page"{% endif %}>Compare</a>
-                    </div>
-                </div>
                 <button class="wv-iconbtn wv-theme-btn wv-desktop-only" id="wv-theme-btn" type="button" aria-label="Switch to light theme" title="Switch to light theme">
                     <span class="wv-theme-icon wv-theme-icon-sun" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" focusable="false"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
                     <span class="wv-theme-icon wv-theme-icon-moon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" focusable="false"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>

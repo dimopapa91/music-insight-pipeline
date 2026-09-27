@@ -189,19 +189,12 @@ def test_hero_without_any_artist_is_search_only(monkeypatch):
     assert "wv-feature" not in html[html.index('id="top"'):html.index('id="wv-title"')]
 
 
-def test_kpis_show_total_plays_compact_and_no_search_counts(monkeypatch):
+def test_hero_has_no_kpi_blocks(monkeypatch):
+    # Removed in the hero cleanup (27 Sep 2026): the right side is search only.
     html = _home(monkeypatch, [], {"recent": []}, plays=4_213_000_000)
-    kpis = html[html.index('class="wv-kpis"'):html.index('id="chapter-01"')]
-    assert "4.2B" in kpis
-    assert "Plays analysed" in kpis
-    assert "Members" not in kpis
-    assert "Searches" not in kpis   # bot-inflated search counts stay off the homepage
-
-
-def test_kpis_show_dash_when_plays_unknown(monkeypatch):
-    html = _home(monkeypatch, [], {"recent": [], })
-    kpis = html[html.index('class="wv-kpis"'):html.index('id="chapter-01"')]
-    assert "—" in kpis
+    hero = html[html.index('id="top"'):html.index('id="chapter-01"')]
+    assert "wv-kpis" not in hero
+    assert "Plays analysed" not in hero and "Data sources" not in hero
 
 
 def test_just_analysed_strip_lists_recent_artists(monkeypatch):

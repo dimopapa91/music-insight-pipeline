@@ -484,7 +484,6 @@ def test_every_aria_controls_target_in_base_html_exists_exactly_once():
         "wv-msg-panel",         # Messages panel
         "wv-notif-panel",       # Notifications panel
         "wv-profile-menu",      # Profile menu
-        "wv-navmenu-panel",     # desktop More menu
         "wv-morepanel",         # mobile More panel
     }
     assert critical <= controls, f"missing critical aria-controls targets: {critical - controls}"

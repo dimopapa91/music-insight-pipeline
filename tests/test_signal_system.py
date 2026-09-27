@@ -50,18 +50,15 @@ def test_desktop_nav_no_longer_shows_old_labels(monkeypatch):
     assert ">News<" in primary_nav
 
 
-def test_desktop_more_menu_contains_compare(monkeypatch):
+def test_desktop_more_menu_is_gone_and_compare_moved_to_profile_menu(monkeypatch):
     client = _dashboard_client(monkeypatch)
     html = client.get("/").data.decode()
-    assert 'id="wv-navmenu-trigger"' in html
-    assert 'aria-haspopup="menu"' in html
-    panel_start = html.index('id="wv-navmenu-panel"')
-    panel_end = html.index("</div>", panel_start)
-    panel = html[panel_start:panel_end]
-    assert 'href="/compare"' in panel
-    assert ">Compare<" in panel
-    # News is no longer here; it's a primary-nav tab.
-    assert 'href="/news"' not in panel
+    assert 'id="wv-navmenu-trigger"' not in html
+    assert 'id="wv-navmenu-panel"' not in html
+    base = open("templates/base.html").read()
+    menu = base[base.index('id="wv-profile-menu"'):]
+    menu = menu[:menu.index("</div>")]
+    assert 'href="/compare"' in menu and ">Compare<" in menu
 
 
 # ── Mobile bottom navigation ──
