@@ -91,3 +91,17 @@ def _no_real_analytics_writes(monkeypatch):
         monkeypatch.setattr(analytics, "db_cursor", _noop_db_cursor)
     except ImportError:
         pass
+
+
+@pytest.fixture(autouse=True)
+def _fresh_artist_page_caches():
+    """views_artist caches Last.fm artist.getInfo per name; tests stub that
+    call differently for the same artist, so start every test cold."""
+    try:
+        import views_artist
+    except ImportError:
+        yield
+        return
+    views_artist._lastfm_info_cache.clear()
+    yield
+    views_artist._lastfm_info_cache.clear()

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Messages locked — Waveline{% endblock %}
+{% block title %}Messages locked · Waveline{% endblock %}
 {% block description %}You can message {{ target.username }} once you both follow each other.{% endblock %}
 
 {% block head_extra %}
@@ -20,9 +20,9 @@
     <h1>You can message {{ target.username }} once you both follow each other</h1>
     <p>
       {% if already_following %}
-      You already follow {{ target.username }} — messaging opens up as soon as they follow you back.
+      You already follow {{ target.username }}. Messaging opens up as soon as they follow you back.
       {% else %}
-      Follow {{ target.username }} to open the door — messaging works once you both follow each other.
+      Follow {{ target.username }} to open the door. Messaging works once you both follow each other.
       {% endif %}
     </p>
     <div class="anf-cta">

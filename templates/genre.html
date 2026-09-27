@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_icons.html" import icon %}
-{% block title %}{{ genre.label }} — Waveline{% endblock %}
+{% block title %}{{ genre.label }} · Waveline{% endblock %}
 {% block description %}{{ genre.label }} on Waveline: the artists that define it, with listening data and AI-written analysis.{% endblock %}
 
 {% block head_extra %}
@@ -54,9 +54,8 @@
     <p class="wv-coord" style="margin-bottom:12px;">About the sound</p>
     {% if genre.summary %}
     <p class="gp-sum">{{ genre.summary | truncate(700) }}</p>
-    <p class="src">Description from <a class="wv-link" href="https://www.last.fm/tag/{{ genre.tag | urlencode }}" target="_blank" rel="noopener noreferrer">Last.fm {{ icon("external") }}</a></p>
     {% else %}
-    <p>Last.fm's description of this genre isn't available right now.</p>
+    <p>A description of this genre isn't available right now.</p>
     {% endif %}
   </div>
 </section>
@@ -72,13 +71,13 @@
     </div>
     <div class="gp-m">
       <div class="nm">{{ a.name }}</div>
-      {% if a.fans %}<div class="fans">{{ a.fans | compact }} Deezer fans</div>{% endif %}
+      {% if a.fans %}<div class="fans">{{ a.fans | compact }} fans</div>{% endif %}
     </div>
   </a>
   {% endfor %}
 </div>
 {% else %}
-<div class="gp-empty"><div class="wv-empty"><h3>Artists are temporarily unavailable</h3><p>Last.fm didn't answer just now. Try again in a moment.</p></div></div>
+<div class="gp-empty"><div class="wv-empty"><h3>Artists are temporarily unavailable</h3><p>They couldn't be loaded just now. Try again in a moment.</p></div></div>
 {% endif %}
 
 <section class="gp-others">

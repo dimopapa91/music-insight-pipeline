@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/waveline.css') }}">
-    <meta name="description" content="{% block description %}Waveline — search any artist for listening data, top tracks, AI-powered insights and the connections leading to your next discovery.{% endblock %}">
+    <meta name="description" content="{% block description %}Waveline: search any artist for listening data, top tracks, AI-powered insights and the connections leading to your next discovery.{% endblock %}">
     {% block head_extra %}{% endblock %}
     <script>
       // Theme before paint: default is the dark signal theme; 'wv-theme'='light' opts out.
@@ -21,6 +21,7 @@
 </head>
 <body>
     {{ sprite() }}
+    <div class="wv-progress" id="wv-progress" aria-hidden="true"></div>
     <a class="wv-skip" href="#main-content">Skip to content</a>
 
     {% set path = request.path %}
@@ -154,9 +155,7 @@
                 <a href="https://dimospapageorgiou.com" target="_blank" rel="noopener noreferrer">Portfolio</a>
             </div>
             <div>
-                <h3>Data</h3>
-                <p>Sources: Last.fm, Spotify &amp; Deezer.</p>
-                <p style="margin-top:6px;">Insights: Anthropic Claude.</p>
+                <h3>Credits</h3>
                 <p class="wv-footer-collab">Agent API built in collaboration with <a href="https://x402.nsgoods.org/" target="_blank" rel="noopener noreferrer">nsgoods</a></p>
                 <p style="margin-top:14px;">Built by Dimos Papageorgiou · Manchester · 2026</p>
             </div>
@@ -300,7 +299,7 @@
     <div class="wv-player" id="wv-player" role="region" aria-label="Track preview">
         <div class="wv-player-art" id="wv-player-art" aria-hidden="true"></div>
         <div class="wv-player-info">
-            <div class="wv-player-title" id="wv-player-title">—</div>
+            <div class="wv-player-title" id="wv-player-title"></div>
             <div class="wv-player-artist" id="wv-player-artist">&nbsp;</div>
         </div>
         <button class="wv-player-btn" id="wv-player-toggle" type="button" aria-label="Pause">{{ icon("pause") }}</button>
@@ -319,7 +318,21 @@
         username: {{ (current_user.username if current_user.is_authenticated else '') | tojson }}
       };
     </script>
+    <script src="{{ url_for('static', filename='js/nav-progress.js') }}"></script>
     <script src="{{ url_for('static', filename='js/nav.js') }}"></script>
+    {#- Prefetch on hover (Chromium): the next page is usually already
+        loaded by the time the click lands. Opt-in selectors only, all of
+        them side-effect-free GETs of already-analysed artists or static
+        sections (so logout, notifications and messages are never
+        matched). Deliberately NOT: /profile (may start an AI call), or
+        genre-page artist cards (may not be analysed yet, and a logged-in
+        visit to an unanalysed artist runs the paid pipeline). -#}
+    <script type="speculationrules">
+    {"prefetch": [{"where": {"and": [
+        {"selector_matches": ".wv-nav a, .wv-feature, .wv-fresh-card, .wv-pulse-ch, .gn-tile, .wv-brand"},
+        {"not": {"href_matches": "/profile*"}}
+      ]}, "eagerness": "moderate"}]}
+    </script>
     <script src="{{ url_for('static', filename='js/player.js') }}"></script>
     <script src="{{ url_for('static', filename='js/command-palette.js') }}"></script>
     {% block scripts %}{% endblock %}

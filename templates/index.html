@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_icons.html" import icon %}
-{% block title %}Waveline — Follow the sound{% endblock %}
+{% block title %}Waveline · Follow the sound{% endblock %}
 {% block description %}Explore artists, discover connections and shape your music taste with Waveline.{% endblock %}
 
 {% block head_extra %}
@@ -208,7 +208,7 @@
       {% endfor %}
     </div>
     {% else %}
-    <div class="wv-empty"><h3>No artists analysed yet</h3><p>Be the first — search one above.</p></div>
+    <div class="wv-empty"><h3>No artists analysed yet</h3><p>Be the first. Search one above.</p></div>
     {% endif %}
 
     <div id="wv-my-recent-wrap" hidden>
@@ -233,7 +233,7 @@
         {% if featured.photo %}<img src="{{ featured.photo | dz_size(1000) }}" alt="" loading="lazy" width="1000" height="1000">{% endif %}
         <div class="wv-boxlbl">
           <h3>{{ featured.artist | titlecase }}</h3>
-          <p class="wv-featured-date">Latest search {{ featured.searched_at.strftime('%d %b %Y') }} · Last.fm · Spotify · Deezer</p>
+          <p class="wv-featured-date">Latest search {{ featured.searched_at.strftime('%d %b %Y') }}</p>
           {% if featured.top_tracks %}
           <div class="wv-featured-tracks">
             {% for t in featured.top_tracks[:4] %}
@@ -244,7 +244,7 @@
         </div>
       </div>
       <div class="wv-featured-body">
-        <p class="wv-eyebrow">AI insight · Claude</p>
+        <p class="wv-eyebrow">AI insight</p>
         {% if featured.insight %}
         <p class="wv-featured-summary">{{ featured.insight | markdown_preview(320) }}…</p>
         {% else %}
@@ -346,7 +346,7 @@
         {% else %}
         <div class="wv-empty">
           <h3>The community is just getting started</h3>
-          <p>No posts yet — be the first to share a discovery once you're signed in.</p>
+          <p>No posts yet. Be the first to share a discovery once you're signed in.</p>
         </div>
         {% endif %}
       </div>

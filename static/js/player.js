@@ -51,7 +51,7 @@
       .then(function (data) {
         if (data && data.preview_url) {
           titleEl.textContent = data.title || track;
-          artistEl.textContent = (data.artist || artist) + " · 30s preview via Deezer";
+          artistEl.textContent = (data.artist || artist) + " · 30s preview";
           audio.src = data.preview_url;
           audio.load();
           var p = audio.play();

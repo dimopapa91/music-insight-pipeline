@@ -118,6 +118,6 @@ def test_big_number_stats_are_compact(monkeypatch):
     html = _render(monkeypatch, TRACKS)
     stats = html[html.index('class="ar-stats"'):html.index('id="tracks"')]
     assert "4M" in stats          # 3,985,438 listeners
-    assert "Last.fm · 3,985,438" in stats
+    assert "3,985,438" in stats and "Last.fm" not in stats
     assert "193.6M" in stats
     assert "1.2M" in stats

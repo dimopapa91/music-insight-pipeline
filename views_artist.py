@@ -2,7 +2,9 @@
 
 import os
 import json
+import time
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import quote
 
 import requests as http_requests
@@ -29,6 +31,46 @@ artist_bp = Blueprint("artist", __name__)
 # waste. Never cached on failure, so a transient provider error is retried
 # on the next request rather than being stuck.
 _compare_cache = {}
+
+
+# Last.fm artist.getInfo (listeners, scrobbles, tags, MBID) used to be
+# fetched on every artist page view, uncached, in series with the other
+# lookups: the main reason artist pages took 2+ seconds. Cached per
+# lowercased name; successes for 6h, failures for 5 min.
+_lastfm_info_cache = {}
+_LASTFM_INFO_TTL = 6 * 3600
+_LASTFM_INFO_NEG_TTL = 300
+_EMPTY_LASTFM_INFO = {"listeners": 0, "scrobbles": 0, "tags": [], "mbid": ""}
+
+
+def _lastfm_artist_info(name):
+    key = name.strip().lower()
+    entry = _lastfm_info_cache.get(key)
+    if entry:
+        ttl = _LASTFM_INFO_TTL if entry["ok"] else _LASTFM_INFO_NEG_TTL
+        if time.time() - entry["at"] < ttl:
+            return entry["data"]
+    data, ok = dict(_EMPTY_LASTFM_INFO), False
+    try:
+        resp = http_requests.get(LASTFM_BASE, params={
+            "method": "artist.getInfo",
+            "artist": name,
+            "api_key": LASTFM_API_KEY,
+            "format": "json"
+        }, timeout=5)
+        artist = resp.json().get("artist", {})
+        stats = artist.get("stats", {})
+        data = {
+            "listeners": int(stats.get("listeners", 0)),
+            "scrobbles": int(stats.get("playcount", 0)),
+            "tags": [t["name"] for t in artist.get("tags", {}).get("tag", [])[:4]],
+            "mbid": artist.get("mbid", ""),
+        }
+        ok = bool(artist)
+    except Exception:
+        pass
+    _lastfm_info_cache[key] = {"data": data, "at": time.time(), "ok": ok}
+    return data
 
 
 def _safe_int(value):
@@ -110,43 +152,35 @@ def artist_profile(artist_name):
         top_playcount = f"{tracks[0]['plays']:,}" if tracks else "—"
         avg_plays = f"{sum(t['plays'] for t in tracks) // len(tracks):,}" if tracks else "—"
 
-        similar = get_similar_artists(name)
+        # External lookups, in two parallel waves instead of one after
+        # another. Wave 1 needs only the name; wave 2 needs the MBID
+        # (media) or the similar list (photos) from wave 1.
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            f_similar = pool.submit(get_similar_artists, name)
+            f_info = pool.submit(_lastfm_artist_info, name)
+            f_events = pool.submit(get_artist_events, name)
+            similar = f_similar.result()
+            info = f_info.result()
+            events = f_events.result()
 
-        # Last.fm: listeners + total scrobbles + top tags + the MBID.
-        # Runs before media resolution because the MBID it returns is what
-        # anchors that lookup to the right artist.
-        lastfm_listeners = 0
-        lastfm_scrobbles = 0
-        lastfm_tags = []
-        mbid = ""
-        try:
-            resp = http_requests.get(LASTFM_BASE, params={
-                "method": "artist.getInfo",
-                "artist": name,
-                "api_key": LASTFM_API_KEY,
-                "format": "json"
-            }, timeout=5)
-            info = resp.json()
-            stats = info.get("artist", {}).get("stats", {})
-            lastfm_listeners = int(stats.get("listeners", 0))
-            lastfm_scrobbles = int(stats.get("playcount", 0))
-            lastfm_tags = [t["name"] for t in info.get("artist", {}).get("tags", {}).get("tag", [])[:4]]
-            mbid = info.get("artist", {}).get("mbid", "")
-        except Exception:
-            pass
+        lastfm_listeners = info["listeners"]
+        lastfm_scrobbles = info["scrobbles"]
+        lastfm_tags = info["tags"]
+        mbid = info["mbid"]
 
         # Spotify + Deezer media, anchored on the MBID when there is one so
         # an artist who shares a name with someone more popular still gets
         # their own photo and stats (see services.get_artist_media).
-        media = get_artist_media(name, mbid)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            f_media = pool.submit(get_artist_media, name, mbid)
+            f_photos = pool.submit(get_artist_photos, similar) if similar else None
+            media = f_media.result()
+            similar_photos = f_photos.result() if f_photos else {}
         spotify = media["spotify"]
         deezer_image = media["deezer_image"]
         deezer_fans = media["deezer_fans"]
         if not spotify:
             logging.warning(f"no spotify media for '{name}'")
-
-        events = get_artist_events(name)
-        similar_photos = get_artist_photos(similar) if similar else {}
 
         return render_template("artist_profile.html",
             artist_name=name,

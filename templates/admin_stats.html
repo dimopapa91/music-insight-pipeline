@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Admin · Stats — Waveline{% endblock %}
+{% block title %}Admin · Stats · Waveline{% endblock %}
 {% block description %}Owner-only self-hosted analytics.{% endblock %}
 
 {% block head_extra %}
@@ -33,7 +33,7 @@
   <div class="adm-head">
     <p class="wv-eyebrow">Admin</p>
     <h1>Analytics</h1>
-    <p class="adm-note">Aggregate, self-hosted usage stats — no third-party tracker, no client-side script. No personal IP addresses are stored; each visitor is identified only by a hash that rotates every day.</p>
+    <p class="adm-note">Aggregate, self-hosted usage stats: no third-party tracker, no client-side script. No personal IP addresses are stored; each visitor is identified only by a hash that rotates every day.</p>
   </div>
 
   {% if not stats %}
@@ -103,7 +103,7 @@
         <tbody>{% for c in stats.top_countries %}<tr><td>{{ c.country }}</td><td>{{ c.count }}</td></tr>{% endfor %}</tbody>
       </table>
     </div>
-    {% else %}<p style="color:var(--wv-muted);font-size:.86rem;">No geo data yet — GeoIP may not be configured (GEOIP_DB_PATH).</p>{% endif %}
+    {% else %}<p style="color:var(--wv-muted);font-size:.86rem;">No geo data yet. GeoIP may not be configured (GEOIP_DB_PATH).</p>{% endif %}
 
     <h3>Top pages</h3>
     {% if stats.top_paths %}

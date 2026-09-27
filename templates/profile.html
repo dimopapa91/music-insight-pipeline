@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}@{{ user.username }} — Waveline{% endblock %}
+{% block title %}@{{ user.username }} · Waveline{% endblock %}
 {% block description %}@{{ user.username }} on Waveline{% if user.bio %}: {{ user.bio }}{% endif %}{% endblock %}
 
 {% block head_extra %}
