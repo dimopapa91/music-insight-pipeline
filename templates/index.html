@@ -388,21 +388,23 @@
     </div>
   </section>
 
-  <!-- INTEGRATIONS, IN PRODUCTION: the official Waveline × nsgoods
-       collaboration, mirroring the card nsgoods shows for Waveline on
-       x402.nsgoods.org. The nsgoods mark is a type-only lockup until their
-       official logo file lands in static/partners/. -->
+  {#- INTEGRATIONS, IN PRODUCTION: the official Waveline × nsgoods
+      collaboration, mirroring the card nsgoods shows for Waveline on
+      x402.nsgoods.org. Wording follows nsgoods' requests (see
+      tests/test_collaborations.py). Logo used unmodified with their OK,
+      copied byte-for-byte from x402.nsgoods.org/brand/. -#}
   <section class="wv-collab" id="collaborations" aria-labelledby="collab-h">
     <p class="wv-eyebrow" id="collab-h">Integrations, in production</p>
     <article class="wv-collab-card">
-      <div class="wv-collab-lockup" aria-label="Waveline in collaboration with nsgoods">
-        <img src="{{ url_for('static', filename='brand/waveline-app-icon.svg') }}" alt="" width="44" height="44" loading="lazy">
+      <div class="wv-collab-lockup">
+        <span class="wv-collab-tile wv-collab-tile-wv"><img src="{{ url_for('static', filename='brand/waveline-app-icon.svg') }}" alt="Waveline" width="44" height="44" loading="lazy"></span>
         <span class="wv-collab-x" aria-hidden="true">×</span>
-        <span class="wv-collab-ns" aria-hidden="true">nsgoods</span>
+        <a class="wv-collab-tile wv-collab-tile-ns" href="https://x402.nsgoods.org/" aria-label="nsgoods (opens x402.nsgoods.org)" target="_blank" rel="noopener noreferrer"><img src="{{ url_for('static', filename='partners/nsgoods-logo-for-light-bg.svg') }}" alt="nsgoods" width="31" height="48" loading="lazy"></a>
       </div>
       <div class="wv-collab-body">
         <h3>Waveline × nsgoods</h3>
-        <p><a href="https://x402.nsgoods.org/" target="_blank" rel="noopener noreferrer">nsgoods</a> verified Waveline's Agent API end to end before it opened to AI agents, and made its first mainnet payment: 0.005 USDC on Base for one artist insight. nsgoods Watchdog now checks our payment terms every 15 minutes.</p>
+        <p>Waveline's Agent API sells artist insights to AI agents over x402, for 0.005 USDC per insight on Base. Dimos Papageorgiou built the endpoint; it was built in collaboration with <a href="https://x402.nsgoods.org/" target="_blank" rel="noopener noreferrer">nsgoods</a>, who checked it from the outside on testnet and mainnet before it opened, made its first mainnet payment, and contributed the docs. nsgoods Watchdog checks its payment terms every 15 minutes.</p>
+        <p class="wv-collab-about">nsgoods runs twelve signed x402 pay-per-call APIs for AI agents on Base and Solana, and checks and monitors other x402 endpoints from the outside.</p>
         <div class="wv-collab-links">
           <a class="wv-link" href="https://x402.nsgoods.org/" target="_blank" rel="noopener noreferrer">x402.nsgoods.org {{ icon('external') }}</a>
           <a class="wv-link" href="https://github.com/dimopapa91/music-insight-pipeline/blob/main/docs/x402.md" target="_blank" rel="noopener noreferrer">Agent API docs {{ icon('external') }}</a>
