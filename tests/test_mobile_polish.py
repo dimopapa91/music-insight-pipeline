@@ -40,14 +40,14 @@ def test_pulse_label_stays_for_screen_readers_when_hidden_on_phones():
     assert "display: none" not in rule and "clip" in rule   # visually hidden, still announced
 
 
-def test_homepage_phone_order_is_search_then_photo_then_numbers():
+def test_homepage_phone_order_is_search_then_photo():
     html = _read("templates/index.html")
     block = html[html.index("Mobile order: search first"):]
     block = block[:block.index("}\n  }") + 4]
     assert ".wv-hero-side { display: contents; }" in block
     orders = {name: int(re.search(rf"\.{name} \{{ order: (\d)", block).group(1))
-              for name in ("wv-hero-inner", "wv-feature", "wv-kpis")}
-    assert orders["wv-hero-inner"] < orders["wv-feature"] < orders["wv-kpis"]
+              for name in ("wv-hero-inner", "wv-feature")}
+    assert orders["wv-hero-inner"] < orders["wv-feature"]
 
 
 def test_textareas_beat_page_level_font_sizes_on_phones():

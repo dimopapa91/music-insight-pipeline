@@ -87,8 +87,7 @@ def test_profile_and_more_menu_semantics_untouched(monkeypatch):
     html = client.get("/about").data.decode()
     assert 'aria-haspopup="menu"' in html[html.index('id="wv-profile-trigger"'):html.index('id="wv-profile-trigger"') + 200]
     assert 'role="menu"' in html[html.index('id="wv-profile-menu"'):html.index('id="wv-profile-menu"') + 60]
-    assert 'aria-haspopup="menu"' in html[html.index('id="wv-navmenu-trigger"'):html.index('id="wv-navmenu-trigger"') + 300]
-    assert 'role="menu"' in html[html.index('id="wv-navmenu-panel"'):html.index('id="wv-navmenu-panel"') + 60]
+    assert 'id="wv-navmenu-trigger"' not in html   # desktop "More" removed; Compare lives in the profile menu
 
 
 def test_footer_link_points_to_full_notifications_page(monkeypatch):

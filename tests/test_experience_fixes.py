@@ -432,21 +432,27 @@ def test_homepage_new_hero_heading(monkeypatch):
     assert "Follow the sound." in html
 
 
-def test_homepage_new_hero_supporting_line(monkeypatch):
+def test_homepage_hero_is_search_only(monkeypatch):
+    # Hero cleanup (27 Sep 2026): no eyebrow, no supporting line, no TRY
+    # chips, no counter; the h1 stays for screen readers only.
     html = _home_html(monkeypatch)
-    assert "One artist can lead anywhere." in html
+    hero = html[html.index('id="top"'):html.index('id="chapter-01"')]
+    assert "One artist can lead anywhere." not in hero
+    assert "Music · Taste · Discovery" not in hero
+    assert "wv-hero-examples" not in hero and ">Try<" not in hero
+    assert 'class="wv-sr-only">Waveline. Follow the sound.</h1>' in hero
 
 
 def test_homepage_new_search_placeholder(monkeypatch):
     html = _home_html(monkeypatch)
-    assert 'placeholder="Start with an artist…"' in html
+    assert 'placeholder="Search an artist…"' in html
 
 
-def test_homepage_tune_in_button(monkeypatch):
+def test_homepage_wave_in_button(monkeypatch):
     html = _home_html(monkeypatch)
     hero_start = html.index('id="wv-title"')
     hero_end = html.index("</form>", hero_start)
-    assert ">Tune in<" in html[hero_start:hero_end]
+    assert ">Wave in<" in html[hero_start:hero_end]
 
 
 def test_homepage_old_tagline_absent(monkeypatch):
@@ -458,7 +464,7 @@ def test_homepage_old_tagline_absent(monkeypatch):
 def test_homepage_chapter_01_copy(monkeypatch):
     html = _home_html(monkeypatch)
     ch01 = html[html.index('id="ch01-h"'):html.index('id="ch01-h"') + 300]
-    assert ">Tune in<" in ch01
+    assert ">Wave in<" in ch01
     assert "Start with a name. See where it takes you." in ch01
 
 

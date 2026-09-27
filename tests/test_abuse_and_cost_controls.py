@@ -471,9 +471,6 @@ def test_homepage_counter_no_longer_claims_bot_inflated_search_count(monkeypatch
     monkeypatch.setattr(views_main, "get_feed", lambda *a, **k: [])
     client = dashboard.app.test_client()
     html = client.get("/").data.decode()
-    start = html.index('class="wv-hero-status"')
-    status_line = html[start:html.index("</p>", start)]
-    assert "10838 artist" in status_line
-    assert "10867" not in status_line  # the bot-inflated search count is gone
-    assert "search" not in status_line  # and so is any "across N searches" framing
-    assert "today" not in status_line
+    hero = html[html.index('id="top"'):html.index('id="chapter-01"')]
+    assert "10867" not in hero  # the bot-inflated search count is never shown
+    assert "wv-hero-status" not in hero  # the counter line was removed in the hero cleanup

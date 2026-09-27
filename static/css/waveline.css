@@ -230,7 +230,7 @@ body.light .wv-brand-word-light { display: block; }
 .wv-iconbtn {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 38px; height: 38px; padding: 0 10px;
-  border: 1px solid var(--wv-border-2); background: transparent; color: var(--wv-ink-2);
+  border: 1px solid var(--wv-border); background: transparent; color: var(--wv-ink-2);
   border-radius: var(--wv-radius); cursor: pointer; font-size: 1rem; text-decoration: none;
   transition: border-color var(--wv-motion) var(--wv-ease), color var(--wv-motion) var(--wv-ease), background var(--wv-motion) var(--wv-ease);
 }
@@ -360,13 +360,13 @@ body.light .wv-theme-icon-moon { display: inline-flex; }
 .wv-profilemenu-trigger {
   display: inline-flex; align-items: center; gap: 8px;
   font-family: var(--wv-font-display); font-weight: 600; font-size: .82rem; letter-spacing: 1px; text-transform: uppercase;
-  color: var(--wv-ink); background: transparent; cursor: pointer; padding: 6px 10px 6px 6px;
-  border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill);
+  color: var(--wv-ink); background: transparent; cursor: pointer; padding: 0;
+  border: 1px solid var(--wv-border); border-radius: 50%; width: 38px; height: 38px; justify-content: center;
   transition: border-color var(--wv-motion) var(--wv-ease), color var(--wv-motion) var(--wv-ease);
 }
 .wv-profilemenu-trigger:hover, .wv-profilemenu-trigger[aria-expanded="true"] { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
 .wv-profile-avatar {
-  width: 22px; height: 22px; border-radius: 50%; background: var(--wv-accent); color: var(--wv-on-accent);
+  width: 30px; height: 30px; border-radius: 50%; background: var(--wv-accent); color: var(--wv-on-accent);
   display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: .7rem; flex-shrink: 0;
 }
 /* Phase 3: same slot, real uploaded photo instead of the monogram */
@@ -414,11 +414,15 @@ img.wv-profile-avatar { object-fit: cover; display: block; }
 /* Search trigger inside the dock */
 .wv-searchbtn {
   display: inline-flex; align-items: center; gap: 10px;
-  height: 38px; padding: 0 10px 0 12px; border: 1px solid var(--wv-border-2); background: var(--wv-surface-2);
+  height: 38px; padding: 0 16px 0 12px; border: 1px solid var(--wv-border); background: transparent;
   color: var(--wv-muted); border-radius: var(--wv-radius-pill); cursor: pointer; font-family: var(--wv-font-body); font-size: .82rem;
   transition: border-color var(--wv-motion) var(--wv-ease), color var(--wv-motion) var(--wv-ease);
 }
 .wv-searchbtn:hover { border-color: var(--wv-accent); color: var(--wv-ink-2); }
+.wv-searchbtn-mark { width: 16px; height: 16px; display: block; }
+.wv-searchbtn-mark-light { display: none; }
+body.light .wv-searchbtn-mark-dark { display: none; }
+body.light .wv-searchbtn-mark-light { display: block; }
 .wv-searchbtn kbd {
   font-family: var(--wv-font-display); font-weight: 600; font-size: .77rem; border: 1px solid var(--wv-border-2); border-radius: 4px;
   padding: 1px 5px; color: var(--wv-muted); background: var(--wv-surface);

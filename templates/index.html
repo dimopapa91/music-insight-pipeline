@@ -18,12 +18,10 @@
   .wv-boxlbl p { color: var(--wv-ink-2); font-size: .9rem; }
   .wv-boxlbl .go { display: inline-block; margin-top: 10px; font-family: var(--wv-font-display); font-weight: 700; font-size: .85rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-accent-ink); border-bottom: 1px solid var(--wv-accent); }
 
-  .wv-hero-side { display: flex; flex-direction: column; min-width: 0; }
-  .wv-hero-inner { padding: var(--wv-7) var(--wv-6) var(--wv-6); border-bottom: 1px solid var(--wv-border); }
+  .wv-hero-side { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+  .wv-hero-inner { padding: var(--wv-7) var(--wv-6); }
   .wv-hero.no-feature .wv-hero-inner { max-width: 820px; }
-  .wv-hero h1 { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(2.8rem, 5.6vw, 4.6rem); line-height: .92; text-transform: uppercase; letter-spacing: -.5px; margin-top: var(--wv-3); }
-  .wv-hero-sub { font-size: clamp(1rem, 1.6vw, 1.15rem); color: var(--wv-ink-2); max-width: 46ch; margin-top: var(--wv-3); }
-  .wv-hero-searchcard { margin-top: var(--wv-5); }
+  .wv-hero-searchcard { margin-top: 0; }
   .wv-hero-searchrow { display: flex; border: 1px solid var(--wv-border-2); }
   .wv-hero-searchrow:focus-within { border-color: var(--wv-accent); }
   .wv-hero-searchrow input { flex: 1; min-width: 0; height: 54px; padding: 0 16px; font-size: 1rem; font-family: var(--wv-font-body); background: var(--wv-bg); color: var(--wv-ink); border: 0; }
@@ -34,36 +32,17 @@
   .wv-suggestion { padding: 12px 16px; cursor: pointer; font-size: .95rem; display: flex; align-items: center; gap: 10px; }
   .wv-suggestion .tag { margin-left: auto; font-family: var(--wv-font-display); font-weight: 600; font-size: .74rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); }
   .wv-suggestion:hover, .wv-suggestion[aria-selected="true"] { background: var(--wv-accent-soft); color: var(--wv-accent-ink); }
-  .wv-hero-examples { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: var(--wv-3); }
-  .wv-hero-examples .lbl { font-size: .82rem; color: var(--wv-muted); font-family: var(--wv-font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-right: 4px; }
-  .wv-hero-examples form { margin: 0; }
-  .wv-hero-examples .wv-chip { min-height: 30px; font-family: var(--wv-font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: .8rem; background: transparent; }
-  .wv-hero-status { margin-top: var(--wv-4); font-size: .84rem; color: var(--wv-muted); }
   .wv-hero.is-tuning .wv-hero-searchrow { border-color: var(--wv-accent); }
-  .wv-hero.is-tuning .wv-hero-searchcard::after { content: "Tuning in\2026"; display: block; margin-top: 10px; font-family: var(--wv-font-display); font-weight: 700; font-size: .89rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--wv-accent-ink); }
+  .wv-hero.is-tuning .wv-hero-searchcard::after { content: "Waving in\2026"; display: block; margin-top: 10px; font-family: var(--wv-font-display); font-weight: 700; font-size: .89rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--wv-accent-ink); }
 
-  .wv-kpis { display: grid; grid-template-columns: 1fr 1fr; flex: 1; }
-  .wv-kpi { padding: var(--wv-4) var(--wv-6); border-bottom: 1px solid var(--wv-border); display: flex; flex-direction: column; justify-content: center; text-decoration: none; color: inherit; }
-  .wv-kpi:nth-child(odd) { border-right: 1px solid var(--wv-border); }
-  .wv-kpi:nth-last-child(-n+2) { border-bottom: 0; }
-  .wv-kpi .k { font-family: var(--wv-font-display); font-weight: 700; font-size: .78rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); }
-  .wv-kpi b { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.8rem, 3vw, 2.5rem); line-height: 1; margin: 8px 0 4px; }
-  .wv-kpi small { font-size: .78rem; color: var(--wv-muted); }
-  a.wv-kpi:hover { background: var(--wv-surface-2); }
-  a.wv-kpi:hover b { color: var(--wv-accent-ink); }
-
-  /* Mobile order: search first, then the photo, then the numbers */
+  /* Mobile order: search first, then the photo */
   @media (max-width: 900px) {
     .wv-hero { grid-template-columns: 1fr; min-height: 0; }
     .wv-hero-side { display: contents; }
-    .wv-hero-inner { order: 1; padding: var(--wv-6) var(--wv-4) var(--wv-5); }
+    .wv-hero-inner { order: 1; padding: var(--wv-5) var(--wv-4); }
     .wv-feature { order: 2; border-right: 0; min-height: 0; aspect-ratio: 4 / 3.4; border-bottom: 1px solid var(--wv-border); }
-    .wv-kpis { order: 3; }
-    .wv-kpi { padding: var(--wv-4); }
-    .wv-kpi b { font-size: 2rem; }
     .wv-boxlbl { left: var(--wv-3); right: var(--wv-3); bottom: var(--wv-3); padding: 12px 14px; }
     .wv-hero-searchrow .wv-btn { padding: 0 16px; }
-    .wv-hero-examples .wv-chip { min-height: 38px; }
   }
 
   /* ── Chapter 01: freshly analysed, as a photo row ── */
@@ -168,47 +147,24 @@
 
   <div class="wv-hero-side">
     <div class="wv-hero-inner">
-      <p class="wv-coord">Music · Taste · Discovery</p>
-      <h1 id="wv-title">Follow the sound.</h1>
-      <p class="wv-hero-sub">One artist can lead anywhere.</p>
+      <h1 id="wv-title" class="wv-sr-only">Waveline. Follow the sound.</h1>
 
       <form method="POST" action="/search" id="search-form" class="wv-hero-searchcard" autocomplete="off" role="search" aria-label="Search for an artist">
         <div class="wv-hero-search-wrap">
           <div class="wv-hero-searchrow">
             <label class="wv-sr-only" for="artist-input">Artist name</label>
-            <input type="text" name="artist" id="artist-input" placeholder="Start with an artist…"
+            <input type="text" name="artist" id="artist-input" placeholder="Search an artist…"
                    autocomplete="off" autocapitalize="words" role="combobox" aria-expanded="false"
                    aria-controls="suggestions" aria-autocomplete="list" required>
-            <button type="submit" class="wv-btn wv-btn-primary">Tune in</button>
+            <button type="submit" class="wv-btn wv-btn-primary">Wave in</button>
           </div>
           <div id="suggestions" class="wv-suggestions" role="listbox" aria-label="Artist suggestions"></div>
         </div>
       </form>
 
-      <div class="wv-hero-examples">
-        <span class="lbl">Try</span>
-        {% for ex in ['Radiohead', 'SZA', 'Nujabes', 'Vince Staples'] %}
-        <form method="POST" action="/search">
-          <input type="hidden" name="artist" value="{{ ex }}">
-          <button type="submit" class="wv-chip">{{ ex }}</button>
-        </form>
-        {% endfor %}
-      </div>
-
       {% if message %}
       <div class="wv-notice {{ 'wv-notice-error' if error else 'wv-notice-info' }}" style="margin-top:var(--wv-4);" role="status">{{ message }}</div>
       {% endif %}
-
-      {% if unique_artists %}
-      <p class="wv-hero-status">Waveline has analysed {{ unique_artists }} artist{{ 's' if unique_artists != 1 }} so far.</p>
-      {% endif %}
-    </div>
-
-    <div class="wv-kpis">
-      <div class="wv-kpi"><span class="k">Artists analysed</span><b>{{ "{:,}".format(unique_artists or 0) }}</b><small>all time</small></div>
-      <div class="wv-kpi"><span class="k">Data sources</span><b>4</b><small>matched by MusicBrainz ID</small></div>
-      <div class="wv-kpi"><span class="k">Plays analysed</span><b>{{ plays_analysed | compact if plays_analysed else "—" }}</b><small>Last.fm plays across top tracks</small></div>
-      <a class="wv-kpi" href="https://github.com/dimopapa91/music-insight-pipeline/blob/main/docs/x402.md" target="_blank" rel="noopener noreferrer"><span class="k">For AI agents</span><b>$0.005</b><small>per insight · x402 on Base {{ icon("external") }}</small></a>
     </div>
   </div>
 </section>
@@ -220,7 +176,7 @@
     <div class="wv-chapter-head">
       <span class="wv-chapter-num" aria-hidden="true">01</span>
       <div class="wv-chapter-title">
-        <h2 id="ch01-h">Tune in</h2>
+        <h2 id="ch01-h">Wave in</h2>
         <p>Start with a name. See where it takes you.</p>
       </div>
       <a class="wv-link" href="#top" style="margin-left:auto;">Search another artist ↑</a>
