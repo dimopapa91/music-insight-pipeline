@@ -337,6 +337,16 @@ def get_community_suggestions(exclude_ids=None, limit=12, viewer_id=None, exclud
                    END AS following
             FROM users u
             WHERE NOT (u.id = ANY(%(exclude)s))
+              -- Only accounts that have done something: searched an
+              -- artist, posted, been followed, or filled in a bio/photo.
+              -- Keeps inactive and bot sign-ups out of Discover.
+              AND (
+                    EXISTS (SELECT 1 FROM searches s WHERE s.user_id = u.id)
+                    OR EXISTS (SELECT 1 FROM posts p WHERE p.user_id = u.id)
+                    OR EXISTS (SELECT 1 FROM follows f4 WHERE f4.followee_id = u.id)
+                    OR COALESCE(u.bio, '') <> ''
+                    OR COALESCE(u.profile_image_url, '') <> ''
+                  )
               AND (
                     NOT %(exclude_followed)s
                     OR %(viewer)s IS NULL

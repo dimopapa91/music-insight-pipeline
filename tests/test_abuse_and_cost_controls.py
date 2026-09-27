@@ -99,15 +99,21 @@ def test_anonymous_unknown_artist_does_not_call_run_pipeline(monkeypatch):
     assert "Log in" in html
 
 
-def test_logged_in_unknown_artist_still_calls_run_pipeline(monkeypatch):
+def test_logged_in_unknown_artist_never_runs_the_pipeline_on_get(monkeypatch):
+    # 27 Sep 2026: a GET must never start paid work, even when logged in.
+    # The page offers an "Analyse" button that POSTs to /search instead.
     calls = {"n": 0}
     monkeypatch.setattr(views_artist, "db_cursor", _never_found_cursor)
     monkeypatch.setattr(views_artist, "run_pipeline", lambda *a, **k: calls.update(n=calls["n"] + 1))
     client = dashboard.app.test_client()
     _login(client, monkeypatch)
     resp = client.get("/artist/Some Brand New Artist")
-    assert calls["n"] == 1
-    assert resp.status_code == 302  # redirects to reload after the auto-fetch
+    assert calls["n"] == 0
+    assert resp.status_code == 404
+    html = resp.data.decode()
+    assert 'method="POST" action="/search"' in html
+    assert 'name="artist" value="Some Brand New Artist"' in html
+    assert "Create free account" not in html
 
 
 def test_anonymous_existing_artist_renders_normally_no_pipeline_call(monkeypatch):
@@ -474,3 +480,37 @@ def test_homepage_counter_no_longer_claims_bot_inflated_search_count(monkeypatch
     hero = html[html.index('id="top"'):html.index('id="chapter-01"')]
     assert "10867" not in hero  # the bot-inflated search count is never shown
     assert "wv-hero-status" not in hero  # the counter line was removed in the hero cleanup
+
+
+# ── bot sign-ups (27 Sep 2026) ──────────────────────────────────────────
+
+def test_register_honeypot_creates_no_account(monkeypatch):
+    import models
+    created = []
+    monkeypatch.setattr(models.User, "create", classmethod(lambda cls, *a, **k: created.append(a)))
+    monkeypatch.setattr(models.User, "get_by_username", classmethod(lambda cls, u: None))
+    monkeypatch.setattr(models.User, "get_by_email", classmethod(lambda cls, e: None))
+    client = dashboard.app.test_client()
+    resp = client.post("/register", data={"username": "botname123", "email": "b@x.io",
+                                          "password": "longenough1", "website": "http://spam"})
+    assert resp.status_code == 302
+    assert created == []
+
+
+def test_register_form_has_hidden_honeypot():
+    html = open("templates/auth.html").read()
+    assert 'name="website"' in html and 'tabindex="-1"' in html and "au-hp" in html
+
+
+def test_auth_posts_are_rate_limited():
+    src = open("auth.py").read()
+    assert '@limiter.limit("5 per hour", methods=["POST"])' in src
+    assert '@limiter.limit("10 per 15 minutes", methods=["POST"])' in src
+
+
+def test_discover_community_only_lists_active_accounts():
+    src = open("social.py").read()
+    start = src.index("def get_community_suggestions")
+    body = src[start:src.index("def get_people_for_you")]
+    assert "EXISTS (SELECT 1 FROM searches s WHERE s.user_id = u.id)" in body
+    assert "EXISTS (SELECT 1 FROM posts p WHERE p.user_id = u.id)" in body

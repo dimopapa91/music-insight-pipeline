@@ -11,6 +11,7 @@ from flask import Blueprint, request, redirect, url_for, render_template
 from flask_login import login_user, logout_user, login_required, current_user
 
 from models import User
+from rate_limit import limiter
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -29,12 +30,19 @@ def _validate(username, email, password):
     return errors
 
 
+# Bot sign-ups were appearing in Discover (random-string usernames, no
+# activity). Two cheap layers: a per-IP limit on POSTs, and a honeypot
+# field ("website") that people never see but form-spamming bots fill in.
+# A bot that trips the honeypot gets a normal-looking redirect and no account.
 @auth_bp.route("/register", methods=["GET", "POST"])
+@limiter.limit("5 per hour", methods=["POST"])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for("profiles.me"))
     errors, username, email = [], "", ""
     if request.method == "POST":
+        if request.form.get("website", "").strip():
+            return redirect(url_for("main.dashboard"))
         username = request.form.get("username", "").strip()
         email = request.form.get("email", "").strip()
         password = request.form.get("password", "")
@@ -51,6 +59,7 @@ def register():
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("10 per 15 minutes", methods=["POST"])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("profiles.me"))

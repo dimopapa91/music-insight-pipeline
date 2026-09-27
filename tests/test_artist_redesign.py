@@ -121,3 +121,11 @@ def test_big_number_stats_are_compact(monkeypatch):
     assert "3,985,438" in stats and "Last.fm" not in stats
     assert "193.6M" in stats
     assert "1.2M" in stats
+
+
+def test_popularity_stat_removed_since_spotify_dropped_the_field():
+    # Spotify's Feb/Mar 2026 Dev Mode changes removed artist `popularity`
+    # and `followers`, so the stat was "—" for every artist.
+    tpl = open("templates/artist_profile.html").read()
+    assert ">Popularity<" not in tpl
+    assert "repeat(4, 1fr)" in tpl

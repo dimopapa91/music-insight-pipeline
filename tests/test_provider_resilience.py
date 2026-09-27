@@ -224,66 +224,26 @@ def test_tracks_and_stats_area_remains_present_without_ai(monkeypatch):
 
 # ── new artist: Claude fails inside run_pipeline, core still succeeds ──
 
-def test_new_artist_claude_failure_inside_run_pipeline_still_renders_profile(monkeypatch):
-    # The auto-fetch-on-miss flow is now member-only (see
-    # test_abuse_and_cost_controls.py for the anonymous side of that split)
-    # — this test is specifically about logged-in behaviour, unchanged.
-    found_row = ("Some Artist", "", dt.datetime(2026, 1, 1), '[{"name": "Track One", "playcount": 10}]')
-    fake_cursor, state = _fake_row_cursor(found_row, found_immediately=False)
-    monkeypatch.setattr(views_artist, "db_cursor", fake_cursor)
-    monkeypatch.setattr(services, "db_cursor", fake_cursor)
-
-    def fake_run_pipeline(artist_name):
-        # Exactly the new contract: Claude failed internally, but
-        # run_pipeline() did NOT raise — Last.fm + DB save succeeded.
-        state["pipeline_ran"] = True
-        return ""
-
-    monkeypatch.setattr(views_artist, "run_pipeline", fake_run_pipeline)
-    client = dashboard.app.test_client()
-    _login(client, monkeypatch)
-    resp = client.get("/artist/Some Artist", follow_redirects=True)
-    assert resp.status_code == 200
-    html = resp.data.decode()
-    assert "Traceback" not in html
-    assert "Track One" in html
-    assert "temporarily unavailable" in html
-
-
-def test_new_artist_genuine_core_failure_still_returns_calm_error(monkeypatch):
+def test_new_artist_get_never_runs_pipeline_even_logged_in(monkeypatch):
+    # 27 Sep 2026: the GET auto-fetch flow was removed (a GET must never
+    # start paid work). A new artist is analysed via POST /search, whose
+    # Claude-failure and core-failure paths are covered by the /search tests
+    # in this file and in test_perf_caches.py.
     fake_cursor, _ = _fake_row_cursor(None, found_immediately=False)  # never found
     monkeypatch.setattr(views_artist, "db_cursor", fake_cursor)
 
     def fake_run_pipeline(artist_name):
-        raise ValueError(f"No track data found for artist: {SECRET}")
+        raise AssertionError("run_pipeline must not be called from a GET")
 
     monkeypatch.setattr(views_artist, "run_pipeline", fake_run_pipeline)
     client = dashboard.app.test_client()
     _login(client, monkeypatch)
     resp = client.get("/artist/Unknown Artist Xyz")
-    assert resp.status_code == 500
+    assert resp.status_code == 404
     html = resp.data.decode()
-    assert SECRET not in html
     assert "Traceback" not in html
-    assert 'class="wv-dock"' in html  # calm shared shell, not a bare 500
-
-
-def test_new_artist_flow_does_not_redirect_loop(monkeypatch):
-    found_row = ("Some Artist", "an insight", dt.datetime(2026, 1, 1), '[{"name": "Track One", "playcount": 10}]')
-    fake_cursor, state = _fake_row_cursor(found_row, found_immediately=False)
-    monkeypatch.setattr(views_artist, "db_cursor", fake_cursor)
-
-    def fake_run_pipeline(artist_name):
-        state["pipeline_ran"] = True
-        return "an insight"
-
-    monkeypatch.setattr(views_artist, "run_pipeline", fake_run_pipeline)
-    client = dashboard.app.test_client()
-    _login(client, monkeypatch)
-    first = client.get("/artist/Some Artist")
-    assert first.status_code == 302
-    second = client.get(first.headers["Location"])
-    assert second.status_code == 200  # resolved after exactly one redirect
+    assert 'class="wv-dock"' in html  # calm shared shell
+    assert "Analyse Unknown Artist Xyz" in html
 
 
 # ── older-insight fallback ──────────────────────────────────────────

@@ -1,7 +1,6 @@
 """Tests for pure helper functions (no DB or network needed)."""
 
 import dashboard
-from spotify_source import format_spotify_summary
 
 
 def test_artist_titlecase_preserves_stylised_caps():
@@ -26,19 +25,3 @@ def test_render_markdown_renders_and_escapes():
     # Raw HTML in the source is escaped, never injected
     injected = str(dashboard.render_markdown("<script>alert(1)</script>"))
     assert "<script>" not in injected
-
-
-def test_format_spotify_summary():
-    data = {
-        "name": "Test Artist",
-        "followers": 1000,
-        "popularity": 50,
-        "genres": ["jazz", "soul"],
-        "top_tracks": [
-            {"name": "Song A", "popularity": 80, "duration_ms": 1, "preview_url": None}
-        ],
-    }
-    summary = format_spotify_summary(data)
-    assert "Test Artist" in summary
-    assert "Song A" in summary
-    assert "1,000" in summary  # thousands separator
