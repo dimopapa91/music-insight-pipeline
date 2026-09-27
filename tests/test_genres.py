@@ -99,7 +99,7 @@ def test_genre_page_renders_artists_photos_and_analysed_badge(monkeypatch):
     assert 'href="/artist/Massive%20Attack"' in grid and 'href="/artist/Portishead"' in grid
     assert "/ma/500x500-" in grid
     assert grid.count('class="gp-badge"') == 1          # only the analysed one
-    assert "1.2M Deezer fans" in grid
+    assert "1.2M fans" in grid and "Deezer" not in grid
     assert "<b>1</b> analysed on Waveline" in html
 
 

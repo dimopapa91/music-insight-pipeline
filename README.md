@@ -180,7 +180,7 @@ python3 email_digest.py         # send the weekly digest once
 ```
 
 In production the app runs as
-`gunicorn dashboard:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120`
+`gunicorn dashboard:app --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 120` (one process, so every request shares the same in-memory caches)
 (Railway start command) with `/robots.txt` as the healthcheck, and the digest runs from a
 separate Railway cron service (`python email_digest.py`, Mondays 08:00 UTC).
 

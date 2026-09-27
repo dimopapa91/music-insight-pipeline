@@ -513,7 +513,7 @@ def test_homepage_accessible_search_label_unchanged(monkeypatch):
 
 def test_homepage_title_and_meta_changed(monkeypatch):
     html = _home_html(monkeypatch)
-    assert "<title>Waveline — Follow the sound</title>" in html
+    assert "<title>Waveline · Follow the sound</title>" in html
     assert 'content="Explore artists, discover connections and shape your music taste with Waveline.' in html
 
 
@@ -522,9 +522,12 @@ def test_footer_copy_updated():
         html = f.read()
     assert "Music discovery, shaped by curiosity." in html
     assert "A living music-data signal" not in html
-    # data-source attribution preserved
-    assert "Last.fm, Spotify" in html
-    assert "Anthropic Claude" in html
+    # Source names were removed from the site chrome (27 Sep 2026);
+    # attribution lives on the About page.
+    assert "Last.fm, Spotify" not in html
+    assert "Anthropic Claude" not in html
+    about = open("templates/about.html").read()
+    assert "Last.fm" in about and "Spotify" in about and "Deezer" in about
 
 
 def test_secondary_chapter_search_form_removed_in_favour_of_quiet_link(monkeypatch):

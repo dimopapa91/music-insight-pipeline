@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}How Waveline works — Waveline{% endblock %}
+{% block title %}How Waveline works · Waveline{% endblock %}
 {% block description %}How Waveline is built: data sources, the Python pipeline, storage, AI insights, and deployment.{% endblock %}
 
 {% block head_extra %}
@@ -28,7 +28,7 @@
   <section class="wv-card wv-card-pad" style="margin-top:var(--wv-5);">
     <div class="ab-stage">
       <div class="n" aria-hidden="true">1</div>
-      <div><h3>Data sources</h3><p>Last.fm supplies listener counts, scrobbles, tags and similar-artist relationships. Spotify supplies genres and popularity via the Client Credentials flow. Deezer supplies artist artwork, fan counts, 30-second track previews and the trending-albums strip — no API key required.</p></div>
+      <div><h3>Data sources</h3><p>Last.fm supplies listener counts, scrobbles, tags and similar-artist relationships. Spotify supplies genres and popularity via the Client Credentials flow. Deezer supplies artist artwork, fan counts, 30-second track previews and the trending-albums strip, with no API key required.</p></div>
     </div>
     <div class="ab-stage">
       <div class="n" aria-hidden="true">2</div>
@@ -36,11 +36,11 @@
     </div>
     <div class="ab-stage">
       <div class="n" aria-hidden="true">3</div>
-      <div><h3>PostgreSQL storage</h3><p>Searches, insights, users, posts, follows, likes, comments and notifications are stored in Postgres via raw parameterised SQL — no ORM — so every search builds a durable, queryable history.</p></div>
+      <div><h3>PostgreSQL storage</h3><p>Searches, insights, users, posts, follows, likes, comments and notifications are stored in Postgres via raw parameterised SQL, with no ORM, so every search builds a durable, queryable history.</p></div>
     </div>
     <div class="ab-stage">
       <div class="n" aria-hidden="true">4</div>
-      <div><h3>Claude-generated insights</h3><p>Anthropic's Claude reads the merged listening data and writes the plain-language artist insight, comparison verdicts and taste profiles you see on Waveline — always labelled as AI-generated.</p></div>
+      <div><h3>Claude-generated insights</h3><p>Anthropic's Claude reads the merged listening data and writes the plain-language artist insight, comparison verdicts and taste profiles you see on Waveline, always labelled as AI-generated.</p></div>
     </div>
     <div class="ab-stage">
       <div class="n" aria-hidden="true">5</div>
@@ -52,7 +52,7 @@
     </div>
     <div class="ab-stage">
       <div class="n" aria-hidden="true">7</div>
-      <div><h3>Community system</h3><p>Accounts, follows, posts, likes, comments and notifications are built on the same database and Flask-Login session model as the rest of the app — no separate service.</p></div>
+      <div><h3>Community system</h3><p>Accounts, follows, posts, likes, comments and notifications are built on the same database and Flask-Login session model as the rest of the app, with no separate service.</p></div>
     </div>
   </section>
 

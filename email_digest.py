@@ -114,7 +114,7 @@ def build_html_email(rows, total_this_week):
 def build_text_email(rows, total_this_week):
     """Plain text fallback"""
     lines = [
-        f"MUSIC INSIGHT PIPELINE — Weekly Digest",
+        f"MUSIC INSIGHT PIPELINE · Weekly Digest",
         f"Week ending {datetime.now().strftime('%d %B %Y')}",
         f"{len(rows)} artists | {total_this_week} total searches this week",
         "=" * 50,
@@ -148,7 +148,7 @@ def send_digest():
         logging.info("No searches this week — skipping digest.")
         return
 
-    subject = f"🎵 Your Weekly Music Digest — {datetime.now().strftime('%d %b %Y')}"
+    subject = f"🎵 Your Weekly Music Digest · {datetime.now().strftime('%d %b %Y')}"
 
     try:
         resp = requests.post(

@@ -935,3 +935,9 @@ button.wv-del-btn:hover { color: var(--wv-danger); }
   .wv-chapter-num { font-size: 2.4rem; }
   .wv-container { padding: 0 var(--wv-4); }
 }
+
+/* ── Navigation progress bar (nav-progress.js) ─────────── */
+.wv-progress { position: fixed; top: 0; left: 0; height: 2px; width: 0; z-index: 10000; background: var(--wv-accent); pointer-events: none; opacity: 0; }
+.wv-progress.is-loading { opacity: 1; animation: wv-progress-run 8s cubic-bezier(.1, .7, .2, 1) forwards; }
+@keyframes wv-progress-run { 0% { width: 0; } 10% { width: 35%; } 40% { width: 70%; } 100% { width: 92%; } }
+@media (prefers-reduced-motion: reduce) { .wv-progress.is-loading { animation: none; width: 60%; } }
