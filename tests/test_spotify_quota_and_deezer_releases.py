@@ -270,17 +270,15 @@ def test_deezer_albums_empty_data_returns_empty_list(monkeypatch):
     assert services.get_deezer_trending_albums() == []
 
 
-def test_news_data_uses_deezer_and_lists_it_as_a_source(monkeypatch):
-    monkeypatch.setattr(services, "fetch_rss", lambda feed: [])
-    monkeypatch.setattr(services, "get_deezer_trending_albums",
-                        lambda: [{"name": "X", "artist": "Y", "image": "",
-                                   "url": "", "type": "Album", "date": ""}])
+def test_news_data_now_comes_from_independent_publications(monkeypatch):
+    # 27 Sep 2026: /news moved to scene-focused independent outlets; the
+    # Deezer chart is no longer part of it (get_deezer_trending_albums stays
+    # available for other callers).
+    import news_feeds
+    monkeypatch.setattr(news_feeds, "fetch_feed", lambda feed: [])
     services.clear_news_cache()
-    monkeypatch.setattr(services, "_last_releases", [])
-
     data = services.get_news_data()
-
-    assert data["releases_status"] == "live"
-    assert data["sources"][-1] == "Deezer"
-    assert "Spotify" not in data["sources"]
+    names = [s["name"] for s in data["sources"]]
+    assert "Deezer" not in names and "NME" not in names and "Pitchfork" not in names
+    assert "The Quietus" in names and "Bandcamp Daily" in names
     services.clear_news_cache()
