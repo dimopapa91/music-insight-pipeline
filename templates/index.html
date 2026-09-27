@@ -17,6 +17,12 @@
   .wv-boxlbl h2 { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(2rem, 4vw, 3rem); line-height: .95; text-transform: uppercase; margin: 8px 0 6px; overflow-wrap: anywhere; }
   .wv-boxlbl p { color: var(--wv-ink-2); font-size: .9rem; }
   .wv-boxlbl .go { display: inline-block; margin-top: 10px; font-family: var(--wv-font-display); font-weight: 700; font-size: .85rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-accent-ink); border-bottom: 1px solid var(--wv-accent); }
+  /* Hero label: compact, so it covers less of the artist photo */
+  .wv-feature .wv-boxlbl { right: auto; width: max-content; max-width: min(320px, calc(100% - 2 * var(--wv-4))); padding: 10px 14px 11px; }
+  .wv-feature .wv-boxlbl .k { font-size: .7rem; }
+  .wv-feature .wv-boxlbl h2 { font-size: clamp(1.4rem, 2.4vw, 1.9rem); margin: 4px 0 3px; }
+  .wv-feature .wv-boxlbl p { font-size: .8rem; }
+  .wv-feature .wv-boxlbl .go { margin-top: 6px; font-size: .74rem; }
 
   .wv-hero-side { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
   .wv-hero-inner { padding: var(--wv-7) var(--wv-6); }
@@ -42,6 +48,9 @@
     .wv-hero-inner { order: 1; padding: var(--wv-5) var(--wv-4); }
     .wv-feature { order: 2; border-right: 0; min-height: 0; aspect-ratio: 4 / 3.4; border-bottom: 1px solid var(--wv-border); }
     .wv-boxlbl { left: var(--wv-3); right: var(--wv-3); bottom: var(--wv-3); padding: 12px 14px; }
+    .wv-feature .wv-boxlbl { right: auto; max-width: calc(100% - 2 * var(--wv-3)); padding: 8px 11px 9px; }
+    .wv-feature .wv-boxlbl h2 { font-size: 1.3rem; }
+    .wv-feature .wv-boxlbl .go { display: none; }  /* the whole photo is the link */
     .wv-hero-searchrow .wv-btn { padding: 0 16px; }
   }
 
