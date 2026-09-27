@@ -61,3 +61,11 @@ def test_track_play_buttons_are_finger_sized():
     html = _read("templates/artist_profile.html")
     rule = re.search(r"\.ar-track \.nm \{([^}]*)\}", html).group(1)
     assert "min-height: 44px" in rule
+
+
+def test_hero_latest_search_label_is_compact_on_desktop_and_phone():
+    html = _read("templates/index.html")
+    assert ".wv-feature .wv-boxlbl { right: auto; width: max-content; max-width: min(320px" in html
+    phone = html[html.index("Mobile order: search first"):]
+    phone = phone[:phone.index("}\n  }") + 4]
+    assert ".wv-feature .wv-boxlbl .go { display: none; }" in phone
