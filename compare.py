@@ -77,7 +77,7 @@ Please provide:
 4. **Production comparison**: how do their production styles differ?
 5. **Verdict**: which artist has broader commercial appeal and why?
 
-Be specific, insightful and concise. Do not use em dashes (the "—" character); use commas, colons or separate sentences instead."""
+Be specific, insightful and concise. Do not use em dashes (the "—" character); use commas, colons or separate sentences instead. Do not mention where the data comes from and do not name any data platform (Last.fm, Spotify, Deezer, MusicBrainz); talk about the music and the listeners directly."""
 
     message = client.messages.create(
         model="claude-haiku-4-5-20251001",

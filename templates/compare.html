@@ -132,7 +132,7 @@
   <section class="wv-card cp-verdict" aria-labelledby="cp-verdict-h">
     <h2 id="cp-verdict-h">AI comparison</h2>
     {% if verdict %}
-    <div class="t">{{ verdict | markdown }}</div>
+    <div class="t">{{ verdict | clean_ai | markdown }}</div>
     {% else %}
     <div class="wv-notice wv-notice-info">The written comparison isn't available right now, but the top tracks above are still accurate. Try again in a moment.</div>
     {% endif %}

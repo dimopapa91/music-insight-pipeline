@@ -14,7 +14,7 @@ from flask_login import current_user
 from db import db_cursor
 from pipeline import run_pipeline
 from rate_limit import limiter
-from text_clean import strip_em_dashes
+from text_clean import strip_em_dashes, clean_ai_text
 from services import (
     get_similar_artists, get_artist_media, get_artist_events, get_artist_db,
     get_artist_photos, record_artist_open,
@@ -231,14 +231,14 @@ Insight: {(a_data.get('insight') or '')[:400]}
 {b_data['name']} top tracks: {', '.join(b_data['tracks'])}
 Insight: {(b_data.get('insight') or '')[:400]}
 
-Write a 2-paragraph comparison in plain prose. Cover: how their sounds and appeal differ, what they share, and which type of listener would prefer each. No markdown, no bullet points. Do not use em dashes (the "—" character); use commas, colons or separate sentences instead."""
+Write a 2-paragraph comparison in plain prose. Cover: how their sounds and appeal differ, what they share, and which type of listener would prefer each. No markdown, no bullet points. Do not use em dashes (the "—" character); use commas, colons or separate sentences instead. Do not mention where the data comes from and do not name any data platform (Last.fm, Spotify, Deezer, MusicBrainz); talk about the music and the listeners directly."""
     try:
         _client = _anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
         msg = _client.messages.create(model="claude-haiku-4-5-20251001", max_tokens=500, messages=[{"role": "user", "content": prompt}])
         # Belt and suspenders: the prompt already asks Claude not to use em
         # dashes, but that's a request, not a guarantee. Enforce it
         # deterministically before this is cached.
-        verdict = strip_em_dashes(msg.content[0].text)
+        verdict = clean_ai_text(msg.content[0].text)
         _compare_cache[key] = verdict
         return verdict
     except Exception as e:

@@ -30,6 +30,7 @@ from views_notifications import notifications_bp
 from views_messages import messages_bp
 from views_admin import admin_bp
 import lastfm_user
+from text_clean import clean_ai_text
 from mcp_server import mcp_bp
 from site_meta import site_meta_bp, add_security_headers, check_same_origin, static_url
 from agent_api import agent_api_bp, init_x402
@@ -143,6 +144,8 @@ app.jinja_env.filters["timeago"] = timeago
 app.jinja_env.filters["avatar_color"] = avatar_color
 app.jinja_env.filters["dz_size"] = deezer_image_size
 app.jinja_env.filters["compact"] = compact_number
+# AI copy only (never user posts): no em dashes, no data-source names.
+app.jinja_env.filters["clean_ai"] = clean_ai_text
 
 # ── Blueprints ──────────────────────────────────────────────────────
 app.register_blueprint(auth_bp)

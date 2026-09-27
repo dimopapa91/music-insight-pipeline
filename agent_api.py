@@ -47,6 +47,7 @@ from urllib.parse import parse_qs
 from flask import Blueprint, current_app, jsonify, request
 
 from db import db_cursor
+from text_clean import clean_ai_text
 
 agent_api_bp = Blueprint("agent_api", __name__)
 
@@ -437,7 +438,7 @@ def _insight_body(row):
     name, text, searched_at = row
     return {
         "artist": name,
-        "insight": text,
+        "insight": clean_ai_text(text),
         "generated_at": _utc_iso(searched_at),
         "source": SOURCE,
     }

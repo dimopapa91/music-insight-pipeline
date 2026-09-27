@@ -147,7 +147,7 @@
     {% endif %}
     {% if insight %}
     <a href="#insight" class="ar-hero-teaser">
-      {{ insight | truncate(150) }}
+      {{ insight | clean_ai | truncate(150) }}
       <span class="more">Read the full AI insight →</span>
     </a>
     {% endif %}
@@ -224,7 +224,7 @@
         {% else %}
         <span class="ar-ai-flag"><span class="dot" aria-hidden="true"></span>AI-generated</span>
         {% endif %}
-        <div class="ar-insight">{{ insight | markdown }}</div>
+        <div class="ar-insight">{{ insight | clean_ai | markdown }}</div>
         {% else %}
         <div class="wv-notice wv-notice-info">Written insight is temporarily unavailable. Artist data and tracks are still available.</div>
         {% endif %}
