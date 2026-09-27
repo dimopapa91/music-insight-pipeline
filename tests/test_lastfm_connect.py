@@ -181,3 +181,9 @@ def test_taste_card_script_draws_only_same_origin_images():
     js = open("static/js/taste-card.js").read()
     assert "toBlob" in js and "data.mark" in js
     assert "dzcdn" not in js
+
+
+def test_connect_card_sits_above_the_profile():
+    tpl = open("templates/taste_profile.html").read()
+    assert tpl.count('id="connect-lastfm"') == 1
+    assert tpl.index('id="connect-lastfm"') < tpl.index("state == 'logged_out'")
