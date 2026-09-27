@@ -1079,39 +1079,7 @@ def get_artist_db(name):
         return None
 
 
-# ── Music news (RSS + Deezer new releases) ──────────────────────────
-
-_news_cache = {"data": None, "fetched_at": 0}
-
-RSS_FEEDS = [
-    {"name": "Pitchfork",        "url": "https://pitchfork.com/rss/news/feed.xml",          "color": "#e00"},
-    {"name": "NME",              "url": "https://www.nme.com/feed",                          "color": "#ff6900"},
-    {"name": "The Guardian",     "url": "https://www.theguardian.com/music/rss",             "color": "#005689"},
-    {"name": "Resident Advisor", "url": "https://ra.co/xml/news.xml",                        "color": "#1da0c3"},
-]
-
-
-def fetch_rss(feed):
-    try:
-        resp = http_requests.get(feed["url"], timeout=6, headers={"User-Agent": "MusicInsightPipeline/1.0"})
-        root = ET.fromstring(resp.content)
-        ns = {"atom": "http://www.w3.org/2005/Atom"}
-        items = []
-        channel = root.find("channel")
-        entries = (channel.findall("item") if channel is not None else []) or root.findall("atom:entry", ns)
-        for entry in entries[:4]:
-            title = (entry.findtext("title") or entry.findtext("atom:title", namespaces=ns) or "").strip()
-            link  = (entry.findtext("link")  or entry.findtext("atom:link[@rel='alternate']", namespaces=ns) or "")
-            if not link:
-                link_el = entry.find("atom:link", ns)
-                link = link_el.get("href", "") if link_el is not None else ""
-            pub   = (entry.findtext("pubDate") or entry.findtext("atom:published", namespaces=ns) or "")
-            if title and link:
-                items.append({"title": title.replace("&amp;", "&"), "link": link.strip(), "pub": pub[:16], "source": feed["name"], "color": feed["color"]})
-        return items
-    except Exception:
-        return []
-
+# ── Music news (independent publications, see news_feeds.py) ───────
 
 def get_deezer_trending_albums(limit=12):
     """Deezer's albums chart (trending/popular albums), in the same shape
@@ -1149,43 +1117,14 @@ def get_deezer_trending_albums(limit=12):
         return []
 
 
-# Last successful releases, so a transient provider failure doesn't blank the section.
-_last_releases = []
-
-
 def get_news_data():
-    """Returns articles + releases + a releases_status ('live' | 'cached' | 'unavailable')
-    and the list of sources. Successfully loaded sections stay visible even if one
-    provider fails; the whole result is cached for an hour (cleared by refresh)."""
-    global _last_releases
-    if _news_cache["data"] and time.time() - _news_cache["fetched_at"] < 3600:
-        return _news_cache["data"]
-
-    articles = []
-    for feed in RSS_FEEDS:
-        articles.extend(fetch_rss(feed))
-
-    releases = get_deezer_trending_albums()
-    if releases:
-        _last_releases = releases
-        releases_status = "live"
-    elif _last_releases:
-        releases = _last_releases      # fall back to last good data
-        releases_status = "cached"
-    else:
-        releases_status = "unavailable"
-
-    data = {
-        "articles": articles,
-        "releases": releases,
-        "releases_status": releases_status,
-        "sources": [f["name"] for f in RSS_FEEDS] + ["Deezer"],
-    }
-    _news_cache["data"] = data
-    _news_cache["fetched_at"] = time.time()
-    return data
+    """Music news for /news. Since 27 Sep 2026 this comes from independent,
+    scene-focused publications (see news_feeds.py); the Deezer chart and the
+    mainstream outlets are gone."""
+    import news_feeds
+    return news_feeds.get_news()
 
 
 def clear_news_cache():
-    _news_cache["data"] = None
-    _news_cache["fetched_at"] = 0
+    import news_feeds
+    news_feeds.clear_cache()

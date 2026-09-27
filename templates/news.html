@@ -1,34 +1,51 @@
 {% extends "base.html" %}
-{% block title %}Music news · Waveline{% endblock %}
+{% block title %}{{ (scenes[scene] ~ ' · ') if scene else '' }}Music news · Waveline{% endblock %}
+{% block description %}Independent writing on the music scenes the charts miss: jazz, ambient, club music, underground hip-hop, psych and more.{% endblock %}
 
 {% block head_extra %}
 <style>
-  .nw-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--wv-4); flex-wrap: wrap; padding: var(--wv-7) 0 var(--wv-5); }
-  .nw-head h1 { font-family: var(--wv-font-display); font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 700; }
-  .nw-head p { color: var(--wv-muted); font-size: .9rem; margin-top: 4px; }
-  .nw-layout { display: grid; grid-template-columns: 1fr 360px; gap: var(--wv-6); align-items: start; }
-  @media (max-width: 900px) { .nw-layout { grid-template-columns: 1fr; } }
+  .nw-head { padding: var(--wv-7) 0 var(--wv-4); display: flex; align-items: flex-end; justify-content: space-between; gap: var(--wv-4); flex-wrap: wrap; }
+  .nw-head h1 { font-family: var(--wv-font-display); font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 700; line-height: .95; }
+  .nw-head p { color: var(--wv-muted); font-size: .95rem; margin-top: 8px; max-width: 56ch; }
+  .nw-scenes { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: var(--wv-5); border-bottom: 1px solid var(--wv-border); margin-bottom: var(--wv-5); }
+  .nw-scenes a { text-decoration: none; min-height: 34px; display: inline-flex; align-items: center; gap: 6px; }
+  .nw-scenes a[aria-current="page"] { background: var(--wv-accent); color: var(--wv-on-accent); border-color: var(--wv-accent); }
+  .nw-scenes .n { font-size: .7rem; opacity: .7; }
 
-  .nw-article { display: block; text-decoration: none; color: inherit; padding: var(--wv-4); margin-bottom: var(--wv-3); transition: border-color var(--wv-motion) var(--wv-ease), transform var(--wv-motion) var(--wv-ease); }
-  .nw-article:hover { border-color: var(--wv-accent); transform: translateY(-1px); }
-  .nw-source { font-family: var(--wv-font-display); font-size: .72rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: var(--wv-radius-pill); color: #fff; display: inline-block; }
-  .nw-title { font-size: .98rem; line-height: 1.45; color: var(--wv-ink); margin: 8px 0 6px; }
-  .nw-article:hover .nw-title { color: var(--wv-accent-ink); }
-  .nw-meta { font-size: .75rem; color: var(--wv-muted); }
+  .nw-layout { display: grid; grid-template-columns: 1fr 300px; gap: var(--wv-6); align-items: start; }
+  @media (max-width: 960px) { .nw-layout { grid-template-columns: 1fr; } }
 
-  .nw-releases { display: grid; grid-template-columns: 1fr 1fr; gap: var(--wv-3); }
-  .nw-rel { display: block; text-decoration: none; color: inherit; overflow: hidden; padding: 0; }
-  .nw-rel:hover { border-color: var(--wv-accent); }
-  .nw-rel img, .nw-rel .ph { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: var(--wv-surface-2); }
-  .nw-rel .ph { display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--wv-muted); }
-  .nw-rel-info { padding: 8px 10px; }
-  .nw-rel-name { font-size: .78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .nw-rel-artist { font-size: .72rem; color: var(--wv-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .nw-rel-type { font-size: .68rem; color: var(--wv-accent-ink); margin-top: 2px; }
+  .nw-kicker { font-family: var(--wv-font-display); font-weight: 700; font-size: .72rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); display: flex; gap: 8px; flex-wrap: wrap; }
+  .nw-kicker .src { color: var(--wv-accent-ink); }
 
-  .nw-sidecard { padding: var(--wv-4); margin-bottom: var(--wv-4); }
-  .nw-sources { display: flex; flex-wrap: wrap; gap: 6px; }
-  .nw-refreshbar { display: flex; align-items: center; gap: var(--wv-3); font-size: .8rem; color: var(--wv-muted); }
+  .nw-lead { display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--wv-5); text-decoration: none; color: inherit; padding-bottom: var(--wv-5); border-bottom: 1px solid var(--wv-border); margin-bottom: var(--wv-5); }
+  .nw-lead .img { aspect-ratio: 3 / 2; background: var(--wv-surface-2); overflow: hidden; }
+  .nw-lead img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .nw-lead h2 { font-family: var(--wv-font-display); font-weight: 700; font-size: clamp(1.5rem, 2.6vw, 2.2rem); line-height: 1.02; margin: 10px 0; }
+  .nw-lead:hover h2 { color: var(--wv-accent-ink); }
+  .nw-lead p { color: var(--wv-ink-2); font-size: .95rem; line-height: 1.6; }
+  @media (max-width: 700px) { .nw-lead { grid-template-columns: 1fr; } }
+
+  .nw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--wv-5) var(--wv-4); }
+  .nw-card { display: flex; flex-direction: column; text-decoration: none; color: inherit; }
+  .nw-card .img { aspect-ratio: 3 / 2; background: var(--wv-surface-2); overflow: hidden; margin-bottom: 10px; }
+  .nw-card img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--wv-motion-slow) var(--wv-ease); }
+  .nw-card:hover img { transform: scale(1.03); }
+  .nw-card .img.noimg { display: grid; place-items: center; font-family: var(--wv-font-display); font-weight: 700; font-size: 1.1rem; color: var(--wv-border-2); text-transform: uppercase; padding: var(--wv-3); text-align: center; }
+  .nw-card h3 { font-size: 1rem; line-height: 1.35; margin: 6px 0 6px; font-weight: 600; }
+  .nw-card:hover h3 { color: var(--wv-accent-ink); }
+  .nw-card p { font-size: .84rem; color: var(--wv-muted); line-height: 1.5; }
+
+  .nw-side { position: sticky; top: calc(var(--wv-header-h) + 16px); }
+  .nw-side .wv-card { padding: var(--wv-5); }
+  .nw-side h2 { font-family: var(--wv-font-display); font-weight: 700; font-size: .85rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-accent-ink); margin-bottom: var(--wv-3); }
+  .nw-side p { font-size: .84rem; color: var(--wv-muted); line-height: 1.55; margin-bottom: var(--wv-3); }
+  .nw-sources { list-style: none; padding: 0; margin: 0; }
+  .nw-sources li { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--wv-border); font-size: .86rem; }
+  .nw-sources a { color: var(--wv-ink); text-decoration: none; }
+  .nw-sources a:hover { color: var(--wv-accent-ink); }
+  .nw-sources span { color: var(--wv-muted); font-size: .75rem; text-align: right; }
+  .nw-refresh { margin-top: var(--wv-4); }
 </style>
 {% endblock %}
 
@@ -37,72 +54,57 @@
   <div class="nw-head">
     <div>
       <p class="wv-eyebrow">Music news</p>
-      <h1>What's happening in music</h1>
-      <p>Headlines from independent music press, plus trending albums.</p>
+      <h1>Beyond the charts</h1>
+      <p>Independent writing on the scenes you don't hear about everywhere else.</p>
     </div>
-    <form method="POST" action="/news/refresh" class="nw-refreshbar">
-      <button type="submit" class="wv-btn wv-btn-ghost wv-btn-sm">↻ Refresh</button>
-    </form>
   </div>
 
-  <div class="nw-layout">
+  <nav class="nw-scenes" aria-label="Scenes">
+    <a class="wv-chip" href="/news" {% if not scene %}aria-current="page"{% endif %}>All scenes</a>
+    {% for key, label in scenes.items() %}{% if counts.get(key) %}
+    <a class="wv-chip" href="/news?scene={{ key }}" {% if scene == key %}aria-current="page"{% endif %}>{{ label }} <span class="n">{{ counts[key] }}</span></a>
+    {% endif %}{% endfor %}
+  </nav>
 
-    <!-- HEADLINES -->
-    <section aria-labelledby="nw-headlines">
-      <div class="wv-section-head"><h2 class="wv-h2" id="nw-headlines">Headlines</h2></div>
+  <div class="nw-layout">
+    <section aria-label="Stories">
       {% if articles %}
-        {% for a in articles %}
-        <a class="wv-card nw-article" href="{{ a.link }}" target="_blank" rel="noopener noreferrer">
-          <span class="nw-source" style="background: {{ a.color }}">{{ a.source }}</span>
-          <div class="nw-title">{{ a.title }}</div>
-          {% if a.pub %}<div class="nw-meta">{{ a.pub }}</div>{% endif %}
+      {% set lead = articles[0] %}
+      <a class="nw-lead" href="{{ lead.link }}" target="_blank" rel="noopener noreferrer">
+        <div class="img">{% if lead.image %}<img src="{{ lead.image }}" alt="" loading="lazy">{% endif %}</div>
+        <div>
+          <div class="nw-kicker"><span class="src">{{ lead.source }}</span><span>{{ lead.scene_label }}</span>{% if lead.published %}<span>{{ lead.published | timeago }}</span>{% endif %}</div>
+          <h2>{{ lead.title }}</h2>
+          {% if lead.excerpt %}<p>{{ lead.excerpt }}</p>{% endif %}
+        </div>
+      </a>
+
+      <div class="nw-grid">
+        {% for a in articles[1:] %}
+        <a class="nw-card" href="{{ a.link }}" target="_blank" rel="noopener noreferrer">
+          {% if a.image %}<div class="img"><img src="{{ a.image }}" alt="" loading="lazy"></div>{% else %}<div class="img noimg">{{ a.source }}</div>{% endif %}
+          <div class="nw-kicker"><span class="src">{{ a.source }}</span>{% if a.published %}<span>{{ a.published | timeago }}</span>{% endif %}</div>
+          <h3>{{ a.title }}</h3>
+          {% if a.excerpt %}<p>{{ a.excerpt }}</p>{% endif %}
         </a>
         {% endfor %}
+      </div>
       {% else %}
-        <div class="wv-empty">
-          <h3>Headlines are unavailable right now</h3>
-          <p>We couldn't reach the news sources. Your other sections still work.</p>
-          <form method="POST" action="/news/refresh" style="margin-top:var(--wv-4);"><button class="wv-btn wv-btn-ghost wv-btn-sm">Try again</button></form>
-        </div>
+      <div class="wv-empty"><h3>The feeds are quiet right now</h3><p>Try again in a few minutes.</p></div>
       {% endif %}
     </section>
 
-    <!-- SIDE: NEW RELEASES + SOURCES -->
-    <aside>
-      <section class="wv-card nw-sidecard" aria-labelledby="nw-rel">
-        <div class="wv-section-head" style="margin-bottom:var(--wv-3);">
-          <h2 class="wv-h2" id="nw-rel" style="font-size:1rem;">Trending albums</h2>
-        </div>
-        {% if releases %}
-          {% if releases_status == 'cached' %}
-          <div class="wv-notice wv-notice-info" style="margin-bottom:var(--wv-3);font-size:.8rem;">Showing the latest chart we loaded; live data is temporarily unavailable.</div>
-          {% endif %}
-          <div class="nw-releases">
-            {% for r in releases %}
-            <a class="wv-card nw-rel" href="{{ r.url }}" target="_blank" rel="noopener noreferrer">
-              {% if r.image %}<img src="{{ r.image }}" alt="" loading="lazy">{% else %}<div class="ph" aria-hidden="true">♪</div>{% endif %}
-              <div class="nw-rel-info">
-                <div class="nw-rel-name">{{ r.name }}</div>
-                <div class="nw-rel-artist">{{ r.artist | titlecase }}</div>
-                <div class="nw-rel-type">{{ r.type }}{% if r.date %} · {{ r.date }}{% endif %}</div>
-              </div>
-            </a>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="wv-notice wv-notice-info" style="font-size:.85rem;align-items:flex-start;">
-            <span>Trending albums are temporarily unavailable. Headlines above are unaffected.</span>
-          </div>
-          <form method="POST" action="/news/refresh" style="margin-top:var(--wv-3);"><button class="wv-btn wv-btn-ghost wv-btn-sm">Retry</button></form>
-        {% endif %}
-      </section>
-
-      <section class="wv-card nw-sidecard" aria-labelledby="nw-src">
-        <div class="wv-section-head" style="margin-bottom:var(--wv-3);"><h2 class="wv-h2" id="nw-src" style="font-size:1rem;">Sources</h2></div>
-        <div class="nw-sources">
-          {% for s in sources %}<span class="wv-chip wv-btn-sm" style="cursor:default;">{{ s }}</span>{% endfor %}
-        </div>
-      </section>
+    <aside class="nw-side" aria-labelledby="nw-sources-h">
+      <div class="wv-card">
+        <h2 id="nw-sources-h">Who we read</h2>
+        <p>Independent publications that go deep on their scenes. Every story links to the original.</p>
+        <ul class="nw-sources">
+          {% for s in sources %}<li><a href="{{ s.home }}" target="_blank" rel="noopener noreferrer">{{ s.name }}</a><span>{{ s.scene }}</span></li>{% endfor %}
+        </ul>
+        <form method="POST" action="/news/refresh" class="nw-refresh">
+          <button type="submit" class="wv-btn wv-btn-ghost wv-btn-sm">↻ Refresh</button>
+        </form>
+      </div>
     </aside>
   </div>
 </div>
