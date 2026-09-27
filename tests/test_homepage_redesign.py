@@ -213,3 +213,13 @@ def test_just_analysed_strip_lists_recent_artists(monkeypatch):
 def test_just_analysed_strip_hidden_when_nothing_recent(monkeypatch):
     html = _home(monkeypatch, [], {"recent": [], })
     assert 'class="wv-pulse"' not in html
+
+
+def test_desktop_hero_photo_is_square_and_artist_sits_beside_it(monkeypatch):
+    row = _Row("J Dilla", "https://cdn-images.dzcdn.net/images/artist/abc/250x250-000000-80-0-0.jpg")
+    html = _home(monkeypatch, [row], {"recent": []})
+    tpl = open("templates/index.html").read()
+    assert "grid-template-columns: var(--hero-h) 1fr" in tpl      # square photo column
+    now = html[html.index('class="wv-now"'):html.index('id="search-form"')]
+    assert "J Dilla" in now and "Open the analysis" in now and "An insight." in now
+    assert ".wv-now { display: none; }" in tpl                     # phones keep the photo label
