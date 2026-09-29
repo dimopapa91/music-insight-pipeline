@@ -45,4 +45,16 @@ def test_header_outlines_use_the_subtle_border():
     for sel in (".wv-iconbtn {", ".wv-profilemenu-trigger {", ".wv-searchbtn {"):
         rule = css[css.index(sel):]
         rule = rule[:rule.index("}")]
-        assert "1px solid var(--wv-border);" in rule, sel
+        assert "var(--wv-hair) solid var(--wv-border);" in rule, sel
+
+
+def test_type_scale_hairlines_and_quiet_hover():
+    css = open("static/css/waveline.css").read()
+    assert "html { scroll-behavior: smooth; font-size: 15px; }" in css
+    assert "font-size: 1rem;" in css[css.index("body {"):css.index("body {") + 300]
+    assert ":root { --wv-hair: .5px; }" in css                       # hairlines on retina
+    assert "1px solid var(--wv-border" not in css                    # every neutral border uses the hairline token
+    for sel in (".wv-iconbtn:hover", ".wv-searchbtn:hover", ".wv-chip:hover", ".wv-btn-ghost:hover"):
+        rule = css[css.index(sel):]
+        rule = rule[:rule.index("}")]
+        assert "var(--wv-accent-line)" in rule, sel                  # subtle lavender on hover

@@ -8,7 +8,7 @@
      Editorial header, a composer that reads like a blank page, underline
      tabs, and a quiet side column. Post/comment styles are shared in
      waveline.css via _post_card.html. */
-  .cm-head { border-bottom: 1px solid var(--wv-border); }
+  .cm-head { border-bottom: var(--wv-hair) solid var(--wv-border); }
   .cm-head-inner { max-width: 1120px; margin: 0 auto; padding: var(--wv-7) var(--wv-5) var(--wv-5); }
   .cm-head h1 { font-size: clamp(2.4rem, 6vw, 4.4rem); font-weight: 700; margin-top: var(--wv-3); }
   .cm-head p.sub { color: var(--wv-ink-2); font-size: 1.05rem; margin-top: var(--wv-3); max-width: 52ch; }
@@ -17,14 +17,14 @@
   @media (max-width: 960px) { .cm-layout { grid-template-columns: 1fr; gap: var(--wv-6); } .cm-aside { order: 2; } }
 
   /* Composer */
-  .cm-compose { border: 1px solid var(--wv-border-2); background: var(--wv-bg-raised); margin-bottom: var(--wv-6); transition: border-color var(--wv-motion) var(--wv-ease); }
+  .cm-compose { border: var(--wv-hair) solid var(--wv-border-2); background: var(--wv-bg-raised); margin-bottom: var(--wv-6); transition: border-color var(--wv-motion) var(--wv-ease); }
   .cm-compose:focus-within { border-color: var(--wv-accent); }
   .cm-compose-top { display: flex; gap: 14px; padding: var(--wv-4) var(--wv-4) 0; }
   .cm-compose-top .who { flex-shrink: 0; padding-top: 4px; }
   .cm-compose textarea { flex: 1; min-width: 0; min-height: 96px; border: 0; background: transparent; color: var(--wv-ink); resize: vertical; font-family: var(--wv-font-body); font-size: 1.08rem; line-height: 1.6; padding: 4px 0 var(--wv-3); }
   .cm-compose textarea::placeholder { color: var(--wv-muted); }
   .cm-compose textarea:focus { outline: none; }
-  .cm-compose-bar { display: flex; align-items: center; gap: var(--wv-3); padding: 10px var(--wv-4); border-top: 1px solid var(--wv-border); flex-wrap: wrap; }
+  .cm-compose-bar { display: flex; align-items: center; gap: var(--wv-3); padding: 10px var(--wv-4); border-top: var(--wv-hair) solid var(--wv-border); flex-wrap: wrap; }
   .cm-tag { flex: 1; min-width: 180px; display: flex; align-items: center; gap: 8px; color: var(--wv-muted); }
   .cm-tag .wv-i { width: 16px; height: 16px; color: var(--wv-accent-ink); }
   .cm-tag input { flex: 1; min-width: 0; border: 0; border-bottom: 1px solid transparent; background: transparent; color: var(--wv-ink); font-family: var(--wv-font-body); font-size: .95rem; height: 38px; padding: 0 2px; }
@@ -35,11 +35,11 @@
   .cm-compose-bar .wv-btn { min-height: 40px; padding: 0 22px; }
   .cm-suggest { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 0 var(--wv-4) var(--wv-3); }
   .cm-suggest .lbl { font-family: var(--wv-font-display); font-weight: 700; font-size: .74rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); margin-right: 4px; }
-  .cm-suggest button { font-family: var(--wv-font-display); font-weight: 700; font-size: .76rem; letter-spacing: .6px; text-transform: uppercase; color: var(--wv-ink-2); background: transparent; border: 1px solid var(--wv-border-2); padding: 4px 10px; min-height: 30px; cursor: pointer; }
-  .cm-suggest button:hover { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
+  .cm-suggest button { font-family: var(--wv-font-display); font-weight: 700; font-size: .76rem; letter-spacing: .6px; text-transform: uppercase; color: var(--wv-ink-2); background: transparent; border: var(--wv-hair) solid var(--wv-border-2); padding: 4px 10px; min-height: 30px; cursor: pointer; }
+  .cm-suggest button:hover { border-color: var(--wv-accent-line); color: var(--wv-accent-ink); }
 
   /* Guest invitation */
-  .cm-intro { border: 1px solid var(--wv-border-2); padding: var(--wv-6) var(--wv-5); margin-bottom: var(--wv-6); background: var(--wv-bg-raised); }
+  .cm-intro { border: var(--wv-hair) solid var(--wv-border-2); padding: var(--wv-6) var(--wv-5); margin-bottom: var(--wv-6); background: var(--wv-bg-raised); }
   .cm-intro h2 { font-family: var(--wv-font-display); font-weight: 700; font-size: 1.8rem; line-height: 1; text-transform: uppercase; }
   .cm-intro p { color: var(--wv-ink-2); margin-top: var(--wv-3); max-width: 50ch; }
   .cm-intro ul { list-style: none; margin: var(--wv-4) 0 0; display: grid; gap: 8px; }
@@ -48,20 +48,20 @@
   .cm-intro .row { display: flex; gap: var(--wv-3); margin-top: var(--wv-5); flex-wrap: wrap; }
 
   /* Underline tabs */
-  .cm-tabs { display: flex; gap: var(--wv-5); border-bottom: 1px solid var(--wv-border); margin-bottom: var(--wv-2); }
+  .cm-tabs { display: flex; gap: var(--wv-5); border-bottom: var(--wv-hair) solid var(--wv-border); margin-bottom: var(--wv-2); }
   .cm-tab { font-family: var(--wv-font-display); font-weight: 700; font-size: .95rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); text-decoration: none; padding: 12px 0; margin-bottom: -1px; border-bottom: 2px solid transparent; min-height: 44px; display: inline-flex; align-items: center; }
   .cm-tab:hover { color: var(--wv-ink); }
   .cm-tab[aria-current="page"] { color: var(--wv-ink); border-bottom-color: var(--wv-accent); }
 
   .cm-tabs + .wv-post { border-top: none; }
   .inline { display: inline; }
-  .cm-pager { display: flex; align-items: center; justify-content: space-between; margin-top: var(--wv-5); padding-top: var(--wv-4); border-top: 1px solid var(--wv-border); }
+  .cm-pager { display: flex; align-items: center; justify-content: space-between; margin-top: var(--wv-5); padding-top: var(--wv-4); border-top: var(--wv-hair) solid var(--wv-border); }
   .cm-pager .pg { font-family: var(--wv-font-display); font-weight: 600; font-size: .8rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); }
 
   /* Side column */
   .cm-aside { display: grid; gap: var(--wv-5); position: sticky; top: calc(var(--wv-header-h) + var(--wv-4)); }
   @media (max-width: 960px) { .cm-aside { position: static; } }
-  .cm-box { border: 1px solid var(--wv-border); padding: var(--wv-4) var(--wv-4) var(--wv-5); }
+  .cm-box { border: var(--wv-hair) solid var(--wv-border); padding: var(--wv-4) var(--wv-4) var(--wv-5); }
   .cm-box h3 { font-family: var(--wv-font-display); font-weight: 700; font-size: .82rem; letter-spacing: 1.2px; text-transform: uppercase; color: var(--wv-muted); margin-bottom: var(--wv-3); }
   .cm-box p { font-size: .9rem; color: var(--wv-ink-2); line-height: 1.6; }
   .cm-box ol { margin: 0; padding: 0; list-style: none; counter-reset: g; display: grid; gap: 10px; }

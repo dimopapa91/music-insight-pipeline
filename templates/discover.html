@@ -12,7 +12,7 @@
   .dc-search form { display: flex; gap: 8px; max-width: 480px; }
   .dc-search input {
     flex: 1; min-width: 0; font-family: var(--wv-font-body); font-size: .92rem;
-    border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius-pill);
+    border: var(--wv-hair) solid var(--wv-border-2); border-radius: var(--wv-radius-pill);
     padding: 0 18px; height: 46px; background: var(--wv-surface-2); color: var(--wv-ink);
   }
   .dc-search input:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); }
@@ -26,7 +26,7 @@
 
   .dc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--wv-4); }
 
-  .dc-card { display: flex; flex-direction: column; gap: 10px; padding: var(--wv-4); background: var(--wv-surface); border: 1px solid var(--wv-border); border-radius: var(--wv-radius-lg); }
+  .dc-card { display: flex; flex-direction: column; gap: 10px; padding: var(--wv-4); background: var(--wv-surface); border: var(--wv-hair) solid var(--wv-border); border-radius: var(--wv-radius-lg); }
   .dc-avatar { flex-shrink: 0; }
   .dc-name { font-family: var(--wv-font-display); font-weight: 700; font-size: 1rem; color: var(--wv-ink); text-decoration: none; overflow-wrap: anywhere; }
   .dc-name:hover { color: var(--wv-accent-ink); }
@@ -36,7 +36,7 @@
   .dc-reason { font-size: .8rem; color: var(--wv-ink-2); margin-top: 4px; }
   .dc-reason strong { color: var(--wv-accent-ink); }
   .dc-reason-muted { color: var(--wv-muted); }
-  .dc-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--wv-3); margin-top: auto; padding-top: var(--wv-3); border-top: 1px solid var(--wv-border); }
+  .dc-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--wv-3); margin-top: auto; padding-top: var(--wv-3); border-top: var(--wv-hair) solid var(--wv-border); }
   .dc-followers { font-family: var(--wv-font-display); font-weight: 600; font-size: .77rem; letter-spacing: .6px; text-transform: uppercase; color: var(--wv-muted); }
 
   @media (max-width: 560px) {
