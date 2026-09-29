@@ -8,20 +8,20 @@
   .adm-head h1 { font-family: var(--wv-font-display); font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 700; letter-spacing: -.4px; }
   .adm-note { font-size: .84rem; color: var(--wv-muted); margin-top: 8px; max-width: 70ch; }
   .adm-section { margin-top: var(--wv-7); }
-  .adm-section h2 { font-family: var(--wv-font-display); font-weight: 600; font-size: .94rem; letter-spacing: 1.6px; text-transform: uppercase; color: var(--wv-accent-ink); border-bottom: 1px solid var(--wv-border); padding-bottom: 10px; margin-bottom: var(--wv-4); }
+  .adm-section h2 { font-family: var(--wv-font-display); font-weight: 600; font-size: .94rem; letter-spacing: 1.6px; text-transform: uppercase; color: var(--wv-accent-ink); border-bottom: var(--wv-hair) solid var(--wv-border); padding-bottom: 10px; margin-bottom: var(--wv-4); }
   .adm-section h3 { font-family: var(--wv-font-display); font-weight: 600; font-size: .86rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); margin: var(--wv-5) 0 var(--wv-3); }
 
   /* Unified data strip — one bordered instrument, not a stack of KPI cards */
-  .adm-stats { display: flex; flex-wrap: wrap; border: 1px solid var(--wv-border); border-radius: var(--wv-radius-lg); background: var(--wv-surface); }
-  .adm-stat { flex: 1 1 150px; padding: var(--wv-4); border-left: 1px solid var(--wv-border); }
+  .adm-stats { display: flex; flex-wrap: wrap; border: var(--wv-hair) solid var(--wv-border); border-radius: var(--wv-radius-lg); background: var(--wv-surface); }
+  .adm-stat { flex: 1 1 150px; padding: var(--wv-4); border-left: var(--wv-hair) solid var(--wv-border); }
   .adm-stat:first-child { border-left: none; }
-  @media (max-width: 700px) { .adm-stat { flex: 1 1 45%; border-left: none; border-top: 1px solid var(--wv-border); } .adm-stat:nth-child(-n+2) { border-top: none; } }
+  @media (max-width: 700px) { .adm-stat { flex: 1 1 45%; border-left: none; border-top: var(--wv-hair) solid var(--wv-border); } .adm-stat:nth-child(-n+2) { border-top: none; } }
   .adm-stat .l { font-family: var(--wv-font-display); font-weight: 600; font-size: .72rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); }
   .adm-stat .v { font-family: var(--wv-font-display); font-weight: 700; font-size: 1.3rem; margin-top: 4px; color: var(--wv-accent-ink); }
 
   .adm-table-wrap { overflow-x: auto; }
   .adm-table { width: 100%; border-collapse: collapse; font-size: .86rem; }
-  .adm-table th, .adm-table td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--wv-border); white-space: nowrap; }
+  .adm-table th, .adm-table td { text-align: left; padding: 9px 12px; border-bottom: var(--wv-hair) solid var(--wv-border); white-space: nowrap; }
   .adm-table td:first-child, .adm-table th:first-child { padding-left: var(--wv-4); }
   .adm-table th { font-family: var(--wv-font-display); font-weight: 600; font-size: .74rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); }
   .adm-table tr:last-child td { border-bottom: none; }

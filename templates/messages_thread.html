@@ -7,7 +7,7 @@
   .dm-thread-back { font-family: var(--wv-font-display); font-weight: 600; font-size: .84rem; letter-spacing: 1px; text-transform: uppercase; color: var(--wv-muted); text-decoration: none; }
   .dm-thread-back:hover { color: var(--wv-accent-ink); }
 
-  .dm-thread-head { display: flex; align-items: center; gap: 12px; margin-top: var(--wv-4); padding-bottom: var(--wv-4); border-bottom: 1px solid var(--wv-border); flex-wrap: wrap; }
+  .dm-thread-head { display: flex; align-items: center; gap: 12px; margin-top: var(--wv-4); padding-bottom: var(--wv-4); border-bottom: var(--wv-hair) solid var(--wv-border); flex-wrap: wrap; }
   .dm-thread-avatar { flex-shrink: 0; }
   .dm-thread-identity { flex: 1; min-width: 0; }
   .dm-thread-name { display: block; font-family: var(--wv-font-display); font-weight: 700; font-size: 1.05rem; color: var(--wv-ink); }
@@ -20,7 +20,7 @@
   .dm-bubble-wrap { max-width: 78%; }
   .dm-bubble {
     padding: 10px 14px; border-radius: var(--wv-radius-lg);
-    background: var(--wv-surface-2); color: var(--wv-ink); border: 1px solid var(--wv-border);
+    background: var(--wv-surface-2); color: var(--wv-ink); border: var(--wv-hair) solid var(--wv-border);
     font-size: .92rem; line-height: 1.55; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: anywhere;
   }
   .dm-row.is-own .dm-bubble { background: var(--wv-accent); color: var(--wv-on-accent); border-color: transparent; }
@@ -29,7 +29,7 @@
 
   .dm-composer textarea {
     width: 100%; min-height: 84px; font-family: var(--wv-font-body); font-size: .95rem;
-    border: 1px solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 12px;
+    border: var(--wv-hair) solid var(--wv-border-2); border-radius: var(--wv-radius); padding: 12px;
     background: var(--wv-surface-2); color: var(--wv-ink); resize: vertical;
   }
   .dm-composer textarea:focus { outline: none; border-color: var(--wv-accent); background: var(--wv-surface); }

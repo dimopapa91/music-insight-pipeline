@@ -17,7 +17,7 @@
     background:
       radial-gradient(120% 160% at 8% 100%, color-mix(in srgb, var(--pf-glow) 34%, transparent), transparent 62%),
       linear-gradient(155deg, var(--wv-surface-2), var(--wv-bg) 72%);
-    border: 1px solid var(--wv-border);
+    border: var(--wv-hair) solid var(--wv-border);
   }
   .pf-hero::after {
     content: ""; position: absolute; inset: 0; opacity: .05; pointer-events: none;
@@ -26,7 +26,7 @@
   @media (max-width: 700px) { .pf-hero { height: 150px; } }
   @media (max-width: 480px) { .pf-hero { height: 118px; border-radius: var(--wv-radius); } }
 
-  .pf-identity { display: flex; gap: var(--wv-5); padding-bottom: var(--wv-6); border-bottom: 1px solid var(--wv-border); }
+  .pf-identity { display: flex; gap: var(--wv-5); padding-bottom: var(--wv-6); border-bottom: var(--wv-hair) solid var(--wv-border); }
   .pf-avatar { margin-top: -64px; flex-shrink: 0; position: relative; z-index: 1; }
   .pf-identity-body { flex: 1; min-width: 0; padding-top: 10px; }
   .pf-identity-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--wv-3); flex-wrap: wrap; }
@@ -68,8 +68,8 @@
   .pf-more[open] summary { margin-bottom: var(--wv-3); }
   /* Social links: one tidy row of labelled buttons. */
   .pf-links { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: var(--wv-4) 0 0; padding: 0; }
-  .pf-link { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; border: 1px solid var(--wv-border-2); color: var(--wv-ink); text-decoration: none; font-size: .84rem; }
-  a.pf-link:hover { border-color: var(--wv-accent); color: var(--wv-accent-ink); }
+  .pf-link { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; border: var(--wv-hair) solid var(--wv-border-2); color: var(--wv-ink); text-decoration: none; font-size: .84rem; }
+  a.pf-link:hover { border-color: var(--wv-accent-line); color: var(--wv-accent-ink); }
   .pf-link-ic { width: 14px; height: 14px; display: block; }
   body.light .pf-link-ic { filter: invert(1); }
   .pf-link .wv-i { width: 14px; height: 14px; }
@@ -78,7 +78,7 @@
 
   .pf-activity-inner { max-width: 720px; }
 
-  .pf-cta { margin-top: var(--wv-8); padding-top: var(--wv-6); border-top: 1px solid var(--wv-border); text-align: center; }
+  .pf-cta { margin-top: var(--wv-8); padding-top: var(--wv-6); border-top: var(--wv-hair) solid var(--wv-border); text-align: center; }
   .pf-cta p { color: var(--wv-muted); font-size: .92rem; margin: 0 auto var(--wv-4); max-width: 46ch; }
 </style>
 {% endblock %}
