@@ -33,7 +33,7 @@ SITE_URL = os.getenv("SITE_URL", "https://wearewaveline.com").rstrip("/")
 # Fonts (stylesheet on fonts.googleapis.com, files on fonts.gstatic.com).
 _CSP = "; ".join([
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
+    "script-src 'self' 'unsafe-inline' https://api.deezer.com",   # photo-fallback.js (JSONP)
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https:",
     "media-src 'self' https:",

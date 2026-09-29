@@ -50,7 +50,7 @@ def test_header_outlines_use_the_subtle_border():
 
 def test_type_scale_hairlines_and_quiet_hover():
     css = open("static/css/waveline.css").read()
-    assert "html { scroll-behavior: smooth; font-size: 15px; }" in css
+    assert "html { scroll-behavior: smooth; font-size: 14.5px; }" in css
     assert "font-size: 1rem;" in css[css.index("body {"):css.index("body {") + 300]
     assert ":root { --wv-hair: .5px; }" in css                       # hairlines on retina
     assert "1px solid var(--wv-border" not in css                    # every neutral border uses the hairline token

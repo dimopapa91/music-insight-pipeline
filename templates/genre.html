@@ -65,7 +65,7 @@
   {% for a in artists %}
   <a class="gp-card" href="/artist/{{ a.name | urlencode }}">
     <div class="gp-ph">
-      {% if a.image %}<img src="{{ a.image | dz_size(500) }}" alt="" {% if loop.index > 5 %}loading="lazy" {% endif %}width="500" height="500">{% else %}<span class="ini" aria-hidden="true">{{ a.name[0] | upper }}</span>{% endif %}
+      {% if a.image %}<img src="{{ a.image | dz_size(500) }}" alt="" {% if loop.index > 5 %}loading="lazy" {% endif %}width="500" height="500">{% else %}<span class="ini" aria-hidden="true" data-wv-photo="{{ a.name }}">{{ a.name[0] | upper }}</span>{% endif %}
       <span class="gp-rank">{{ "%02d" | format(loop.index) }}</span>
       {% if a.analysed %}<span class="gp-badge">Analysed</span>{% endif %}
     </div>

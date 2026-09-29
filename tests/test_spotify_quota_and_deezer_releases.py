@@ -132,7 +132,11 @@ def test_negative_cache_expires_so_spotify_is_retried_later(monkeypatch):
     assert services.get_spotify_artist("Radiohead") == {}
     # Age the negative entry past its (shorter) TTL — the quota is meant to
     # recover, so this must not be a permanent blackout.
-    services._spotify_artist_cache["radiohead"]["at"] -= services._SPOTIFY_ARTIST_NEG_TTL + 1
+    # A 429 pauses Spotify (honouring Retry-After) instead of caching a
+    # blank; once the pause is over it is asked again.
+    assert services.photo_store.paused("spotify")
+    assert services.get_spotify_artist("Radiohead") == {} and len(calls) == 1   # paused: no request
+    services.photo_store.reset_pauses()
 
     assert services.get_spotify_artist("Radiohead")["popularity"] == 82
     assert len(calls) == 2
@@ -148,6 +152,7 @@ def test_quota_and_generic_errors_are_logged_distinctly(monkeypatch, caplog):
 
     caplog.clear()
     services._spotify_artist_cache.clear()
+    services.photo_store.reset_pauses()
     monkeypatch.setattr(services.http_requests, "get",
                         lambda *a, **k: _FakeResponse(503))
     with caplog.at_level("WARNING"):

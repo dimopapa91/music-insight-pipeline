@@ -18,6 +18,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 
 import requests as http_requests
+import photo_store
 import markdown as markdown_lib
 from markupsafe import Markup
 
@@ -172,6 +173,8 @@ def get_spotify_artist(artist_name):
         _spotify_artist_cache[key] = {"data": data, "at": time.time()}
         return data
 
+    if photo_store.paused("spotify"):
+        return {}        # refused recently: don't spend (or cache) anything
     token = get_spotify_token()
     if not token:
         return _remember({})
@@ -185,6 +188,8 @@ def get_spotify_artist(artist_name):
             # telling apart in the logs. Never log the token or headers.
             if resp.status_code == 429:
                 logger.warning("Spotify search quota exceeded (429) for %r", artist_name)
+                photo_store.pause("spotify", _retry_after(resp, 600))
+                return {}
             else:
                 logger.warning("Spotify search HTTP %s for %r", resp.status_code, artist_name)
             return _remember({})
@@ -288,9 +293,15 @@ def _deezer_artist_card(name):
             return entry["data"]
 
     def _remember(card, ok):
+        if not ok:
+            last = photo_store.load(name)
+            if last:
+                card = {"name": name, "image": last["image"], "nb_fan": last["nb_fan"]}
         _deezer_card_cache[key] = {"data": card, "at": time.time(), "ok": ok}
         return card
 
+    if photo_store.paused("deezer"):
+        return _remember({"name": name, "image": "", "nb_fan": 0}, False)
     try:
         resp = http_requests.get(
             "https://api.deezer.com/search/artist",
@@ -298,6 +309,8 @@ def _deezer_artist_card(name):
             timeout=4
         )
         data = resp.json()
+        if _deezer_refused(resp, data):
+            return _remember({"name": name, "image": "", "nb_fan": 0}, False)
         if data.get("total", 0) > 0:
             d = data["data"][0]
             return _remember({
@@ -344,6 +357,25 @@ _ARTIST_PHOTO_NEG_TTL = 3600        # a real "no such artist on Deezer"
 # Retry errors after two minutes instead.
 _ARTIST_PHOTO_ERR_TTL = 120
 
+
+def _retry_after(resp, default):
+    try:
+        return int(float(resp.headers.get("Retry-After", default)))
+    except Exception:
+        return default
+
+
+def _deezer_refused(resp, payload=None):
+    """True (and pause Deezer for 10 min) when Deezer is refusing us:
+    HTTP 403/429 or its quota error (code 4) in a 200 body."""
+    status = getattr(resp, "status_code", 200)
+    err = (payload or {}).get("error") if isinstance(payload, dict) else None
+    quota = isinstance(err, dict) and err.get("code") == 4
+    if status in (403, 429) or quota:
+        photo_store.pause("deezer", 600)
+        return True
+    return False
+
 _DEEZER_SIZE_RE = re.compile(r"/(\d+)x\1-")
 
 
@@ -373,17 +405,36 @@ def get_artist_photo(name):
         if time.time() - entry["at"] < ttl:
             return entry["data"]
 
+    stored = None
+    if not entry:
+        # Cold memory (fresh deploy): a recent stored photo needs no Deezer call.
+        stored = photo_store.load(name)
+        if stored and stored["fresh"]:
+            data = {"image": stored["image"], "nb_fan": stored["nb_fan"]}
+            _artist_photo_cache[key] = {"data": data, "at": time.time(), "ok": True}
+            return data
+
     def _remember(data, ok):
-        # Never replace a good cached photo with an error result.
-        if not ok and entry and entry["ok"] and entry["data"]["image"]:
-            return entry["data"]
+        # Never replace a good photo with an error result: fall back to the
+        # one in memory, then the one stored in the database.
+        if not ok:
+            if entry and entry["ok"] and entry["data"]["image"]:
+                return entry["data"]
+            last = stored if stored is not None else photo_store.load(name)
+            if last:
+                data = {"image": last["image"], "nb_fan": last["nb_fan"]}
+        elif data["image"]:
+            photo_store.save(name, data["image"], data["nb_fan"])
         _artist_photo_cache[key] = {"data": data, "at": time.time(), "ok": ok}
         return data
 
+    if photo_store.paused("deezer"):
+        return _remember(empty, False)
     try:
         resp = http_requests.get("https://api.deezer.com/search/artist",
                                  params={"q": name, "limit": 10}, timeout=4)
         payload = resp.json()
+        _deezer_refused(resp, payload)
         if getattr(resp, "status_code", 200) != 200 or "error" in payload:
             return _remember(empty, False)          # quota/5xx: retry soon
         results = payload.get("data", []) or []
@@ -756,6 +807,8 @@ def get_spotify_artist_by_id(spotify_id):
         _spotify_by_id_cache[spotify_id] = {"data": data, "at": time.time()}
         return data
 
+    if photo_store.paused("spotify"):
+        return {}
     token = get_spotify_token()
     if not token:
         return _remember({})
@@ -768,6 +821,8 @@ def get_spotify_artist_by_id(spotify_id):
             # is a different problem from a generic API error.
             if resp.status_code == 429:
                 logger.warning("Spotify quota exceeded (429) for artist id %r", spotify_id)
+                photo_store.pause("spotify", _retry_after(resp, 600))
+                return {}
             else:
                 logger.warning("Spotify artist HTTP %s for id %r", resp.status_code, spotify_id)
             return _remember({})
@@ -801,8 +856,11 @@ def get_deezer_artist_by_id(deezer_id):
         _deezer_by_id_cache[deezer_id] = {"data": data, "at": time.time(), "ok": ok}
         return data
 
+    if photo_store.paused("deezer"):
+        return empty       # not cached: retried once the pause ends
     try:
         resp = http_requests.get(f"https://api.deezer.com/artist/{deezer_id}", timeout=5)
+        _deezer_refused(resp)
         if resp.status_code != 200:
             logger.warning("Deezer artist HTTP %s for id %r", resp.status_code, deezer_id)
             return _remember(empty, False)
@@ -823,10 +881,13 @@ def get_deezer_artist_by_id(deezer_id):
 def get_deezer_artist_by_name(name):
     """Name-search fallback for Deezer media, guarded by artist_names_match
     so a near-miss can't hand over the wrong artist's photo."""
+    if photo_store.paused("deezer"):
+        return {"image": "", "nb_fan": 0}
     try:
         resp = http_requests.get("https://api.deezer.com/search/artist",
             params={"q": name, "limit": 1}, timeout=4)
         d = resp.json()
+        _deezer_refused(resp, d)
         if d.get("total", 0) > 0 and artist_names_match(name, d["data"][0].get("name", "")):
             return {
                 "image": clean_deezer_image(d["data"][0].get("picture_medium", "")),
@@ -855,6 +916,14 @@ def get_artist_media(name, mbid=None):
     dz = get_deezer_artist_by_id(links["deezer_id"]) if links.get("deezer_id") else {}
     if not dz.get("image"):
         dz = get_deezer_artist_by_name(name)
+
+    if dz.get("image"):
+        photo_store.save(name, dz["image"], dz.get("nb_fan", 0))
+    elif not spotify.get("image"):
+        # Both providers failed or refused us: show the last photo we had.
+        last = photo_store.load(name)
+        if last:
+            dz = {"image": last["image"], "nb_fan": last["nb_fan"]}
 
     return {
         "spotify": spotify,

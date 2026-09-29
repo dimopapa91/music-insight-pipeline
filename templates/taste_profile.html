@@ -116,7 +116,7 @@
       {% for a in taste.top[:10] %}
       {% set ph = (taste.photos.get(a.name) or {}).get('image') %}
       <a class="tp-art" href="/artist/{{ a.name | urlencode }}">
-        {% if ph %}<img src="{{ ph | dz_size(500) }}" alt="" loading="lazy" width="500" height="500">{% else %}<span class="ini" aria-hidden="true">{{ a.name[0] | upper }}</span>{% endif %}
+        {% if ph %}<img src="{{ ph | dz_size(500) }}" alt="" loading="lazy" width="500" height="500">{% else %}<span class="ini" aria-hidden="true" data-wv-photo="{{ a.name }}">{{ a.name[0] | upper }}</span>{% endif %}
         <span class="rk">{{ loop.index }}</span>
         <span class="lbl">{{ a.name }}<small>{{ a.plays | compact }} plays</small></span>
       </a>
@@ -155,7 +155,7 @@
       {% for name in taste.recs %}
       {% set ph = (taste.photos.get(name) or {}).get('image') %}
       <a class="tp-art" href="/artist/{{ name | urlencode }}">
-        {% if ph %}<img src="{{ ph | dz_size(500) }}" alt="" loading="lazy" width="500" height="500">{% else %}<span class="ini" aria-hidden="true">{{ name[0] | upper }}</span>{% endif %}
+        {% if ph %}<img src="{{ ph | dz_size(500) }}" alt="" loading="lazy" width="500" height="500">{% else %}<span class="ini" aria-hidden="true" data-wv-photo="{{ name }}">{{ name[0] | upper }}</span>{% endif %}
         <span class="lbl">{{ name }}</span>
       </a>
       {% endfor %}

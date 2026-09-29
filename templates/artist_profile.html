@@ -126,7 +126,7 @@
 {% set photo = (deezer_image | dz_size(1000)) if deezer_image else (spotify.image or '') %}
 <section class="ar-top" id="overview">
   <div class="ar-photo">
-    {% if photo %}<img src="{{ photo }}" alt="{{ artist_name | titlecase }}" width="1000" height="1000" fetchpriority="high">{% else %}<div class="ph" aria-hidden="true">{{ artist_name[0] | upper }}</div>{% endif %}
+    {% if photo %}<img src="{{ photo }}" alt="{{ artist_name | titlecase }}" width="1000" height="1000" fetchpriority="high">{% else %}<div class="ph" aria-hidden="true" data-wv-photo="{{ artist_name }}" data-wv-px="1000" data-wv-alt="{{ artist_name | titlecase }}">{{ artist_name[0] | upper }}</div>{% endif %}
   </div>
   <div class="ar-info">
     <a class="ar-back" href="/">← Home</a>
@@ -239,7 +239,7 @@
       {% for name in similar_artists %}
       {% set sp = (similar_photos or {}).get(name, {}) %}
       <a href="/artist/{{ name | urlencode }}" class="ar-similar-card">
-        {% if sp.image %}<img src="{{ sp.image | dz_size(500) }}" alt="" loading="lazy" width="500" height="500">{% endif %}
+        {% if sp.image %}<img src="{{ sp.image | dz_size(500) }}" alt="" loading="lazy" width="500" height="500">{% else %}<span hidden data-wv-photo="{{ name }}"></span>{% endif %}
         <span class="nm">{{ name | titlecase }}</span>
       </a>
       {% endfor %}
