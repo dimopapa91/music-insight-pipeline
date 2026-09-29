@@ -161,7 +161,7 @@
     {% if featured.photo %}
     <img class="wv-feature-img" src="{{ featured.photo | dz_size(1000) }}" alt="" width="1000" height="1000" fetchpriority="high">
     {% else %}
-    <span class="wv-feature-noimg" aria-hidden="true">{{ featured.artist[0] | upper }}</span>
+    <span class="wv-feature-noimg" aria-hidden="true" data-wv-photo="{{ featured.artist }}" data-wv-px="1000" data-wv-class="wv-feature-img">{{ featured.artist[0] | upper }}</span>
     {% endif %}
     <div class="wv-boxlbl">
       <span class="k">Latest search · {{ featured.searched_at | timeago }}</span>
@@ -225,7 +225,7 @@
       {% for row in fresh %}
       <a class="wv-fresh-card" href="/artist/{{ row.artist | urlencode }}">
         <div class="wv-fresh-ph">
-          {% if row.photo %}<img src="{{ row.photo | dz_size(500) }}" alt="" loading="lazy" width="500" height="500">{% else %}<span class="ini" aria-hidden="true">{{ row.artist[0] | upper }}</span>{% endif %}
+          {% if row.photo %}<img src="{{ row.photo | dz_size(500) }}" alt="" loading="lazy" width="500" height="500">{% else %}<span class="ini" aria-hidden="true" data-wv-photo="{{ row.artist }}">{{ row.artist[0] | upper }}</span>{% endif %}
           <span class="wv-fresh-when">{{ row.searched_at | timeago }}</span>
         </div>
         <div class="wv-fresh-m">
@@ -258,7 +258,7 @@
 
     <article class="wv-card wv-featured">
       <div class="wv-featured-visual">
-        {% if featured.photo %}<img src="{{ featured.photo | dz_size(1000) }}" alt="" loading="lazy" width="1000" height="1000">{% endif %}
+        {% if featured.photo %}<img src="{{ featured.photo | dz_size(1000) }}" alt="" loading="lazy" width="1000" height="1000">{% else %}<span hidden data-wv-photo="{{ featured.artist }}" data-wv-px="1000"></span>{% endif %}
         <div class="wv-boxlbl">
           <h3>{{ featured.artist | titlecase }}</h3>
           <p class="wv-featured-date">Latest search {{ featured.searched_at.strftime('%d %b %Y') }}</p>
@@ -316,7 +316,7 @@
     <div class="wv-tiles">
       {% for d in discovery[:8] %}
       <a class="wv-tile" href="/artist/{{ d.name | urlencode }}">
-        {% if d.image %}<img src="{{ d.image | dz_size(500) }}" alt="" loading="lazy" width="500" height="500">{% endif %}
+        {% if d.image %}<img src="{{ d.image | dz_size(500) }}" alt="" loading="lazy" width="500" height="500">{% else %}<span hidden data-wv-photo="{{ d.name }}"></span>{% endif %}
         <span class="t">{{ d.name | titlecase }}</span>
         {% if d.nb_fan %}<span class="f">{{ "{:,}".format(d.nb_fan) }} fans</span>{% endif %}
       </a>

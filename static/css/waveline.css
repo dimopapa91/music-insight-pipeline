@@ -20,7 +20,7 @@
   --wv-accent:      #c9b8ff;  /* lavender */
   --wv-accent-ink:  #d9ccff;  /* links/text in accent on black */
   --wv-accent-soft: rgba(201,184,255,.14);
-  --wv-accent-line: rgba(201,184,255,.42);  /* hover outlines: a hint of lavender, not a glow */
+  --wv-accent-line: rgba(201,184,255,.30);  /* hover outlines: a hint of lavender, not a glow */
   --wv-hair: 1px;                           /* 0.5px on high-density screens, see below */
   --wv-on-accent: #0d0820;   /* text placed on top of --wv-accent (≈13:1) */
   --wv-danger:    #ff6b61;
@@ -96,7 +96,7 @@ body.light {
   --wv-accent:      #5b3fd0;
   --wv-accent-ink:  #4c32b8;
   --wv-accent-soft: rgba(91,63,208,.10);
-  --wv-accent-line: rgba(91,63,208,.38);
+  --wv-accent-line: rgba(91,63,208,.28);
   --wv-on-accent: #ffffff;
   --wv-danger:    #b3261e;
   --wv-danger-soft:#fdecea;
@@ -114,7 +114,7 @@ body.light {
    desktop. The root drops from 16px to 15px; every rem-based size follows,
    spacing (px tokens) stays as it was. Inputs keep 16px on phones (iOS
    zooms into anything smaller). */
-html { scroll-behavior: smooth; font-size: 15px; }
+html { scroll-behavior: smooth; font-size: 14.5px; }
 @media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) { :root { --wv-hair: .5px; } }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

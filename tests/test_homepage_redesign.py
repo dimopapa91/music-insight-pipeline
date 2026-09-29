@@ -233,7 +233,9 @@ def test_deezer_quota_error_is_retried_soon_not_cached_as_no_photo(monkeypatch):
     assert services.get_artist_photo("Bonobo")["image"] == ""
     entry = services._artist_photo_cache["bonobo"]
     assert entry["ok"] is False
-    entry["at"] -= services._ARTIST_PHOTO_ERR_TTL + 1          # two minutes later
+    assert services.photo_store.paused("deezer")               # refused: Deezer is left alone for a while
+    entry["at"] -= services._ARTIST_PHOTO_ERR_TTL + 1          # later, once the pause is over
+    services.photo_store.reset_pauses()
     monkeypatch.setattr(services.http_requests, "get", lambda *a, **k: _deezer(("Bonobo", 365253, "bbb")))
     assert "/bbb/" in services.get_artist_photo("Bonobo")["image"]
 
